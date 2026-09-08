@@ -12,8 +12,17 @@ description: >
 
 Lightweight orchestrator for the full analog design pipeline. Sequences skill
 invocations, manages global state, and maintains `iteration-log.yml`. Does NOT
-dispatch agents directly, run simulations, or write netlists — only decides
-"which skill next" and "record what happened."
+write circuit netlists, run hand-calculations, or run simulations — only decides
+"which skill next", dispatches dedicated subagents, and "records what happened."
+
+## Orchestrator Execution Invariants (ANTI-MONOLITHIC EXECUTION RULES)
+
+> [!CRITICAL]
+> **Mandatory Subagent Dispatch**: When the state machine enters any stage:
+>    - Stage 1 (Decompose/Architecture) -> MUST dispatch `ARCHITECT` subagent.
+>    - Stage 2 (Circuit Design & Sizing) -> MUST dispatch `DESIGNER` subagent.
+>    - Stage 3 (Pre-Sim Review & Checklist) -> MUST dispatch `REVIEWER` subagent.
+>    - Stage 4 (Simulation & Verification) -> MUST dispatch `VERIFIER` subagent.
 
 ## When to Use
 

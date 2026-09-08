@@ -97,11 +97,11 @@ When integration verification fails:
 
 2. **Send back to design loop**:
    - Revise the interface constraints or sub-block spec as needed.
-   - Dispatch the affected sub-block's designer with updated constraints.
+   - Report the failure and updated constraints to the **orchestrator** (the orchestrator will dispatch the affected sub-block's designer).
    - The designer/verifier loop re-runs for that sub-block only.
 
 3. **Architectural failure**: if multiple sub-blocks fail or the failure is systemic
-   (e.g., power budget blown), escalate to `/analog-decompose` for architecture revision.
+   (e.g., power budget blown), escalate to orchestrator for `/analog-decompose` architecture revision.
 
 ## Sign-Off Gate
 
@@ -109,17 +109,17 @@ When integration verification fails:
 
 Before the design can be delivered or migrated to Virtuoso:
 
-1. Dispatch verifier with `level: L3` on the fully integrated design.
+1. Request orchestrator to dispatch verifier with `level: L3` on the fully integrated design.
 2. All top-level specs must pass across all corners defined in `spec.yml`.
 3. If any corner fails:
-   - Performance issue: return to designer for the affected sub-block.
-   - Architectural issue: return to `/analog-decompose`.
+   - Performance issue: return to orchestrator to route to designer for the affected sub-block.
+   - Architectural issue: return to orchestrator for `/analog-decompose`.
 
 Do not proceed to Virtuoso migration until L3 passes.
 
 ## Virtuoso Migration
 
-After L3 sign-off, dispatch the designer agent with a Virtuoso migration task:
+After L3 sign-off, report to the **orchestrator**, which will dispatch the designer agent with a Virtuoso migration task:
 
 1. **Input**: path to the verified integrated netlist.
 2. **Action**: designer migrates the netlist to a Virtuoso cellview and runs LVS.

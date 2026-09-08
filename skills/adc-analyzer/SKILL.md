@@ -56,9 +56,9 @@ callouts.
 
 ## Handoff rules
 
-- **Pass**: report convergence to the orchestrator; do not re-dispatch designer.
-- **Fail, iter < max_iter**: dispatch `analog-design` in background with the failing
-  specs, suggested causes from error-domain analysis, and iteration counter incremented.
+Only the orchestrator dispatches subagents. The analyzer NEVER dispatches the designer directly.
+- **Pass**: report convergence to the orchestrator.
+- **Fail, iter < max_iter**: report to the orchestrator with failing specs, suggested causes from error-domain analysis, and recommendations. The orchestrator will log the iteration and dispatch `analog-design`.
 - **Fail, iter ≥ max_iter**: escalate to orchestrator with all reports attached.
 
 ## See also

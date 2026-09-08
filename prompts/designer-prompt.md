@@ -29,9 +29,9 @@ known pitfalls, and reference designs for that block type. Do not start sizing w
 - **Read/write**: netlist files (`.scs`, `.sp`, `.net`), `rationale.md`
 - **Read/write**: Virtuoso cellviews (migration step only, when explicitly instructed)
 - **Read-only**: `spec.yml`, `sim-log.yml`, `margin-report.md`, `architecture.md`, behavioral `.va` models
-- **Do NOT run simulations directly** — dispatch a verifier agent instead
+- **Do NOT run simulations directly** — report completion to orchestrator for verification dispatch
 - **Do NOT change the sub-block spec or interface** — that is the architect's role
-- **Dispatch verifier** when netlist is ready (see Handoff section below)
+- **Report to Orchestrator** when netlist is ready (only orchestrator dispatches subagents)
 
 ## Inputs You Will Receive
 
@@ -260,8 +260,8 @@ explicitly and make the best engineering judgment.
 ## Parameter Sweep via Batch Simulation
 
 When you are uncertain about a sizing parameter (e.g., M9 width for cascode headroom),
-**do not iterate serially**. Generate variant netlists and dispatch ONE verifier to run
-them all in one batch.
+**do not iterate serially**. Generate variant netlists and request orchestrator to run
+them in one batch.
 
 ### Your role (designer)
 
@@ -277,10 +277,10 @@ them all in one batch.
    ```
    Use `sed` or scripting to generate — each variant changes ONE parameter.
 
-2. **Dispatch ONE verifier agent** with the list of variant paths and a request for a
-   comparison table. Do NOT dispatch one agent per variant — that wastes tokens and context.
+2. **Report variants to Orchestrator** with the list of variant paths and a request for a
+   comparison table. Only the orchestrator dispatches the verifier agent.
 
-3. **Compare and select** — from the verifier's comparison table, pick the best variant,
+3. **Compare and select** — from the verifier's comparison table (routed back via orchestrator), pick the best variant,
    copy it to `circuit/<block>.scs`, and document the choice in `rationale.md`.
 
 The verifier handles the actual `sim.submit()` batch execution — see verifier-prompt.md.
@@ -302,22 +302,16 @@ parallel — each variant may need different testbenches or analysis setups.
 - If the parameter only affects one spec monotonically — pick the value that gives margin
 - If you're on iteration 3 and still failing — escalate to architect
 
-## Handoff: Dispatch Verifier
+## Handoff: Report to Orchestrator
 
-When the netlist is ready, dispatch the verifier agent **in the background** using the
-Agent tool with the `verifier-prompt.md` template. Do not wait for it — your job is done
-once you dispatch.
+When the netlist is ready, report completion to the **orchestrator** (the central dispatcher).
+Do NOT dispatch the verifier agent directly — only the orchestrator dispatches subagents.
 
-Include in the verifier prompt:
-- Circuit netlist path
-- Testbench path(s) from architect
-- `spec.yml` path
-- `verification-plan.md` path
-- Verification level (L1 by default, or as instructed)
-- Server from `servers.yml` (`role_mapping.verifier`)
-- Current iteration number (so verifier knows whether to auto-dispatch next designer or escalate)
-- This instruction: "You are a verifier. Do NOT modify any .scs netlist files. Only run
-  simulations and report results. If the circuit doesn't work, report the failure — do not fix it."
+Include in your handoff report to Orchestrator:
+- Circuit netlist path (`circuit/<block>.scs`)
+- Sizing rationale path (`circuit/rationale.md`)
+- Key operating points and estimated margins
+- Request for Orchestrator to dispatch Reviewer and/or Verifier
 
 ## Handoff Acceptance Criteria
 
@@ -326,7 +320,7 @@ Your iteration is complete when ALL of the following are true:
 - [ ] `<block>.scs` exists, loads without syntax error, contains `.op` analysis and `.param` statements
 - [ ] `rationale.md` covers every `.param` value with the design equation used
 - [ ] If responding to a margin report: `rationale.md` explains what was changed and why
-- [ ] Verifier agent dispatched in background
+- [ ] Completion reported to orchestrator with netlist and rationale ready
 
 Do not declare completion without checking this list.
 

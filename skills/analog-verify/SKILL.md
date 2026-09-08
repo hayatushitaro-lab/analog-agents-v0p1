@@ -504,39 +504,39 @@ Return a comparison table with the key metrics the designer asked about:
 
 Do NOT pick the winner — that is the designer's decision.
 
-## After Simulation: Auto-Dispatch Next Agent
+## After Simulation: Report to Orchestrator
 
-After writing the margin report, dispatch the next agent **in background** based on the result:
+Only the orchestrator dispatches subagents. The verifier NEVER dispatches the designer directly.
+After writing the margin report, report results back to the **orchestrator**:
 
 ### If all specs PASS
-Report convergence to orchestrator. Do not dispatch designer.
+Report convergence to orchestrator.
 Write a one-line summary: `CONVERGED — all specs pass at L1/L2, iteration N`.
 
 ### If any spec FAILS and iteration < max_iter (effort-dependent)
-Dispatch the **designer** agent in background with:
+Report verification failure to orchestrator with:
 - The margin report path
 - The failing specs with measured values, targets, shortfalls
 - Suggested causes for each failure (from your analysis)
-- Incremented iteration number: `iteration = N + 1`
-- All original inputs (spec.yml, testbench paths, architecture.md, servers.yml)
+- Recommendation for orchestrator to log iteration and re-dispatch designer
 
 ### If any spec FAILS and iteration >= max_iter
-Do NOT dispatch designer. Escalate to orchestrator:
+Escalate to orchestrator:
 Write an escalation report: `ESCALATE — <max_iter> iterations failed, architect review required`.
 Include all margin reports and the trajectory of each failing spec.
 
 ### If pre-simulation review REJECTED (no simulation run)
-- Circuit issue → dispatch **designer** with the rejection report (not a design iteration,
-  do not increment loop counter)
-- Testbench issue → report to orchestrator (routes to **architect**)
+Report rejection to orchestrator:
+- Circuit issue → orchestrator will route rejection report to designer
+- Testbench issue → orchestrator will route to architect
 
 See `shared-references/handoff-contracts.md` for the full handoff payload requirements.
 
 ## Handoff Acceptance Criteria
 
 - [ ] Pre-simulation review completed (circuit + testbench)
-- [ ] If issues found: rejection report written, no simulation run, appropriate agent dispatched
+- [ ] If issues found: rejection report written, no simulation run, reported to orchestrator
 - [ ] If approved: margin-report.md with MOSFET op table + results table
 - [ ] Every FAIL includes: corner, measured value, shortfall, at least one suggested cause
-- [ ] Next agent dispatched (designer, or escalation report to orchestrator)
+- [ ] Verification results reported to orchestrator (no direct agent dispatch)
 - [ ] Circuit netlist unchanged (you must not have written to any `.scs`/`.sp`/`.net`)
