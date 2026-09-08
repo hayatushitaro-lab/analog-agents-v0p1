@@ -1,0 +1,164 @@
+id: topo-ldo-008
+type: topology
+name: "FVF (Flipped Voltage Follower) LDO — NMOS Pass with Cascode"
+tags: [ldo, nmos-pass, fvf, source-follower, cascode, no-chargepump, gpdk045]
+process_nodes: [45nm, 65nm, 28nm, 130nm]
+
+topology:
+  pass_device: nmos
+  output_cap: external_large
+  variant: fvf
+  compensation: miller
+  ea_stages: 1
+
+content:
+  description: >
+    FVF (Flipped Voltage Follower) LDO：NMOS pass管以源跟随器方式连接，栅极接VDD（通过
+    限流电阻），源极即输出节点。一个NMOS cascode（共栅）管串联在pass管源极与输出之间，
+    提升输出阻抗。OTA正端接VREF，负端接pass管源极（即VOUT），输出驱动cascode管栅极。
+    无需电荷泵——栅极由VDD供电。FVF拓扑天然具有高PSRR和低dropout。
+    基于通用电路知识（Sassoon & Franca, 2004; Bult & Geelen, 1993），
+    适用于45nm及以下先进工艺。
+
+  key_tradeoffs:
+    - "无需电荷泵，Iq极低"
+    - "dropout≈VDSAT_cascode（~200-400mV @ 45nm），低于PMOS pass"
+    - "PSRR优秀：cascode结构天然提升高频PSRR"
+    - "增益低于传统LDO（FVF增益<1）"
+
+  typical_specs:
+    dropout: "200-400mV"
+    psrr_dc: "60-80 dB"
+    psrr_high_freq: "优秀（cascode天然衰减电源噪声）"
+    phase_margin: "60-80°"
+    iq: "5-30µA"
+    load_current_max: "10-50mA"
+    vdd_range: "VDD > VOUT + VGS"
+
+  sizing_anchors:
+    pass_device: "NMOS, W大, L=2-4×Lmin"
+    cascode_device: "NMOS, W≈pass/2, L=2-4×Lmin"
+    ota: "共源或折叠cascode, 驱动cascode栅极"
+    resistor: "pass管栅极限流电阻，10K-100K"
+
+derived_from: []
+confidence: unverified
+source: "通用电路知识 (Sassoon & Franca 2004; Bult & Geelen 1993)"
+created: 2026-08-17
+updated: 2026-08-17
+
+key_params:
+  dropout:
+    formula: "dropout ≈ VDSAT_cascode = sqrt(2*Iload / (μn*Cox*Wc/Lc))"
+    typical_range: "200-400mV"
+    unit: mV
+    note: "pass管源极接输出，dropout仅由cascode管VDSAT决定"
+  psrr_low_freq:
+    formula: "PSRR_DC ≈ gm_cascode × rout_ota"
+    typical_range: "60-80 dB"
+    unit: dB
+  psrr_high_freq:
+    formula: "PSRR_high ≈ gm_cascode / (s*Cgd_cascode)"
+    note: "cascode管G-D电容天然衰减高频电源噪声，FVF的固有优势"
+  iq:
+    formula: "I_ota + I_pass_leakage"
+    typical_range: "5-30µA"
+    unit: µA
+    note: "FVF无需bias大电流，Iq天然低"
+  transient_droop:
+    formula: "droop = ΔI/(gmp×BW_loop)"
+    typical_range: "5-30mV"
+    unit: mV
+
+sizing_equations:
+  pass_transistor:
+    goal: "满足满载电流驱动"
+    formula: "W/L_pass = Iload / (μn*Cox*(VGS-Vth)^2 / 2)  （强反型）"
+    notes:
+      - "pass管栅极接VDD，VGS=VDD-VOUT"
+      - "W按Iload需求计算，L=2-4×Lmin提本征增益"
+      - "pass管工作在饱和区，确保VDS>VDAT"
+  cascode_transistor:
+    goal: "提升输出阻抗，决定dropout"
+    formula: "W/L_cas = Iload / (μn*Cox*VDSAT_cas² / 2)"
+    notes:
+      - "VDSAT_cas决定dropout，越小越好"
+      - "cascode管栅极由OTA驱动，需足够gm"
+      - "L=2-4×Lmin降低CLM"
+  stability:
+    goal: "全负载PM>45°"
+    pole_conditions:
+      p1: "1/(2π*(1/gm_pass)*CL)  （主极点，输出端）"
+      p2: "1/(2π*rout_ota*Cpar_cas_gate)  （次极点，cascode栅极）"
+      ugbw: "gm_pass/(2π*CL)"
+      stability_rule: "p2 > 4 × UGBW"
+    note: "FVF主极点在输出端（pass管源极），由1/gm_pass和CL决定"
+  psrr:
+    goal: "PSRR > 60dB @ DC"
+    formula: "PSRR_DC ≈ gm_cas × rout_ota"
+    note: "cascode管提供固有PSRR，无需高增益OTA"
+
+tradeoffs:
+  - dimension: "cascode管VDSAT vs dropout vs 面积"
+    description: "VDSAT_cas↓→dropout↓但W↑→面积↑"
+    bounds: "VDSAT_cas ∈ [100mV, 400mV]"
+  - dimension: "OTA增益 vs PSRR vs 稳定性"
+    description: "OTA增益↑→PSRR↑但极点增多"
+    bounds: "A_OL ∈ [40dB, 70dB]"
+  - dimension: "pass管栅极电阻 vs 启动时间 vs Iq"
+    description: "R_gate↑→pass管栅极泄漏↓但启动慢"
+    bounds: "R_gate ∈ [10K, 100K]"
+  - dimension: "CL vs 稳定性 vs 瞬态"
+    description: "CL↑→p1下移→PM↑但瞬态慢"
+    bounds: "CL ∈ [1µF, 10µF]"
+
+optimization_dims:
+  - param: VDSAT_cas
+    bounds: [100, 400]
+    unit: mV
+    affects: [dropout, area]
+    notes: "决定dropout的关键参数"
+  - param: A_OL
+    bounds: [40, 70]
+    unit: dB
+    affects: [psrr, stability]
+  - param: R_gate
+    bounds: [10, 100]
+    unit: KΩ
+    affects: [startup_time, iq]
+  - param: CL
+    bounds: [1µF, 10µF]
+    affects: [phase_margin, transient_response]
+
+when_to_use:
+  - "需要低dropout但无电荷泵"
+  - "需要低Iq（<30µA）"
+  - "需要高PSRR（含高频）"
+  - "RF/混合信号SoC对电源噪声敏感"
+  - "VDD略高于VOUT+VGS"
+  - "先进工艺（45nm及以下）"
+
+when_not_to_use:
+  - "需要极低dropout（<100mV）→ 选NMOS+CP (009)"
+  - "需要高增益OTA → 选002/005"
+  - "VDD远低于VOUT+VGS → FVF不工作"
+  - "需要数字辅助 → 选003"
+  - "成熟工艺（180nm以上）→ PMOS pass更简单"
+
+pitfalls:
+  - id: pitfall-ldo-024
+    description: "FVF增益<1，VOUT精度依赖VREF精度"
+    root_cause: "FVF的环路增益由cascode管gm决定，天然<1，无法放大误差信号"
+    fix: "确保VREF精度高；OTA增益需补偿FVF的低增益"
+  - id: pitfall-ldo-025
+    description: "cascode管偏置电压不稳定导致VOUT漂移"
+    root_cause: "cascode管栅极偏置电压的精度直接影响pass管工作点"
+    fix: "使用精密偏置链或带隙基准为cascode管提供偏置"
+  - id: pitfall-ldo-026
+    description: "pass管栅极接VDD时ESD敏感"
+    root_cause: "NMOS pass管栅极直接接VDD，ESD事件可能击穿栅氧化层"
+    fix: "栅极加ESD保护二极管或限流电阻"
+  - id: pitfall-ldo-027
+    description: "轻载时cascode管进入亚阈值区，dropout增加"
+    root_cause: "Iload↓→cascode管VDSAT↓→但亚阈值区电流不线性→dropout不可控"
+    fix: "确保cascode管在轻载时仍工作在饱和区"

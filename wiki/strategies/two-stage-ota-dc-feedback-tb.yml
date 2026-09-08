@@ -1,0 +1,28 @@
+id: strat-ota-005
+type: strategy
+name: "Two-stage OTA testbench: DC-feedback bias stabilization + STB loop gain"
+tags: [ota, two-stage, testbench, stb, dc-feedback, phase-margin]
+process_nodes: [65nm]
+module: ota
+
+content:
+  description: >
+    A two-stage OTA has no unique open-loop DC operating point: the stage-2
+    output between the CS driver and the current-source load is a knife-edge
+    balance, and a floating open-loop TB degenerates (M6 triode, vout rail-stuck
+    at mV level, AC gain -9dB). Stabilize with unity-gain DC feedback and measure
+    the loop gain with STB:
+      - dcop TB: Rfb (vout vinp) resistor r=1G; vinp NOT driven by an ideal
+        source; vinn = VCM. Forces the intended op; vout = VCM + Vos.
+      - AC TB: 0V bridge Vbr (vout vinp) vsource dc=0; `stb1 stb probe=Vbr`;
+        Av = |T| @ low freq, GBW = |T|=1 crossing, PM from phase(T).
+    Also: in a mirror-load diff pair, the NON-INVERTING input is the high-Z side
+    (vn/M2), and the diode side (vp/M1) is INVERTING — drive AC on vnn so
+    PM = 180deg + phase applies directly.
+  when_to_use: "Any 2+ stage amplifier TB (OTA/LDO EA) when open-loop bias is degenerate"
+
+derived_from: ["proj-ota-2stage-33v"]
+confidence: unverified
+source: "ota_2stage_33v project, verifier iter1-2 TB QC (2026-08-30)"
+created: 2026-08-30
+updated: 2026-08-30

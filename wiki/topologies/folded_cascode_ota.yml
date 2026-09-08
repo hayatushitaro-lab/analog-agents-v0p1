@@ -1,0 +1,74 @@
+id: topo-ota-004
+name: "Folded-cascode OTA (NMOS input folded to PMOS cascode)"
+level: 3
+topology: folded_cascode
+
+supply:
+  vdd: 3.3
+  vcm: 1.2
+  process: "TSMC-65nm 3.3V"
+  devices: [nch_33, pch_33]
+
+specs:
+  Av:     { unit: dB,   default: 60 }
+  GBW:    { unit: MHz,  default: 100 }
+  PM:     { unit: deg,  default: 60 }
+  CL:     { unit: pF,   default: 2 }
+  Itail:  { unit: uA,   default: 200 }
+  SR:     { unit: V/us, default: 50 }
+  Vin_cm: { unit: V,    default: 1.2 }
+  Vout_swing: { unit: V, default: 2.5 }
+
+nodes:
+  vin_p: vp
+  vin_n: vn
+  vout: vout
+  vbias1: vb1        # 尾源栅
+  vbias2: vb2        # cascode 栅
+  vdd: VDD
+  vss: VSS
+
+devices:
+  - { id: M1, role: input_p,      type: nch_33 }
+  - { id: M2, role: input_n,      type: nch_33 }
+  - { id: M3, role: cascode_p1,   type: pch_33 }
+  - { id: M4, role: cascode_p2,   type: pch_33 }
+  - { id: M5, role: load_p1,      type: pch_33 }
+  - { id: M6, role: load_p2,      type: pch_33 }
+  - { id: M7, role: tail,         type: nch_33 }
+
+equations:
+  gm1: "2 * pi * GBW * CL"
+  Id:  "Itail / 2"
+  gm_over_Id: "gm1 / Id"
+  Vov1: "vov_from_gmid(gm/Id)"
+  W1: "W_from_gmid(Id, L1, gm/Id, muCox_n)"
+  Av: "gm1 * (gm3*ro3*ro1 || gm5*ro5*ro7)  # 折叠 cascode 输出阻抗"
+  SR: "Itail / CL"
+
+calibration:
+  muCox_n: { value: 60e-6, unit: "A/V^2", backout: "从 W1 反推 gm1" }
+  muCox_p: { value: 30e-6, unit: "A/V^2", backout: "从 cascode/负载反推" }
+  lambda_n: { value: 0.1, unit: "1/V", backout: "..." }
+  lambda_p: { value: 0.1, unit: "1/V", backout: "..." }
+
+sensitivities:
+  - { param: "W1/W2", up: [GBW], down: [PM], note: "输入对 gm 决定 GBW" }
+  - { param: "W3/W4", up: [Av], down: [Vout_swing], note: "cascode 宽↑ → ro↑增益↑" }
+  - { param: Itail, up: [GBW, SR], down: [], note: "电流↑ → gm/SR↑" }
+  - { param: L_cascode, up: [Av], down: [GBW], note: "cascode L↑ → ro↑增益↑" }
+
+sizing_rules:
+  - "finger width 默认 1u,镜像比只通过 nf/multi 调"
+  - "输入对 gm/Id 10~15;cascode/负载/尾源 gm/Id ~10"
+  - "cascode 用长 L(2-4x 最小)提 ro → 增益"
+  - "折叠结构输入对与 cascode 各 2 层堆叠,摆幅比 telescopic 大"
+
+pitfalls:
+  - "折叠 cascode:输入对漏极接 PMOS cascode 源,不是直接接 VDD——方向错了会短路"
+  - "折叠结构尾电流 = Itail + 2×(每边折叠电流),尾源管承载电流是输入对两倍"
+  - "NMOS 输入 → Vcm 低(近 VSS)"
+  - "输出摆幅 = VDD - 2×Vov(只有 cascode + 负载两层),比 telescopic 大"
+
+checklist: checklists/folded_cascode_ota.yml
+template: templates/folded_cascode_ota.scs

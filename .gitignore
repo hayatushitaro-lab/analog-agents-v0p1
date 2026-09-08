@@ -1,0 +1,80 @@
+# ── Python ─────────────────────────────────────────────
+__pycache__/
+*.pyc
+.venv/
+
+# ── Editors / OS ───────────────────────────────────────
+.vscode/
+.idea/
+.claude/
+Thumbs.db
+.DS_Store
+
+# ── Per-user lockfile (virtuoso-bridge is editable, pin nothing) ──
+uv.lock
+
+# ── Credentials & per-user config — never commit ──────
+config/servers.yml
+config/reviewers.yml
+config/effort.yml
+
+# ── Workstation-local state — historical, replaced by _local/ + tmp/ + WORK_* ──
+# Kept as defensive ignore in case anyone re-creates ./local/ accidentally.
+local/
+
+# ── Per-skill site-specific config (hostnames, license MAC, user homes) ─
+_local/
+skills/*/_local/
+
+# ── Run-time outputs (may contain absolute paths, usernames, PDKs) ──
+output/
+example_artifacts/
+
+# ── Throwaway scripts, experiments ─────────────────────
+tmp/
+
+# ── Simulation intermediate / artifact files ───────────
+*.raw/
+sim-log.yml
+margin-report.md
+spectre.out
+
+# ── Iteration-specific wiki content ────────────────────
+wiki/projects/
+wiki/user-preferences.yml
+
+# ── Reference docs copied locally (have their own source) ──
+skill-api-reference/
+
+# ── Third-party reference PDFs (size + redistribution concerns) ──
+references/
+
+# Workstation-local working dirs — anything starting with WORK
+WORK/
+WORK_*
+digital/
+AMS-IO-Agent/
+
+# ── Skills not yet ready to publish ────────────────────
+# These contain lab-specific paths, in-progress experiments, and
+# exploration artifacts. Promote individually once stable.
+skills/mixed-signal-verification/
+skills/digital-flow/
+skills/calibre/
+
+# ── Merged additions (lossless merge) ────────────────
+# (old WA/ private mirror merged into wiki/projects/ per merge-migration.md; no WA/ no longer needed)
+# memory/ : DSH/Codex per-agent memory (gqyl increment)
+memory/
+# kb PDK/model data: isolated from git (merge-instructions §3); keep docs/config tracked
+wiki/projects/*/model/ref_lib/
+wiki/projects/*/model/*.scs
+wiki/projects/*/model/*.inc
+wiki/projects/*/model/*.lib
+wiki/projects/*/model/*.va
+wiki/projects/*/model/*.hspice
+wiki/projects/*/model/*.tf
+wiki/projects/*/model/*.l
+wiki/projects/*/model/*.skew
+wiki/projects/*/model/*.drf
+wiki/projects/*/model/*.so

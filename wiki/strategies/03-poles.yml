@@ -1,0 +1,24 @@
+id: strat-ldo-007
+type: strategy
+name: "LDO 极点配置方程 (§3 poles)"
+tags: [ldo, poles, stability, esr, cascode]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    主/次极点与极点分离条件。外部大电容 LDO 主极点在输出端
+    p1 = 1/(2π×(Rout_pass+ESR)×CL)；次极点 p2 = 1/(2π×Rout_EA×Cpar_EA)。
+    稳定条件 p2 > 4×UGBW。另有 cascode 极点与 ESR 零点（辅助极点）。
+  how:
+    - "主极点(大 CL): p1=1/(2π×(Rout_pass+ESR)×CL)。轻载 gmp→0 极点上移，重载 p1 下移；ESR↑→p1↓→UGBW↓→更稳定。"
+    - "次极点(OTA 输出端): p2=1/(2π×Rout_EA×Cpar_EA)。两级 OTA: p1=1/(2π×Rout_s1×Cc)，p2=1/(2π×Rout_s2×Cout)。"
+    - "极点分离: 外部大电容 Cc < CL/(4×gmp×Rout_EA)；Capless Cc > 4×gm_EA×Rout_pass×Cout，即须 gmp >> gm_EA。"
+    - "cascode 极点 p_cascode=1/(2π×Rout_cas×Cpar_cas)；FVF 中 p_cas=1/(2π×(1/gm_cas)×Cpar_cas)，gm_cas↑ 极点更安全。"
+    - "ESR 零点 z_ESR=1/(2π×ESR×CL)。设计目标 UGBW < z_ESR < p2；z_ESR<UGBW 过早抬相位，z_ESR>p2 无帮助。"
+  when_to_use: "评估 LDO 环路在各负载/补偿下的极点分布与稳定性边界时。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

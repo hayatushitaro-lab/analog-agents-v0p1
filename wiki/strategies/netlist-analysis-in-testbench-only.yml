@@ -1,0 +1,23 @@
+id: strat-bandgap-007
+type: strategy
+name: "Analysis statements live in testbenches only (SFE-679)"
+tags: [bandgap, spectre, netlist, testbench, analysis, sfe-679]
+process_nodes: [65nm]
+
+content:
+  description: >
+    A Spectre netlist (simulator lang=spectre) must not carry SPICE analysis
+    cards: a top-level `.op` raises a hard Spectre 18.1 error
+    (SFE-679: "SPICE .op cards are not supported in Spectre language sections")
+    and blocks every run. All analyses (dcOp temp sweep, tran startup, etc.)
+    belong in the testbench; the DUT netlist contains devices, subckt, save and
+    parameters only.
+  key_points:
+    - "Verifier pre-sim review caught this before any simulation cost (1 rejection, 0 wasted sims)."
+    - "The tempdc TB's swept dcOp already provides the 27C operating point; no .op needed."
+
+derived_from: ["proj-001"]
+confidence: unverified
+source: "WORK_bandgap_1v2_tc30 verifier pre-sim review (2026-08-29)"
+created: 2026-08-31
+updated: 2026-08-31

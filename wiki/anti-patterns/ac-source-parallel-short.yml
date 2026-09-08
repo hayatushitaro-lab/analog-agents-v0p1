@@ -1,0 +1,23 @@
+id: anti-ldo-001
+type: anti-pattern
+name: "Parallel AC source across netlist VDD causes rigid-branch short"
+tags: [spectre, ac, psrr, testbench, topology-error]
+process_nodes: [any]
+
+content:
+  description: >
+    Adding a second voltage source in parallel with the circuit's own supply
+    source (to inject an AC ripple) produces 'The following branches form a
+    loop of rigid branches (shorts)' and forces the AC run to abort.
+  failure_mechanism: >
+    Two ideal voltage sources drive the same node -> a rigid short loop with
+    no series impedance. Spectre topology check rejects it before AC runs.
+  fix: >
+    Drop the parallel source. Instead SERIES a `vsource type=ac mag=1` between
+    the DC source and the supply node: DC(src)->Vac->vdd.
+
+derived_from: [proj-ldo-analog]
+confidence: verified
+source: "LDO_ANALOG PSRR attempts"
+created: 2026-08-21
+updated: 2026-08-21

@@ -1,0 +1,157 @@
+id: topo-ldo-009
+type: topology
+name: "NMOS Pass LDO with Charge Pump — Minimum Dropout"
+tags: [ldo, nmos-pass, chargepump, miller, external-cl, gpdk045]
+process_nodes: [45nm, 65nm, 28nm, 130nm]
+
+topology:
+  pass_device: nmos
+  output_cap: external_large
+  variant: traditional_analog
+  compensation: miller
+  ea_stages: 1
+
+content:
+  description: >
+    NMOS pass管 + 倍压电荷泵驱动的LDO。NMOS栅极由电荷泵提供VDD+ΔV的驱动电压，
+    使NMOS pass管可在VOUT接近VDD时仍保持饱和。drop-down最低（仅需VDSAT_NMOS~50-150mV @ 45nm）。
+    OTA为常规共源结构，输出驱动NMOS pass管栅极。电荷泵通常为2x或1.5x倍压结构，
+    增加开关噪声、功耗和面积。基于通用电路知识。
+
+  key_tradeoffs:
+    - "drop-down最低（~50-150mV），优于所有PMOS pass拓扑"
+    - "需要电荷泵：面积大、功耗高、开关噪声"
+    - "NMOS unit transconductance高→pass管面积可更小"
+    - "电荷泵时钟纹波耦合到输出，影响PSRR"
+
+  typical_specs:
+    dropout: "50-150mV"
+    psrr_dc: "60-80 dB"
+    phase_margin: "60-80°"
+    iq: "50-200µA（含电荷泵）"
+    load_current_max: "10-100mA"
+    chargepump_efficiency: "80-90%"
+    chargepump_clock: "10-100MHz"
+
+  sizing_anchors:
+    pass_device: "NMOS, W按Iload计算, L=2-4×Lmin"
+    chargepump: "2x或1.5x倍压, 时钟频率10-100MHz"
+    ota: "共源或五管OTA, 输出驱动NMOS栅极"
+
+derived_from: []
+confidence: unverified
+source: "通用电路知识"
+created: 2026-08-17
+updated: 2026-08-17
+
+key_params:
+  dropout:
+    formula: "dropout = VDSAT_NMOS = sqrt(2*Iload / (μn*Cox*W/L))"
+    typical_range: "50-150mV"
+    unit: mV
+    note: "NMOS强反型时VDSAT低，drop-down优于PMOS"
+  psrr_low_freq:
+    formula: "A_OL(OTA) × (gmp/gds_pass)"
+    typical_range: "60-80 dB"
+    unit: dB
+  psrr_high_freq:
+    formula: "PSRR(f) ≈ 20log(gmp/gds) - 20log(f/BW)"
+    note: "电荷泵时钟频率引入纹波，需在PSRR设计中考量"
+  iq:
+    formula: "I_ota + I_chargepump + I_FB"
+    typical_range: "50-200µA"
+    unit: µA
+    note: "电荷泵增加10-50µA静态电流"
+  transient_droop:
+    formula: "droop = ΔI*ESR + ΔI*dt/CL"
+    typical_range: "5-50mV"
+    unit: mV
+
+sizing_equations:
+  pass_transistor:
+    goal: "满足drop-down spec"
+    formula: "W/L = 2*Iload / (μn*Cox*dropout²)"
+    notes:
+      - "NMOS μn ≈ 2-3× μp，相同dropout下W更小"
+      - "L=2-4×Lmin降低CLM"
+      - "栅极驱动电压需VDD+VGS，由电荷泵提供"
+  charge_pump:
+    goal: "产生Vgate=VDD+ΔV"
+    formula: "Vgate ≈ 2×VDD - 2×Vth_diode (2x倍压)"
+    notes:
+      - "倍压比：2x(经典)或1.5x(节省面积)"
+      - "时钟频率：fclk>10×UGBW避免纹波"
+      - "电荷泵电容：Cpump=10-100pF"
+      - "效率：η≈80-90%"
+  stability:
+    goal: "全负载PM>45°"
+    pole_conditions:
+      p1: "1/(2π*Rout*CL)  （主极点，输出端）"
+      p2: "1/(2π*Rout_EA*Cpar)  （次极点，OTA输出）"
+      ugbw: "gmp/(2π*CL)"
+      stability_rule: "p2 > 4 × UGBW"
+  psrr:
+    goal: "PSRR > 60dB @ DC，PSRR在fclk处无明显凹陷"
+    formula: "PSRR_DC ≈ A_OL(OTA)"
+
+tradeoffs:
+  - dimension: "电荷泵倍压比 vs drop-down vs 效率"
+    description: "倍压比↑→Vgate↑→drop-down↓但效率↓"
+    bounds: "倍压比 ∈ [1.5x, 2x]"
+  - dimension: "电荷泵时钟频率 vs 纹波 vs 功耗"
+    description: "fclk↑→纹波小但功耗↑"
+    bounds: "fclk ∈ [10MHz, 100MHz]"
+  - dimension: "pass管W vs drop-down vs 面积"
+    description: "W↑→drop-down↓但栅极电容↑"
+    bounds: "W ∈ [5µm, 200µm]"
+  - dimension: "Cc vs PM vs 带宽"
+    description: "Cc↑→PM↑但UGBW↓"
+    bounds: "Cc ∈ [0.5pF, 5pF]"
+
+optimization_dims:
+  - param: W_pass
+    bounds: [5, 200]
+    unit: µm
+    affects: [dropout, area]
+  - param: chargepump_ratio
+    bounds: [1.5, 2.0]
+    affects: [dropout, efficiency]
+  - param: fclk
+    bounds: [10, 100]
+    unit: MHz
+    affects: [ripple, power]
+  - param: Cc
+    bounds: [0.5pF, 5pF]
+    affects: [phase_margin, ugbw]
+
+when_to_use:
+  - "需要极低drop-down（<150mV）"
+  - "VDD和VOUT非常接近"
+  - "对面积有容忍度（电荷泵+电容）"
+  - "Iq约束不严格"
+  - "需要大电流驱动（NMOS unit gm高）"
+  - "电池供电设备，需要最大化电池利用率"
+
+when_not_to_use:
+  - "drop-down要求不严格（>200mV）→ PMOS pass更简单 (001-007)"
+  - "Iq严格约束（<30µA）→ FVF (008)"
+  - "对开关噪声敏感 → PMOS pass (001-007)"
+  - "需要简单设计 → PMOS pass (001/004)"
+
+pitfalls:
+  - id: pitfall-ldo-028
+    description: "电荷泵时钟纹波耦合到输出"
+    root_cause: "电荷泵开关节点通过衬底耦合或电源阻抗耦合到LDO输出"
+    fix: "电荷泵时钟频率>10×UGBW；电荷泵与LDO电源分离；加旁路电容"
+  - id: pitfall-ldo-029
+    description: "启动时电荷泵需先建立，LDO暂态不稳定"
+    root_cause: "上电时电荷泵需数个时钟周期建立Vgate，期间pass管未导通"
+    fix: "加软启动电路确保电荷泵先稳定再使能pass管"
+  - id: pitfall-ldo-030
+    description: "电荷泵效率低导致功耗大"
+    root_cause: "电荷泵二极管压降和时钟频率决定效率，设计不当效率<70%"
+    fix: "使用传输门替代二极管；优化时钟频率"
+  - id: pitfall-ldo-031
+    description: "NMOS pass管栅极过压风险"
+    root_cause: "电荷泵产生的Vgate可能超过NMOS栅氧化层击穿电压"
+    fix: "限制电荷泵输出<1.5×VDD；加钳位保护"

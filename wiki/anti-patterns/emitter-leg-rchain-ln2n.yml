@@ -1,0 +1,30 @@
+id: anti-bandgap-004
+type: anti-pattern
+name: "Emitter-leg R_chain doubles Q1 current: dVbe_eff = VT*ln(2N), not VT*ln(N)"
+tags: [bandgap, dVbe, rchain, emitter, ptat, tc-null]
+process_nodes: [65nm]
+
+content:
+  description: >
+    If the R_chain low end returns to the Q1 emitter node (vb) rather than to ground, then
+    I_Q1 = 2I (core PTAT current + R_chain current both flow through Q1) and the effective
+    PTAT voltage is dVbe_eff = VT*ln(2N) = 82.1 mV for N=12 (measured 82.57 mV), NOT
+    VT*ln(N) = 64.2 mV. The TC-null ratio derived from the wrong slope (8.98 for ln(12)) is
+    wrong for this topology; the correct ratio is ~6.93.
+  failure_mechanism: >
+    The textbook dVbe = VT*ln(N) assumes only the core PTAT current flows in Q1. When the
+    R_chain (or any load branch) returns to the emitter, the emitter current is a multiple of
+    the branch current, changing the actual dVbe and hence the required null ratio.
+  fix: >
+    Inspect where the R_chain / load returns. If it is the Q1 emitter, use dVbe_eff =
+    VT*ln(2N) for hand-calc, then confirm by measurement (and re-derive the null from measured
+    slopes anyway - see strat-bandgap-003).
+  signs:
+    - "vb - vq2e measures ~82 mV (N=12) instead of the ln(12) 64.2 mV."
+    - "TC(vbg) stays PTAT-tilted even after OTA offset is fixed, when ratio was set with ln(N)."
+
+derived_from: ["proj-bandgap-v1v0"]
+confidence: unverified
+source: "WORK_bandgap_1v0_tc25 architect 1b (measured 82.57 mV), verifier iter-2 caveat"
+created: 2026-08-26
+updated: 2026-08-26

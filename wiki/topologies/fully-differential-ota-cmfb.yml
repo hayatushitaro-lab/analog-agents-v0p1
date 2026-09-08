@@ -1,0 +1,22 @@
+id: topo-ota-001
+type: topology
+name: "Fully Differential OTA with CMFB"
+tags: [ota, differential, cmfb, analog]
+content:
+  description: "Fully differential OTA with separate input CM and output CM; output CM is regulated by a CMFB loop."
+  key_tradeoffs:
+    - "Resistive sensing: simple and robust, but resistors load the output."
+    - "Dual cross-coupled pairs: no resistor loading, but limited linear range."
+    - "Switched-capacitor CMFB: no DC loading, high precision, but needs clock and transient-only simulation."
+    - "Partial CMFB: better CM stability, but slower CM regulation."
+  typical_specs:
+    cm_phase_margin: ">= 45 deg"
+    psrr_cmrr_sim: "Use Monte Carlo/dcmatch; ideal diff cancellation gives meaningless -600 dB"
+  key_notes:
+    - "Input pair type determines valid Vcm_in range: PMOS -> low Vcm, NMOS -> high Vcm."
+    - "Vcm_out is independent of Vcm_in and typically set at VDD/2."
+derived_from: ["shared-references/cmfb.md"]
+confidence: verified
+source: "shared-references/cmfb.md"
+created: 2026-08-23
+updated: 2026-08-23

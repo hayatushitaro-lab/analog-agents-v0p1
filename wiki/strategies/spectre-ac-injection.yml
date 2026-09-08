@@ -1,0 +1,31 @@
+id: strat-ldo-004
+type: strategy
+name: "Inject AC ripple in Cadence Spectre the reliable way"
+tags: [spectre, psrr, ac, testbench, simulation]
+process_nodes: [any]
+
+content:
+  description: >
+    To measure PSRR/AC response, the supply AC stimulus must be injected
+    correctly in spectre. The reliable, Cadence-verified form is a
+    SERIES-connected AC source between the DC bias source and the circuit
+    supply node, using `type=ac mag=1`.
+  how:
+    - "Vdc (vdd_in 0) vsource dc=1.2        # DC bias source"
+    - "Vac (vdd vdd_in) vsource type=ac mag=1   # AC ripple, SERIES, not parallel"
+    - "Then PSRR = 20log10(|V(vdd)|/|V(out)|) over the AC sweep (Vac mag=1
+      gives V(vdd)_ac ~ 1 if the DC source is ideal)."
+  anti_pitfalls:
+    - "acmag= / ac=1 on vsource: IGNORED in older spectre (SFE-30) -> AC
+      amplitude injected is 0."
+    - "Parallel AC vsource across the netlist VDD: causes 'loop of rigid
+      branches (shorts)' fatal error."
+    - "vsource-type=ac is required; vsin/src undefined in this setup."
+  notes:
+    - "Reference working example: LDO_DIG2_final_ac.scs (verified)."
+
+derived_from: [proj-ldo-analog]
+confidence: verified
+source: "LDO_ANALOG PSRR measurement"
+created: 2026-08-21
+updated: 2026-08-21

@@ -1,0 +1,25 @@
+id: strat-bandgap-003
+type: strategy
+name: "Derive TC null ratios from measured slopes, re-derive after every topology change"
+tags: [bandgap, tc-null, measured, slope, r2, r1, dVbe, trim]
+process_nodes: [65nm]
+
+content:
+  description: >
+    The resistor ratio that nulls TC (R2/R1, R_chain/R1) must be derived from MEASURED
+    VBE@27C, dVBE/dT, dIptat/dT and resistor TCR -- never from textbook VBE/nominal constants
+    alone, and re-derived whenever the topology changes the PTAT slope. Textbook anchors used
+    in this project: 8.98 (assumed VBE=0.63V, ln(12)) -> 6.93 (emitter-leg ln(24)) -> 6.2
+    (measured slopes + TCR). Each wrong anchor cost iterations; the final null used measured
+    dVBE/dT=-1.78 mV/C, dIptat/dT=+2.18 nA/C, TCR_R~0.
+  key_points:
+    - "Measure VBE(Q1)@27C in Spectre (0.6772 V here, not the assumed 0.63 V)."
+    - "If R_chain's low end returns to the Q1 emitter, I_Q1 = 2I and dVbe_eff = VT*ln(2N) (82.1 mV for N=12), NOT VT*ln(N)."
+    - "R2 = [|dVBE/dT| + VBE*|TCR_R|] / dIptat/dT (active CTAT). Here ~800k, window [760,880]k; final trim 806k."
+    - "Keep a trim window and treat a borderline TC (few ppm over) as a trim, not a topology regression."
+
+derived_from: ["proj-bandgap-v1v0"]
+confidence: unverified
+source: "WORK_bandgap_1v0_tc25 architect iter-4 re-pin (architecture.md 1c), verifier iter-5/7"
+created: 2026-08-26
+updated: 2026-08-26

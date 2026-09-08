@@ -1,0 +1,24 @@
+id: strat-ldo-019
+type: strategy
+name: "Behavioral AC loop model must mirror TB: ESR zero + output-node parasitic before PM table claims"
+tags: [ldo, behavioral-model, ac-analysis, phase-margin, verification]
+process_nodes: [65nm]
+
+content:
+  description: >
+    Before quoting a PM/UGF table from a behavioral AC loop model, diff the
+    model's element set against the real testbench. In ldo_1v1 the behavioral AC
+    gate omitted the TB's Cout ESR (0.05ohm -> fz_esr ~67.7kHz) and the
+    error-amplifier output-node parasitic C1 (~0.5-1.5pF). With Rz=1.1Mohm
+    decoupling Cc at high frequency, the ESR zero lifts the gain plateau to MHz
+    and pushes the 100mA UGF to 3.8-5.64MHz (vs 222kHz in the model), collapsing
+    nominal-parameter PM to 20-47deg. The same project's transient ODE already
+    contained ESR and c1par=1.5pF -- the AC/transient inconsistency itself was a
+    red flag. Re-derive PM tables with TB elements included, then gate on STB
+    measurements (4 loads x 5 corners) rather than on the model alone.
+
+derived_from: ["proj-002"]
+confidence: unverified
+source: "ldo_1v1 cross-model review D1/Action 2 (proj-002)"
+created: 2026-08-31
+updated: 2026-08-31

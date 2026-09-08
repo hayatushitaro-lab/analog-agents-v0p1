@@ -1,0 +1,22 @@
+id: strat-ldo-008
+type: strategy
+name: "LDO 零点配置方程 (§4 zeros)"
+tags: [ldo, zeros, rhp, ahuja, compensation, feedforward]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    Miller 补偿产生的 RHP 零点 z_RHP = gm_stage2/Cc 会在右半平面恶化 PM。
+    用调零电阻 Rz 消除或移到左半平面；另有自适应零点与前馈零点。
+  how:
+    - "RHP 零点消除: z_LHP=1/(Cc×(Rz-1/gm_stage2))。Rz=1/gm_stage2 时零点到无穷；Rz>1/gm_stage2 移到左半平面。"
+    - "Rz 设计: Rz=1/gm_stage2（抵消），或 Rz=(1/gm_stage2)×(p2/z_target)（零点放 UGBW 附近）。"
+    - "自适应零点 Rz_adaptive=(1/gm_stage2)×(f_pass/UGBW)；实现 Rz=R0+R1×(Iload/Imax)（电流镜）。"
+    - "前馈零点 z_ff=gm_ff/Cff，在左半平面抬 PM；放在 UGBW 与 p2 之间最佳。"
+  when_to_use: "两级/多级 Miller 补偿需要处理 RHP 零点、或加入调零/自适应/前馈零点改善 PM 时。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

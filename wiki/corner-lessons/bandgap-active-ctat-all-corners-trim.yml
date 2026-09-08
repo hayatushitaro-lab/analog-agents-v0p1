@@ -1,0 +1,25 @@
+id: corner-bandgap-003
+type: corner-lesson
+name: "Active CTAT + measured-slope R2 trim closes all corners TC < 25 ppm/C (worst = FF)"
+tags: [bandgap, corner, tc, active-ctat, trim, ff]
+process_nodes: [65nm]
+
+content:
+  description: >
+    A current-mode bandgap with an active CTAT loop and an R2 trim window CAN meet TC < 25
+    ppm/C at all corners (TT 16.81 / SS 9.39 / FF 21.36 ppm/C, box -40..125C). This refines
+    corner-bandgap-001 (fixed ratio + short-only trim DAC can't close TT/SS/FF): with a
+    measured-slope null and a continuous trim window, the corner conflict is contained.
+  measured_impact: >
+    TC(vref) TT 16.81 / SS 9.39 / FF 21.36 ppm/C (target < 25); vref@27C [0.9993, 1.0018] V
+    all corners; power <= 39.6 uW (FF); startup <= 87.9 us no ring (SS125 worst settle).
+    Worst TC margin is FF +3.64 ppm/C (the tightest spec).
+  fix: >
+    Keep a trim window on the CTAT resistor (here [760,880]k, final 806k) and re-null from
+    measured slopes after the topology settles. Watch FF as the tightest TC corner, not SS.
+
+derived_from: ["proj-bandgap-v1v0"]
+confidence: unverified
+source: "WORK_bandgap_1v0_tc25 verifier L3 iter-7 (CONVERGED)"
+created: 2026-08-26
+updated: 2026-08-26

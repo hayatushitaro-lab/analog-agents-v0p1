@@ -1,0 +1,25 @@
+id: corner-ldo-003
+type: corner-lesson
+name: "SS Corner Light-Load PM is the Worst Case in 47uF LDO"
+tags: [ldo, corner, ss, light-load, phase-margin, 65nm]
+process_nodes: [65nm]
+
+content:
+  description: >
+    In a 47uF-output LDO the slow corner (ss) + light load (tiny gmpass) gives
+    the lowest phase margin of the whole PVT matrix (48 deg vs 50 target in
+    LDO_1V2_100mA), while full/mid load stays 80-90 deg across tt/ss/ff.
+    NOTE (proj-002, 2026-08-31): this holds when no ESR zero enters the loop
+    band; with a low-ESR ceramic TB (fz_esr ~67.7kHz), the worst case flips to
+    full/mid load (ldo_1v1 PM_min 72.1deg @ ff_m40/100mA) -- see corner-ldo-005.
+  failure_mechanism: >
+    Light load -> pass gm small -> loop DC gain drops (~53dB) and internal
+    poles sit closer to UGF; slow corner further lowers gm, worst combined
+    margin.
+  mitigation: "Verify PM at (ss, light-load) explicitly; size Rz zero to help light load."
+
+derived_from: ["proj-001"]
+confidence: verified
+source: "LDO_1V2_100mA project PVT matrix"
+created: 2026-08-25
+updated: 2026-08-31

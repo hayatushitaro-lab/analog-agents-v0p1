@@ -1,0 +1,26 @@
+id: corner-bandgap-008
+type: corner-lesson
+name: "Fixed FM524 bandgap: existing bg_trim code 11 centers Vref near 1.20 V without transistor-level edits"
+tags: [bandgap, fm524, trim, vref, fixed-topology]
+
+content:
+  description: >
+    For the fixed FM524 VBE + segmented R-chain + BGAMP macro, the existing
+    `bg_trim<1:0>` code 11 gives the closest TT/27 C output to 1.20 V. The
+    selection requires no transistor, resistor, or topology change: code 11
+    measures 1.203254 V at TT/27 C, while all four legal codes remain inside
+    the broad 1.14-1.26 V functional window.
+  measured_impact: >
+    The final code 11 remains centered across the covered TT/SS/FF/FS/SF
+    corners: Vref@27 C is 1.203085-1.203346 V and the full temperature-window
+    extrema are 1.198701-1.207441 V. Maximum measured TC is 43.559 ppm/C and
+    maximum internal power is 54.669 uW.
+  takeaways:
+    - "When the topology is fixed, sweep legal trim codes before attempting transistor-level retuning."
+    - "Select the code using nominal Vref centering, then re-check TC and power across process and temperature corners."
+
+derived_from: [proj-007]
+confidence: unverified
+source: "FM524 bandgap L1/L2/L3 verification, 2026-09-03"
+created: 2026-09-03
+updated: 2026-09-03

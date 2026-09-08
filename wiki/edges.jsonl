@@ -1,0 +1,82 @@
+{"from": "strat-shared-001", "to": "anti-shared-002", "rel": "prevents", "note": "longer L on mirrors reduces Vth sensitivity but mixed-L is orthogonal to Vcm choice"}
+{"from": "corner-bandgap-001", "to": "proj-fm377", "rel": "derived_from", "note": "WORK_fm377_bandgap iteration 3 escalation (id normalized from corner-001)"}
+{"from": "anti-ldo-001", "to": "proj-ldo-1v2-100ma", "rel": "derived_from", "note": "LDO_1V2_100mA analyzed AC-source parallel-short pitfall"}
+{"from": "corner-ldo-001", "to": "proj-ldo-0v9-drx65", "rel": "derived_from", "note": "LDO_0V9_20mA_DRY_65nm FF pass Vout overshoot"}
+{"from": "corner-ota-001", "to": "proj-ota-cases", "rel": "derived_from", "note": "telescopic OTA 2026-08-18 case (self reference/ota/cases)"}
+{"from": "topo-ota-002", "to": "proj-ota-cases", "rel": "derived_from", "note": "5T OTA recipe derived from converged cases in reference/ota/cases"}
+{"from": "topo-ota-005", "to": "proj-ota-cases", "rel": "derived_from", "note": "telescopic OTA recipe from reference/ota cases (telescopic_ota_50m/v6)"}
+{"from": "topo-ota-007", "to": "proj-ota-cases", "rel": "derived_from", "note": "FD CMFB OTA recipe from reference/ota case fully_diff_cmfb_ota_17m"}
+{"from": "topo-ldo-012", "to": "proj-ldo-0v9-20ma", "rel": "derived_from", "note": "PMOS-pass two-stage LDO recipe from WA wiki topologies"}
+{"from": "corner-bandgap-002", "to": "proj-fm377", "rel": "derived_from", "note": "SS/FF Vref shift measured in fm377 bandgap verification (from kb/wiki)"}
+{"from":"proj-ota-5t-33v","to":"topo-ota-002","rel":"uses","note":"5T OTA review-mode design adopts 5t_ota recipe on 3.3V IO (W1=52u/L1=2u/gmId=8, tail W5=40u)"}
+{"from":"proj-ota-5t-33v","to":"anti-ota-001","rel":"confirms","note":"review-mode iterations did not trigger GBW/CL/Itail contradiction (gm/Id=8, W1=52u)"}
+{"from":"strat-ota-003","to":"proj-ota-5t-33v","rel":"derived_from","note":"Spectre sim method (remote spectre + PSF real/imag + no-BOM/no-multi) validated on 5T OTA; applies LDO sim method to OTA"}
+{"from":"strat-shared-004","to":"proj-ota-5t-33v","rel":"derived_from","note":"opencode-go-anthropic cross-model review channel (x-api-key, manual JSON, english prompt) used for 5T OTA review"}
+{"from": "proj-ota-telescopic-33v", "to": "topo-ota-005", "rel": "implements", "note": "telescopic_cascode recipe reproduced (NMOS input + cascade + PMOS mirror), review-mode estimated"}
+{"from": "proj-ota-telescopic-33v", "to": "corner-ota-001", "rel": "reuses", "note": "VB2=1.8V bias + Itail=100u/CL=2p sizing baseline from telescopic case 2026-08-18"}
+{"from": "proj-ota-telescopic-33v", "to": "anti-ota-001", "rel": "confirms", "note": "default spec (Itail100u/CL2p/GBW20M) pins input gm/Id=5 strong-inversion"}
+{"from": "proj-ota-telescopic-33v", "to": "strat-shared-005", "rel": "derived_from", "note": "L3 PVT + cross-model review 鍙岃建钀藉湴鏈綋 (isource bug + ss_125c/ff_m40c + review-浠跨湡浜掕ˉ)"}
+{"from": "proj-ota-telescopic-33v", "to": "strat-ota-003", "rel": "extends", "note": "琛ュ厖 NMOS isource 鏂瑰悜 + L3 PVT 鐪熷疄娓╁害 + GBW 鎻掑€?(iterative_additions)"}
+{"from": "proj-ota-telescopic-33v", "to": "strat-shared-004", "rel": "extends", "note": "琛ュ厖 review_opencode.ps1 缁撴瀯鍖栬緭鍑轰緷璧?(DIMENSION/VERDICT/REASONING 鍚﹀垯鍏?N/A)"}
+{"from": "proj-ota-5t-33v-r2", "to": "topo-ota-002", "rel": "instance_of", "note": "5T single-stage OTA (PMOS input + NMOS mirror load) full-EDA L3 simulated, 3 corners PASS; internal 10:1 bias ratio was characterized"}
+{"from": "proj-ota-5t-33v-r2", "to": "proj-ota-5t-33v", "rel": "extends", "note": "鍚屾嫇鎵戝悓宸ヨ壓鍚岃礋杞?bias 澶嶇敤鍙傝€冩敹鏁涘€? 鍞竴宸紓 bias 鏀矾 1:1(IREF=100u)鈫?0:1(IREF=10u) 鍘嬪姛鑰?0.66鈫?.363mW"}
+{"from": "corner-ota-002", "to": "proj-ota-5t-33v-r2", "rel": "derived_from", "note": "5T OTA ss_125c ugbw FAIL(18.36MHz) 鏍瑰洜 gm1-18%, W1 52u鈫?0u 鎶?gm1 淇(22.83MHz) 闆跺洖褰? corner-lesson"}
+{"from": "corner-ota-002", "to": "proj-ota-5t-33v-r2", "rel": "discovered_in", "note": "SS UGBW margin risk was discovered during the L3 PVT iteration from iter1 to iter2"}
+{"from": "proj-ota-5t-33v-r2", "to": "strat-ota-001", "rel": "validated", "note": "gm-id-bandwidth-sizing (GBW鈫抔m1鈫扞d鈫抔m/Id鈫扺): 淇?ss ugbw 鍙嶆帹 W1, 寮哄弽鍨嬪钩鏂瑰緥澶栨帹鍛戒腑 (棰勬祴 ss gm1 298uS vs 瀹炴祴 303.7uS)"}
+{"from": "proj-ota-5t-33v-r2", "to": "strat-shared-005", "rel": "extends", "note": "L3 PVT used four independent checks (AC, loopgain, DC-gain slope, and gm1*Rout operating-point analysis) plus cross-model review to validate SS UGBW risk"}
+{"from": "proj-ota-5t-33v-r2", "to": "strat-ota-003", "rel": "derived_from", "note": "Spectre sim method (杩滅 spectre + PSF real/imag + no-BOM/no-multi + L3 涓夎) 鍦ㄦ湰椤圭洰 full-EDA 瀹炴祴钀藉湴 (osc=@192.168.16.100)"}
+{"from": "proj-ota-5t-33v-r2", "to": "anti-ota-001", "rel": "confirms", "note": "淇?ss ugbw 闈犳彁 W1 鑰岄潪鍐插急鍙嶅瀷, ss gm/Id鈮?.15 寮哄弽鍨? 鏈Е鍙?GBW/CL/Itail contradiction"}
+{"from": "proj-ota-5t-33v-r2", "to": "strat-shared-004", "rel": "extends", "note": "cross-model review (minimax single-model) 鍦?iter1 棰勮█ GBW 鍙屽彛寰勫垎姝? 琚?L3 瀹炴祴璇佸疄 (ss ugbw FAIL)"}
+{"from": "anti-shared-003", "to": "proj-ota-5t-33v-r2", "rel": "derived_from", "note": "Verifier dispatch initially had no bash/ssh/exec after write_paths, causing L1/L2 SIM-BLOCKED rounds 1-3; the execution-channel handoff later enabled measured simulation"}
+{"from": "strat-ota-004", "to": "proj-ota-5t-33v-r2", "rel": "derived_from", "note": "10:1 鍐呴儴鑷亸缃暅鍍?(IREF=10u/Mbp=4u/M5=40u) 鍘?bias 鍔熻€?0.33鈫?.033mW, L3 鍏ㄨ鍔熻€?PASS 瀹炴祴"}
+{"from": "proj-ota-5t-33v-r2", "to": "strat-ota-004", "rel": "validates", "note": "10:1 闀滃儚鍔熻€楁敹鐩婂湪 L3 PVT 涓夎瀹炴祴纭 (power 0.318-0.387mW 鍏?PASS, Itail 97uA 鍖归厤鍙帴鍙?"}
+{"from": "case-bandgap-01", "to": "proj-bandgap-v1v0", "rel": "contains", "note": "bandgap block case is part of proj-bandgap-v1v0"}
+{"from": "anti-bandgap-002", "to": "proj-bandgap-v1v0", "rel": "discovered_in", "note": "VBE-tap CTAT-tilt proven in proj-bandgap-v1v0 (architecture.md 1b)"}
+{"from": "anti-bandgap-003", "to": "proj-bandgap-v1v0", "rel": "discovered_in", "note": "passive VBE/R mirror failure measured iter-3 (+1405 ppm/C)"}
+{"from": "anti-bandgap-004", "to": "proj-bandgap-v1v0", "rel": "discovered_in", "note": "emitter-leg dVbe_eff=VT*ln(2N) confirmed in iter-2 caveat"}
+{"from": "corner-bandgap-003", "to": "proj-bandgap-v1v0", "rel": "discovered_in", "note": "active CTAT + trim closes all-corners TC<25 (L3 iter-7)"}
+{"from": "corner-bandgap-003", "to": "corner-bandgap-001", "rel": "extends", "note": "proj-bandgap-v1v0: active CTAT + R2 trim window closes TT/SS/FF TC<25 where fixed ratio + short-only DAC cannot"}
+{"from": "topo-bandgap-001", "to": "anti-bandgap-002", "rel": "prevents", "note": "proj-bandgap-v1v0: tap-as-output to sub-1.2V is CTAT-tilted; tap is monitor-only"}
+{"from": "proj-bandgap-v1v0", "to": "strat-bandgap-002", "rel": "validated", "note": "current-mode output met vref 1.0V + TC<25 simultaneously (L3)"}
+{"from": "proj-bandgap-v1v0", "to": "strat-bandgap-003", "rel": "validated", "note": "measured-slope null (6.2) + R2 trim closed TC across corners"}
+{"from": "proj-bandgap-v1v0", "to": "corner-bandgap-001", "rel": "validated", "note": "corner conflict real for fixed ratio; refined by continuous trim window (corner-bandgap-003)"}
+{"from": "proj-ota-33v", "to": "topo-ota-005", "rel": "instance_of", "note": "telescopic cascode OTA, L3 3-corner PASS iter1 (53.84/47.84/83.0 tt)"}
+{"from": "proj-ota-33v", "to": "proj-ota-telescopic-33v", "rel": "derived_from", "note": "sizing reused verbatim (M1/2 21u/380n, VB2=1.8V, IREF=100u) — metrics reproduced across servers"}
+{"from": "proj-ota-2stage-33v", "to": "topo-ota-006", "rel": "instance_of", "note": "two-stage Miller OTA + Ahuja comp, TSMC-65nm 3.3V IO, single-ended"}
+{"from": "proj-ota-2stage-33v", "to": "corner-ota-003", "rel": "discovered_in", "note": "Ahuja zero source-impedance plateau lesson"}
+{"from": "proj-ota-2stage-33v", "to": "anti-ota-003", "rel": "discovered_in", "note": "Ahuja CG reversed orientation trap"}
+{"from": "proj-ota-2stage-33v", "to": "strat-ota-005", "rel": "validated", "note": "DC-feedback + STB TB strategy for two-stage OTAs"}
+{"from": "anti-ota-003", "to": "corner-ota-003", "rel": "requires", "note": "fixing the orientation exposes the zero-placement limit"}
+{"from": "proj-003", "to": "topo-ldo-002", "rel": "extends", "note": "2-stage EA (NMOS_lvt input, cascoded pair) + PMOS pass + external Cout=10uF + Miller Cc-Rz low-fz"}
+{"from": "anti-001", "to": "proj-003", "rel": "discovered_in", "note": "it1 BLOCKER: PMOS tail with NMOS pair -> dead state"}
+{"from": "corner-001", "to": "proj-003", "rel": "discovered_in", "note": "ff-corner M2 Vds collapse -> cascoded pair fix (it5-it8)"}
+{"from": "strat-bandgap-004", "to": "proj-001", "rel": "discovered_in", "note": "OTA2 diff pair 20u/1u fixes weak-inversion null gain"}
+{"from": "strat-bandgap-005", "to": "proj-001", "rel": "discovered_in", "note": "OTA2 load 1u/4u doubles ro"}
+{"from": "strat-bandgap-006", "to": "proj-001", "rel": "discovered_in", "note": "startup pulldown vs cold-FF leak margin"}
+{"from": "strat-bandgap-007", "to": "proj-001", "rel": "discovered_in", "note": "analysis belongs in testbenches (SFE-679)"}
+{"from": "corner-bandgap-004", "to": "proj-001", "rel": "discovered_in", "note": "pre-sim SFE-679 rejection lesson"}
+{"from": "corner-bandgap-005", "to": "proj-001", "rel": "discovered_in", "note": "review WARNs closed with zero static power"}
+{"from": "corner-bandgap-006", "to": "proj-001", "rel": "discovered_in", "note": "R_out TC-neutral re-centring"}
+{"from": "corner-bandgap-007", "to": "proj-001", "rel": "discovered_in", "note": "FF tightest TC, SS tightest offset gate"}
+{"from": "strat-ldo-018", "to": "strat-ldo-001", "rel": "extends", "note": "droop-in-band large-Cout settle strategy refines the big-Cout compensation guide (proj-002 ldo_1v1)"}
+{"from": "strat-ldo-018", "to": "proj-002", "rel": "discovered_in", "note": "ldo_1v1: settle ~0us with 47uF, 30x margin over 30us spec"}
+{"from": "strat-ldo-019", "to": "proj-002", "rel": "discovered_in", "note": "ldo_1v1 review D1: AC gate omitted ESR zero + n_out parasitic"}
+{"from": "strat-ldo-019", "to": "anti-ldo-005", "rel": "prevents", "note": "mirroring TB elements in behavioral AC models prevents the mismatch anti-pattern"}
+{"from": "corner-ldo-004", "to": "proj-002", "rel": "discovered_in", "note": "gm1=316uS = 0.51x nominal resolved predicted PM collapse"}
+{"from": "corner-ldo-004", "to": "anti-ldo-005", "rel": "prevents", "note": "calibrating gm before judging platform-dependent PM risk"}
+{"from": "corner-ldo-005", "to": "proj-002", "rel": "discovered_in", "note": "PM_min 72.1deg @ ff_m40/100mA with ESR zero in band"}
+{"from": "corner-ldo-005", "to": "corner-ldo-003", "rel": "extends", "note": "no-ESR light-load worst still holds; with ESR zero full/mid-load worst"}
+{"from": "anti-ldo-005", "to": "proj-002", "rel": "discovered_in", "note": "behavioral AC vs TB mismatch hid nominal PM collapse until cross-model review"}
+{"from": "proj-002", "to": "strat-ldo-001", "rel": "validated", "note": "47uF + Miller Cc-Rz L3 sign-off: PM_min 72.1deg, settle 30x margin"}
+{"from": "proj-002", "to": "topo-ldo-012", "rel": "instance_of", "note": "65nm/47uF PMOS-pass two-stage LDO, one-iteration convergence"}
+{"from": "proj-002", "to": "topo-ldo-012", "rel": "validated", "note": "L3 5-corner Spectre sign-off PASS, 32 runs 0 errors"}
+{"from": "corner-bandgap-008", "to": "proj-007", "rel": "discovered_in", "note": "FM524 code-11 Vref centering with unchanged transistor-level topology"}
+{"from": "corner-bandgap-009", "to": "proj-007", "rel": "discovered_in", "note": "FM524 sign-off required PVT and startup coverage beyond TT/27 C trim ranking"}
+{"from": "anti-bandgap-005", "to": "proj-kb-bandgap", "rel": "discovered_in", "note": "NB1910 baseline model-section mismatch: rppolywo_m is defined in disres; matching corner sections enabled read-in"}
+{"from": "anti-bandgap-006", "to": "proj-kb-bandgap", "rel": "discovered_in", "note": "NB1910 portable DC deck required disabling tmiflag, tmipath, and etmiusrinput together when TMI companion files were unavailable"}
+{"from": "anti-bandgap-007", "to": "proj-kb-bandgap", "rel": "discovered_in", "note": "NB1910 candidate-3 endpoint TC understated dense 1 C local-slope peaks"}
+{"from": "anti-bandgap-008", "to": "proj-kb-bandgap", "rel": "discovered_in", "note": "NB1910 candidate-2/3 showed Vref and power closure without TC closure after R10/current scaling"}
+{"from": "anti-ota-004", "to": "proj-009", "rel": "discovered_in", "note": "Stale remote Spectre model include path blocked the first verification attempt"}
+{"from": "anti-ota-005", "to": "proj-009", "rel": "discovered_in", "note": "Unsupported ac magnitude=1 vsource syntax caused SFE-874 before AC simulation"}
+{"from": "corner-ota-004", "to": "proj-009", "rel": "discovered_in", "note": "SS/125C limited core current and GBW in the final three-corner verification"}
+{"from": "anti-ota-006", "to": "proj-009", "rel": "discovered_in", "note": "Cross-model review caught Cc mismatch between spec and implementation"}

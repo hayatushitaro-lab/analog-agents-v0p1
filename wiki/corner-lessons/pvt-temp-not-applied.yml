@@ -1,0 +1,27 @@
+id: corner-ldo-002
+type: corner-lesson
+name: "PVT corner temperature was silently ignored (testbench bug)"
+tags: [pvt, temperature, spectre, testbench, corner]
+process_nodes: [65nm]
+
+content:
+  description: >
+    A corner testbench that sets temperature via `dc1 dc temp=125` or
+    `stb1 stb temp=<T>` does NOT actually apply temperature: spectre ignores
+    `temp=` as an analysis parameter (SFE-30 warning) and all corners run at
+    the default 27C. Real PVT is incomplete -> process-vs-temperature split
+    goes undetected.
+  manifestation: >
+    Initial PVT run reported tt/ss/ff all at 27C; ff_-40C (true) later showed
+    PM dropping to 58.3deg, which was hidden before.
+  fix: >
+    Set global temperature with `simulatorOptions options temp=<T>` (or the
+    analysis-level `Temp` in some setups), and verify in the log that
+    `temp = <T C>` appears. Keep process section (include line) separate from
+    temperature (options).
+
+derived_from: [proj-ldo-analog]
+confidence: verified
+source: "LDO_ANALOG PVT"
+created: 2026-08-21
+updated: 2026-08-21

@@ -1,0 +1,267 @@
+# ============================================================
+# Fully-Differential Two-Stage CMFB OTA Checklist
+# (telescopic 1st stage + symmetric CS 2nd stage, topo-ota-007)
+# ============================================================
+
+symmetry:
+  description: "M1p/M1n、M3p/M3n、M5p/M5n、M8p/M8n、M9p/M9n 五对管尺寸一一对称"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    核对 netlist 中五对差分对管的 w/l/nf/multi: M1p/M1n、M3p/M3n、
+    M5p/M5n、M8p/M8n、M9p/M9n 必须一一对称。不对称 → 差分失衡、
+    失调电压抬升、CMRR 恶化。
+
+input_pair_connectivity:
+  description: "输入对 vp→M1p、vn→M1n,AC 差分激励 Vip/Vin 必须反相"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    vp 接 M1p 栅、vn 接 M1n 栅;AC 差分输入 Vip/Vin 必须反相(如
+    mag=1/180 或 ac 对置),否则差分增益测成共模。
+
+output_load_and_cmfb_sense:
+  description: "输出 vout_p/vout_n 各挂 CL,RS1/RS2 从输出到 net_cm 做共模检测"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    vout_p/vout_n 各挂 CL;RS1/RS2 从 vout_p/vout_n 接到 net_cm
+    (输出共模检测节点)。RS 需 ≥10×Rout2(≈200k),漏挂 CL 或 RS
+    会让 AC/CM 行为与设计不符。
+
+first_stage_chain:
+  description: "第一级 telescopic 链路完整:net_tail→输入对→cascode→PMOS 电流源负载→VDD"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    第一级链路: net_tail → M1p/1n(输入对) → net_xp/xn → M3p/3n
+    (NMOS cascode, 栅=VB2) → net_ap/an → M5p/5n(PMOS 电流源负载,
+    栅=vcmfb1) → VDD。任一段断链 → 增益路径缺失。
+
+second_stage_pmos_cs:
+  description: "第二级必须 PMOS 共源:net_ap 是 PMOS 负载漏高电平(≈VCM1=2.5V)"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    第二级: net_ap → M8p(PMOS CS 栅!) → vout_p → M9p(NMOS 负载,
+    栅=vcmfb) → VSS。⚠️ net_ap 是 PMOS 负载漏端高电平(≈VCM1=2.5V),
+    所以第二级必须是 PMOS 共源——若用 NMOS CS 会因栅电平过高无法导通。
+
+compensation:
+  description: "Miller 补偿完整:Ccp+Rzp(net_ap→vout_p)、Ccn+Rzn(net_an→vout_n)"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    补偿网络: Ccp+Rzp 从 net_ap 到 vout_p,Ccn+Rzn 从 net_an 到 vout_n,
+    对称放置。漏接单侧 → 差分不平衡;漏接零点电阻 → 右半平面零点拖累 PM。
+
+bias_chain_nbias:
+  description: "偏置链 1 完整:IREF→Mbias(diode)→nbias→M7 尾源 + Mc1t(第一级 CMFB 尾源)"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    IREF → Mbias(diode) → nbias → M7(第一级尾源) 与 Mc1t(第一级 CMFB
+    误差放大器尾源)。nbias 栅悬空或镜像管缺失 → 尾源无偏置。
+
+bias_chain_pbias:
+  description: "偏置链 2 完整:Ipb→Mpb(PMOS diode)→pbias→Mcm5(输出 CMFB 尾源)"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    Ipb → Mpb(PMOS diode) → pbias → Mcm5(输出 CMFB 误差放大器尾源)。
+    pbias 同时供第一级 PMOS 电流源负载偏置,必须成链。
+
+cmfb1_path:
+  description: "第一级 CMFB 链路完整:RS1a/RS1b→NMOS 输入对 Mc1p/Mc1n→PMOS 镜 Mc1a/Mc1b→vcmfb1→M5 栅"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007, anti-shared-001]
+  how: >
+    第一级 CMFB: RS1a/RS1b 从 net_ap/an 取共模 → net_cm1 → NMOS 输入对
+    Mc1p/Mc1n + PMOS 镜 Mc1a/Mc1b → vcmfb1 → M5 负载栅。镜负载必须,
+    不能用 diode 负载直连 vcmfb1(anti-shared-001)。
+
+cmfb_out_path:
+  description: "输出 CMFB 链路完整:RS1/RS2→PMOS 输入对 Mcmp/Mcmn→NMOS 镜 Mcm3/Mcm4→vcmfb→M9 栅"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007, anti-shared-001]
+  how: >
+    输出 CMFB: RS1/RS2 从 vout_p/vout_n 取共模 → net_cm → PMOS 输入对
+    Mcmp/Mcmn + NMOS 镜 Mcm3/Mcm4 → vcmfb → M9 负载栅。镜负载必须,
+    不能用 diode 负载直连 vcmfb(anti-shared-001)。
+
+cmfb_reference_sources:
+  description: "VCM1_S 与 VCMOUT_S 独立电压源必须存在(只写 parameters 不接电源 = 参考栅悬空)"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    第一级 CMFB 参考 VCM1_S、输出 CMFB 参考 VCMOUT_S 必须是实际接入的
+    独立 vsource。只写 parameters 不接电源 → 参考栅 0V,共模错位。
+
+cmfb1_polarity:
+  description: "第一级 CMFB 必须是负反馈(接反锁 rail)"
+  method: semantic
+  severity: error
+  effort: standard
+  auto_checkable: false
+  references: [topo-ota-007]
+  how: >
+    第一级: net_ap↑ → net_cm1↑ → Mc1p(NMOS, Id↑) → net_c1p(PMOS diode
+    电流↑→节点↓) → Mc1b 镜像电流↑ → vcmfb1↑ → M5(PMOS) 栅↑ → |Vsg|↓ →
+    Id↓ → net_ap↓ ✓。沿链路验证极性,接反会锁 rail。
+
+cmfb_out_polarity:
+  description: "输出 CMFB 必须是负反馈(接反锁 rail)"
+  method: semantic
+  severity: error
+  effort: standard
+  auto_checkable: false
+  references: [topo-ota-007]
+  how: >
+    输出: vout↑ → net_cm↑ → Mcmp(PMOS 栅↑→|Vsg|↓→Id↓) → Mcm3 电流↓ →
+    net_mcp↓ → Mcm4 镜像电流↓;Mcmn(Id↑) 推高 → vcmfb↑ → M9(NMOS) 栅↑ →
+    Id↑ → 输出↓ ✓。沿链路验证极性,接反会锁 rail。
+
+cmfb1_input_pair_type:
+  description: "第一级 CMFB 输入共模高(VCM1≈2.2~2.5V)→ 必须 NMOS 输入对"
+  method: semantic
+  severity: error
+  effort: standard
+  auto_checkable: false
+  references: [topo-ota-007, anti-shared-002]
+  how: >
+    第一级 CMFB 输入共模 VCM1≈2.2~2.5V(高)→ NMOS 输入对 + PMOS 镜负载;
+    PMOS 输入会重蹈尾源电平坑(anti-shared-002)。
+
+cmfb_out_input_pair_type:
+  description: "输出 CMFB 输入共模中(VCM_OUT≈1.65V)→ PMOS 输入对 + PMOS 尾源接 VDD"
+  method: semantic
+  severity: error
+  effort: standard
+  auto_checkable: false
+  references: [topo-ota-007, anti-shared-002]
+  how: >
+    输出 CMFB 输入共模 VCM_OUT≈1.65V(中)→ PMOS 输入对 + PMOS 尾源接
+    VDD(tail_cm≈2.5V > 栅),保证输入对饱和。
+
+vout_common_mode:
+  description: "静态点:vout_p ≈ vout_n ≈ VCM_OUT(1.65V)"
+  method: estimate
+  severity: error
+  effort: standard
+  auto_checkable: false
+  references: [topo-ota-007]
+  how: >
+    仿真后核对 vout_p/vout_n 共模 ≈ VCM_OUT(1.65V)。偏离 → CMFB 环路
+    未收敛或参考源未接入。
+
+first_stage_common_mode:
+  description: "静态点:net_ap ≈ net_an ≈ VCM1(2.5V),net_cm1 全程漂移 <5mV"
+  method: estimate
+  severity: error
+  effort: standard
+  auto_checkable: false
+  references: [topo-ota-007]
+  how: >
+    net_ap ≈ net_an ≈ VCM1(2.5V),net_cm1 全程漂移 <5mV。第一级是高阻
+    无反馈节点,静态镜像 ±4% 失配就会推轨(3.2V/0.16V),靠第一级 CMFB
+    钳住,不靠调 W。
+
+vcmfb_levels:
+  description: "静态点:vcmfb1 ≈ VDD−|Vsg5|(≈2.5V);vcmfb 使 M9 饱和(≈0.7V)"
+  method: estimate
+  severity: error
+  effort: standard
+  auto_checkable: false
+  references: [topo-ota-007]
+  how: >
+    vcmfb1 ≈ VDD−|Vsg5|(≈2.5V) 使 M5 饱和;vcmfb ≈0.7V 使 M9(NMOS 负载)
+    饱和。电平异常 → CMFB 误差放大器工作点错误。
+
+stage2_current_budget:
+  description: "静态点:M8p/n、M9p/n Id ≈ 70uA/侧,Itotal ≤200uA"
+  method: estimate
+  severity: warn
+  effort: standard
+  auto_checkable: false
+  references: [topo-ota-007]
+  how: >
+    M8p/n、M9p/n Id ≈ 70uA/侧,总电流 Itotal ≤200uA(IREF 5% + IPB 5% +
+    输出 CMFB 尾源 2.5% + 第一级 CMFB 5% + 第一级 15% + 第二级每侧剩余)。
+    超预算 → 检查镜像失配推轨或第二级电流过大。
+
+saturation_regions:
+  description: "静态点:全部管 region=2(saturation)"
+  method: semantic
+  severity: error
+  effort: standard
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    OP 检查所有器件 region=2。任一进 triode(尤其 cascode/尾源/CMFB 输入对)
+    → 先修偏置再做 AC。
+
+body_connections:
+  description: "电学规则:NMOS body=VSS,PMOS body=VDD"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    所有 NMOS body=VSS、PMOS body=VDD。体接反/悬空 → 衬底二极管导通或
+    阈值漂移。
+
+device_type_and_fingers:
+  description: "电学规则:器件用 nch_33/pch_33(3.3V 档),w 单指宽,total=w×nf"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    器件用 nch_33/pch_33(3.3V 档);finger width 默认 1u,w 为单指宽,
+    total=w×nf,镜像比只通过 nf/multi 调。
+
+analysis_setup:
+  description: "仿真设置:save=selected 未改回 allpub;ac/dc/op 分析齐全"
+  method: structural
+  severity: warn
+  effort: lite
+  auto_checkable: true
+  references: [topo-ota-007]
+  how: >
+    核对 save=selected 没有被改回 allpub;ac/dc/op 分析齐全。
+    全差分理想仿真(无失配)PSRR/CMRR 是数值地板,要 MC/dcmatch 才有意义。

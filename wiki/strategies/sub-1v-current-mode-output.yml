@@ -1,0 +1,25 @@
+id: strat-bandgap-002
+type: strategy
+name: "Sub-1.2V bandgap output: use ground-referenced current-mode output, not a VBE-tap"
+tags: [bandgap, reference, current-mode, sub-1v, output-stage, tc]
+process_nodes: [65nm]
+
+content:
+  description: >
+    When the required bandgap output is below the first-order null voltage
+    (~1.25 V = VBE + |dVBE/dT|*T), do NOT tap the VBE-referenced R_chain. A tap to 1.0 V is
+    provably CTAT-tilted (~-820 ppm/C). Instead sum a PTAT current and a CTAT current into a
+    ground-referenced resistor: vref = R_out*(Iptat + Ictat). This is the only configuration
+    that meets vref ~ 1.0 V and TC < 25 ppm/C simultaneously from a ~1.2V first-order core.
+  key_points:
+    - "Iptat = dVbe_eff/R1 (dVbe_eff is emitter-current-dependent: VT*ln(2N)=82.1mV when R_chain returns to Q1 emitter)."
+    - "Ictat = VBE/R2 MUST be set by an active CTAT loop below VBE~0.68V (passive ground-referenced mirror lacks headroom)."
+    - "R_out is a pure scale (TC-neutral): re-centring vref by adjusting R_out never changes TC."
+    - "Keep the ~1.2V internal vbg as a diagnostic node; it confirms the core is nulled independently of the output."
+  when_to_use: "Any bandgap whose vref target is < ~1.2 V with a tight TC spec (< 50 ppm/C)."
+
+derived_from: ["proj-bandgap-v1v0"]
+confidence: unverified
+source: "WORK_bandgap_1v0_tc25 architect decision iter-3 (architecture.md 1b), converged L3"
+created: 2026-08-26
+updated: 2026-08-26

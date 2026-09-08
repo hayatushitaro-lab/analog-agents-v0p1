@@ -1,0 +1,183 @@
+id: topo-ldo-003
+type: topology
+name: "NMOS Input 5T OTA LDO with External CL, ESR Zero and Soft-Start"
+tags: [ldo, pmos-pass, nmos-input, 5t-ota, external-cl, esr-zero, softstart, gpdk045]
+process_nodes: [45nm]
+
+topology:
+  pass_device: pmos
+  output_cap: external_large
+  variant: traditional_analog
+  compensation: miller
+  ea_stages: 1
+
+content:
+  description: >
+    五管OTA（NMOS差分输入对 + PMOS电流镜负载）+ PMOS LVT传递管 +
+    外部电容+ESR(0.47µF) + Miller补偿 + PMOS钳位软启动。
+    NMOS输入管适合低VREF场景（VREF≥0.7V），ESR零点提供额外PM。
+    软启动由Rss+Css积分和M_clamp钳位实现，I_peak可控制在90mA以下。
+    基于 LDO_DIG/DIG2 项目验证，gpdk045 45nm CMOS，
+    VDD=1.15-1.7V, VOUT=1.0V(DIG)/0.9V(DIG2), Iload_max=10mA。
+
+  key_tradeoffs:
+    - "NMOS输入增益略低(PM最小67°)但VCM低(VREF≥0.7V)"
+    - "ESR零点提升PM但ESR随工艺漂移"
+    - "软启动钳位I_peak与M_clamp尺寸强相关"
+    - "轻载PM最低点~88°(非空载)，ESR零点主导"
+
+  typical_specs:
+    dropout: "150-250mV"
+    psrr_dc: "70-85 dB"
+    phase_margin: "67-103°"
+    gain_margin: "40-85 dB"
+    iq: "~40µA"
+    load_current_max: "10mA"
+    i_inrush_max: "90mA"
+    t_settle_max: "20µs"
+    vdd_range: "1.15-1.7V"
+
+  sizing_anchors:
+    diff_pair: "NMOS svt, W=4µm, L=5µm, m=6"
+    mirror: "PMOS svt, W=4µm, L=0.5µm, m=6"
+    tail_current: "NMOS svt, W=4µm, L=1µm, m=24, Ibias≈32µA"
+    pass_device: "PMOS lvt, W=25µm, L=45nm, m=200"
+    miller_cap: "Cc=1pF, Rc=5KΩ"
+    feedforward_cap: "Cff=1pF"
+    soft_start: "Rss=100K, Css=5pF, M_clamp(pch_svt W=4.7µm L=2µm)"
+    output_cap: "Cout=0.47µF, ESR=1Ω"
+
+derived_from: ["proj-LDO_DIG", "proj-LDO_DIG2"]
+confidence: verified
+source: "LDO_DIG sensitivity_design_guide + LDO_DIG2_final_summary"
+created: 2026-08-17
+updated: 2026-08-17
+
+key_params:
+  dropout:
+    formula: "|Vds_sat| = sqrt(2*Imax / (μp*Cox*W/L))"
+    typical_range: "150-250mV"
+    unit: mV
+    note: "DIG2 m=200时dropout=250mV(放宽)"
+  psrr_low_freq:
+    formula: "A_OL(OTA) × (gmp/gds_pass)"
+    typical_range: "70-85 dB"
+    unit: dB
+  psrr_high_freq:
+    formula: "PSRR(f) ≈ 20log(gmp/gds) - 20log(f/BW)"
+    note: "ESR零点在~339kHz提供额外PM"
+  iq:
+    formula: "I_EA + I_FB + I_bias = 32µA + VOUT/(R1+R2) + ..."
+    typical_range: "~40µA"
+    unit: µA
+  transient_droop:
+    formula: "droop = ΔI*ESR + ΔI*dt/Cout"
+    typical_range: "5-50mV"
+    unit: mV
+  i_inrush:
+    formula: "I_peak ≈ VDD/(Rss + R_pass_on)"
+    typical_range: "46-74mA (实测)"
+    unit: mA
+    note: "M_clamp钳位进一步限制"
+
+sizing_equations:
+  pass_transistor:
+    goal: "满足10mA满载dropout"
+    formula: "W/L = 2*Imax / (μp*Cox*dropout²)"
+    notes:
+      - "L=45nm（强反型）"
+      - "DIG: m=100, dropout=150mV; DIG2: m=200, dropout=250mV"
+      - "PMOS lvt降低Vth，提高驱动能力"
+  stability:
+    goal: "全负载PM>45°，ESR零点辅助"
+    pole_conditions:
+      p1: "1/(2π*(1/gmp+ESR)*Cout)  （主极点，输出端）"
+      p2: "1/(2π*Rout_EA*(Cc+Cpar))  （次极点，OTA输出）"
+      esr_zero: "1/(2π*ESR*Cout) ≈ 339kHz"
+      ugbw: "gmp/(2π*Cout)"
+      stability_rule: "ESR零点在UGBW和p2之间"
+    failure_mode: "Iload=100µA时PM最低(~88°)，因轻载OTA输出阻抗高"
+  psrr:
+    goal: "PSRR > 70dB @ DC"
+    formula: "PSRR_DC ≈ A_OL(OTA)"
+  transient:
+    goal: "I_peak < 90mA, t_settle < 20µs"
+    formula: "I_peak ≈ VDD/(Rss + R_pass_on); t_settle ≈ 1/(2π*BW_loop)"
+    note: "M_clamp钳位将I_peak从204mA降到~65mA"
+
+tradeoffs:
+  - dimension: "Cc vs PM vs 带宽"
+    description: "Cc↑→PM↑但UGBW↓；Cc=1pF时PM≈89-102°"
+    bounds: "Cc ∈ [0.5pF, 2pF]"
+  - dimension: "ESR vs PM vs 稳定性"
+    description: "ESR零点提升PM但ESR随工艺/温度漂移"
+    bounds: "ESR ∈ [1Ω, 1.5Ω]"
+  - dimension: "M_clamp W vs I_peak vs 响应"
+    description: "M_clamp W↑→钳位更强→I_peak↓但软启动时间↑"
+    bounds: "M_clamp W ∈ [3µm, 6µm]"
+  - dimension: "Mp m vs dropout vs 栅极驱动"
+    description: "m↑→dropout↓但栅极电容↑→OTA驱动压力↑"
+    bounds: "m ∈ [100, 300]"
+  - dimension: "Rss/Css vs 软启动时间 vs I_peak"
+    description: "Rss↑→I_peak↓但t_settle↑；Css↑→启动更平滑但更慢"
+    bounds: "Rss ∈ [50K, 200K], Css ∈ [2pF, 10pF]"
+
+optimization_dims:
+  - param: Cc
+    bounds: [0.5pF, 2pF]
+    affects: [phase_margin, ugbw]
+    notes: "Cc=1pF时PM≈89-102°"
+  - param: Rss
+    bounds: [50, 200]
+    unit: KΩ
+    affects: [i_inrush, t_settle]
+    notes: "Rss=100K时I_peak≈65mA"
+  - param: Css
+    bounds: [2pF, 10pF]
+    affects: [i_inrush, t_settle]
+    notes: "Css=5pF时t_settle≈20µs"
+  - param: Mp_m
+    bounds: [100, 300]
+    affects: [dropout, phase_margin]
+    notes: "m=200时dropout=250mV"
+  - param: M_clamp_W
+    bounds: [3, 6]
+    unit: µm
+    affects: [i_inrush]
+    notes: "M_clamp W=4.7µm时I_peak~65mA"
+
+when_to_use:
+  - "VREF≥0.7V（NMOS输入VCM满足）"
+  - "需要软启动浪涌抑制（I_peak约束）"
+  - "允许外部电容+ESR（0.47µF）"
+  - "Iload ≤ 10mA"
+  - "需要ESR零点辅助补偿"
+
+when_not_to_use:
+  - "VREF<0.7V → NMOS输入VCM不足，选PMOS输入(001)"
+  - "不需要软启动 → 001更简单"
+  - "Iload>20mA → 选002"
+  - "capless需求 → 选002"
+  - "PMOS输入需求（VREF低）→ 选001/004"
+
+pitfalls:
+  - id: pitfall-ldo-011
+    description: "NMOS输入VCM限制：VREF必须≥VGS_NMOS"
+    root_cause: "NMOS输入对VCM_min≈0.52V，VREF<0.7V时偏置不足"
+    fix: "VREF≥0.7V；VREF更低时选PMOS输入(001)"
+  - id: pitfall-ldo-012
+    description: "轻载PM最低点~88°（非空载），反直觉"
+    root_cause: "Iload=100µA时OTA输出阻抗高，次极点靠近主极点"
+    fix: "确保ESR零点覆盖此区域，Cc=1pF足够"
+  - id: pitfall-ldo-013
+    description: "软启动失败：去除M_clamp导致STB振荡"
+    root_cause: "RC bypass方案无法稳定启动，需钳位管限流"
+    fix: "必须保留M_clamp(pch_svt W=4.7µm L=2µm)"
+  - id: pitfall-ldo-014
+    description: "ESR零点随工艺/温度漂移"
+    root_cause: "ESR温度系数大，corner间零点位置变化"
+    fix: "ESR零点放在UGBW和p2之间，留足裕量"
+  - id: pitfall-ldo-015
+    description: "GM在VDD=1.4V满载时仅28.4dB"
+    root_cause: "高VDD下OTA增益增大→高频穿越点后移→GM↓"
+    fix: "减小OTA增益或增加高频极点"

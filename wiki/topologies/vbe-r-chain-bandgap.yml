@@ -1,0 +1,38 @@
+id: topo-bandgap-001
+type: topology
+name: "VBE + R-chain Bandgap with Tap-Selected Vntat"
+tags: [bandgap, reference, vbe, r-chain, ptat, 0.13um, 3p3]
+process_nodes: [0.13um]
+
+content:
+  description: >
+    First-order bandgap built around a diode-connected vertical PNP (Q1) and a
+    second PNP leg (Q3, typically area ratio 12:1). An opamp forces the top of
+    the deltaVbe resistor (R1) to equal VBE(Q1), so R1 carries a PTAT current
+    VT*ln(N)/R1. PMOS cascode branches mirror this PTAT-derived current into a
+    series resistor chain stacked on VBE, giving vbg = VBE + I_chain*R_chain.
+    The chain taps are selectable through NMOS switches whose common source
+    node (Vntat) is an output tap selector, not a trim return.
+  key_tradeoffs:
+    - "Larger area ratio N increases deltaVbe but also increases Q3 area and matching sensitivity"
+    - "Larger R_chain raises vbg per unit current but increases noise and area"
+    - "Tap-selected Vntat output provides a monitor/output voltage but does not shunt-trim vbg"
+  typical_specs:
+    vref: "~1.2 V at TT 27 C"
+    tc: "15-20 ppm/C with first-order compensation"
+    power: "20-35 uW at 3.3 V"
+  sizing_anchors:
+    Q1: "vpnp_5x5 m=1"
+    Q3: "vpnp_5x5 m=12"
+    R1: "~136 kOhm (ppolyf_u_1k l=68u w=1u s=2)"
+    R_chain: "~1.25 MOhm total, unit 136 kOhm + 29 kOhm top"
+  key_notes:
+    - "Vntat is an output in the CDL pin direction; leave it high-Z or weakly loaded, do not short it to ground when simulating tap selection."
+    - "Startup from zero supply takes ~50 us in 0.13um 3.3 V; size POR/enable timing accordingly."
+    - "With all R2 trim switches off, vbg is at the top of the full chain (highest vbg code)."
+
+derived_from: ["proj-fm377-bandgap"]
+confidence: verified
+source: "wiki/projects/fm377/bandgap/scs/bg_v02.scs; fm377 bandgap verification 2026-08-23"
+created: 2026-08-23
+updated: 2026-08-23

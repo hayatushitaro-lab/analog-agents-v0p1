@@ -1,0 +1,28 @@
+id: anti-ota-006
+type: anti-pattern
+name: "Miller compensation parameter drift across spec, netlist, and testbench"
+tags: [ota, two-stage, miller, compensation, specification, netlist, testbench, consistency]
+process_nodes: [65nm]
+
+content:
+  description: >
+    The implemented Miller capacitor and nulling resistor must be consistent in
+    the block specification, transistor-level rationale, netlist, and testbench.
+  failure_mechanism: >
+    A stale compensation value makes review and simulation answer different
+    design questions. In this project the block spec initially stated Cc=1 pF
+    while the implemented design and testbench used Cc=2 pF.
+  detection:
+    - "Cross-check Cc and Rz across spec.yml, rationale.md, netlist, and TB."
+    - "Treat a review mismatch as a release blocker until the source values agree."
+  fix: >
+    Align all artifacts to the implemented value before verification; the final
+    design used Cc=2 pF and Rz=580 ohm.
+  measured_impact:
+    - "One review warning was resolved before L1/L2/L3 verification."
+
+derived_from: ["proj-009"]
+confidence: unverified
+source: "OTA 2-stage Miller cross-model review, 2026-09-07"
+created: 2026-09-07
+updated: 2026-09-07

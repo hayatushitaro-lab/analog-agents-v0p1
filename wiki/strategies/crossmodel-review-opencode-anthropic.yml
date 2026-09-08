@@ -1,0 +1,41 @@
+id: strat-shared-004
+type: strategy
+name: "Cross-model review 通道: opencode-go-anthropic (Anthropic Messages) + 手工 JSON"
+tags: [review, cross-model, llm, anthropic, minimax, api, opencode]
+process_nodes: []
+
+content:
+  description: >
+    在 analog-agents 里跑 cross-model review 的可用通道与工程踩坑（在 ota-5t-33v 中验证）。
+    review 本应由 tools/review_bridge.py 驱动，但它只支持 OpenAI /chat/completions；
+    本通道是 Anthropic Messages 格式，需单独驱动。
+  channel:
+    - "端点 : https://opencode.ai/zen/go/v1/messages  (Anthropic Messages, POST)"
+    - "模型 : minimax-m3 (经 opencode zen 网关)"
+    - "鉴权 : header 'x-api-key: <key>'   (KEEP: 用 x-api-key, 不要用 Authorization: Bearer)"
+    - "需加  header 'anthropic-version: 2023-06-01'"
+    - "key  : OPENCODE_GO_API_KEY(读自 Reasonix .env: C:\\Users\\<user>\\AppData\\Roaming\\reasonix\\.env)"
+  request_body:
+    - '{"model":"minimax-m3","max_tokens":N,"temperature":0.1,"messages":[{"role":"user","content":prompt}]}'
+  pitfalls:
+    - 'CRITICAL: 本环境 ConvertTo-Json 会把字符串 content 包进 .value 再指数展开, 生成 ~107MB 异常 body -> 500。必须手工拼接 JSON 并转义 content (Json-Esc: \\ \" \n 等)。'
+    - "CRITICAL: 网关单请求 input-token 对中文敏感, 大量中文/unicode prompt 会 500; 纯英文紧凑 prompt(3.5-4KB ASCII) 可稳过。review 输入用英文摘要。"
+    - "opencode zen 超大 max_tokens 偶发 500; max_tokens~4000-6000 稳妥。"
+    - "PowerShell 5.1 无 BOM 容忍: .ps1 源码含中文按 ANSI 读会破坏解析; 脚本保持纯 ASCII。"
+    - "review 响应失败排除法: 先电话短 prompt(如 Reply:PONG) 验证通道, 再逐档加大 body/中文定位 500 边界。"
+  normal_response:
+    - '成功返回 {"type":"message","content":[{"type":"text","text":"<审查>"}],"usage":{...},"stop_reason":"end_turn"}'
+    - "解析 verdicts 用 DIMENSION/VERDICT/REASONING 结构 (与 review_bridge 同协议: Connection/Bias/Sizing/Topology/Spec_achievability)。"
+  related:
+    - "config/reviewers.yml 记录本通道; tools/review_opencode.ps1(Win) 为可复用驱动。"
+  # 2026-08-24 ota-telescopic-33v 增补: 结构化输出依赖 (CRITICAL)
+  structured_output_critical:
+    - "review_opencode.ps1 解析器依赖 DIMENSION:/VERDICT:/REASONING: 标记。若 prompt 让模型自由回答, 返回千字文本但工具丢弃 -> cross-model-review.md 的 Consensus 全 N/A (仅 Reviewer Status ok)。"
+    - "prompt 必须显式强制: 'REQUIRED OUTPUT FORMAT: EXACTLY five sections, each DIMENSION:/VERDICT:/REASONING:; VERDICT line exactly PASS/WARN/FAIL; end with OVERALL: PASS'."
+    - "先入 N/A 前置 => 尚未重试结构化; 重发结构化 prompt 即可, 不要接受空白 report (ota-telescopic-33v 两次调用对比验证)。"
+    - "review 静态可能对 DC 偏置 FAIL(isource 灌高阻栅'无路径'), 被 dcop 仿真证伪(diode-connected Mbias 泄放) — 结论以仿真为准, review 有效点(如 无CMFB/headroom)须进 known_limits。方法论见 strat-shared-005。"
+  derived_from: [proj-ota-5t-33v, proj-ota-telescopic-33v]
+confidence: verified
+source: "scenario 2026-08-24 ota-5t-33v cross-model review (minimax-m3 via opencode zen); + ota-telescopic-33v 结构化输出"
+created: 2026-08-24
+updated: 2026-08-24

@@ -1,0 +1,170 @@
+id: topo-ldo-001
+type: topology
+name: "PMOS Input 5T OTA LDO with External CL and Miller Compensation"
+tags: [ldo, pmos-pass, pmos-input, 5t-ota, external-cl, miller, single-stage, gpdk045]
+process_nodes: [45nm]
+
+topology:
+  pass_device: pmos
+  output_cap: external_large
+  variant: traditional_analog
+  compensation: miller
+  ea_stages: 1
+
+content:
+  description: >
+    五管OTA（PMOS差分输入对 + NMOS电流镜负载）+ PMOS传递管 + 外部大电容 +
+    Miller补偿。PMOS输入管提供低1/f噪声和宽VCM，适合VREF在中高电压的场景。
+    单级OTA结构，增益中等（~60-80dB），补偿简单（仅Cc和Rc两个参数）。
+    基于 HP_LDO 项目验证，gpdk045 45nm CMOS，VDD=1.15-1.7V, VOUT=1.0V,
+    Iload_max=8mA, IQ~23µA。
+
+  key_tradeoffs:
+    - "PMOS输入增益有限(~80dB)但1/f噪声低、VCM宽"
+    - "Cc是PM主调旋钮：Cc↑→PM↑但带宽压缩"
+    - "PMOS传递管m=100时dropout~150mV，余量紧"
+    - "IQ极低(~23µA)因PMOS输入电流小"
+
+  typical_specs:
+    dropout: "150-300mV"
+    psrr_dc: "60-80 dB"
+    phase_margin: "85-105°"
+    gain_margin: "60-80 dB"
+    iq: "~23µA"
+    load_current_max: "8mA"
+    vdd_range: "1.15-1.7V"
+
+  sizing_anchors:
+    diff_pair: "PMOS svt, W=4µm, L=1µm, m=10, gm/Id≈8"
+    pass_device: "PMOS svt, W=5µm, L=45nm, m=100"
+    mirror: "NMOS svt, W=4µm, L=0.5µm, m=2"
+    tail_current: "PMOS svt, W=4µm, L=1µm, m=8"
+    miller_cap: "Cc=1pF, Rc=5KΩ"
+
+derived_from: ["proj-HP_LDO"]
+confidence: verified
+source: "HP_LDO sensitivity_design_guide + gm_id_查表决策"
+created: 2026-08-17
+updated: 2026-08-17
+
+key_params:
+  dropout:
+    formula: "|Vds_sat| = sqrt(2*Imax / (μp*Cox*W/L))"
+    typical_range: "150-300mV"
+    unit: mV
+    note: "m=100, W=5µm, L=45nm时~150-200mV，余量紧"
+  psrr_low_freq:
+    formula: "A_OL(OTA) ≈ gm_diff * (ro_diff || ro_mirror)"
+    typical_range: "60-80 dB"
+    unit: dB
+  psrr_high_freq:
+    formula: "PSRR(f) ≈ 20log(gmp/gds) - 20log(f/BW)"
+    note: "BW以上以-20dB/dec下降"
+  iq:
+    formula: "I_EA + I_FB = Ibias×2 + VOUT/(Rf1+Rf2)"
+    typical_range: "~23µA"
+    unit: µA
+  transient_droop:
+    formula: "droop = ΔI*ESR + ΔI*dt/CL"
+    typical_range: "5-50mV"
+    unit: mV
+  area:
+    typical_range: "0.005-0.02 mm²"
+    note: "pass管W=500µm占主要面积"
+
+sizing_equations:
+  pass_transistor:
+    goal: "满足dropout spec"
+    formula: "W/L = 2*Imax / (μp*Cox*dropout²)"
+    notes:
+      - "L固定45nm（强反型要求）"
+      - "W固定5µm/finger，只调m"
+      - "m=100时总宽500µm，dropout~150-200mV"
+  stability:
+    goal: "全负载PM>45°"
+    pole_conditions:
+      p1: "1/(2π*(1/gmp+ESR)*CL)  （主极点，输出端）"
+      p2: "1/(2π*Rout_EA*(Cc+Cpar))  （次极点，OTA输出）"
+      ugbw: "gmp/(2π*CL)"
+      stability_rule: "p2 > 4 × UGBW"
+    failure_mode: "Cc过小→PM不足；Cc过大→UGBW压缩→瞬态慢"
+  psrr:
+    goal: "PSRR > 60dB @ DC"
+    formula: "PSRR_DC ≈ A_OL(OTA)"
+    bandwidth_rule: "PSRR高频滚降由OTA增益带宽积决定"
+  transient:
+    goal: "droop < spec"
+    formula: "droop = ΔI*ESR + ΔI*dt/CL"
+    note: "大CL(1-10µF)时ESR主导，dt/CL项小"
+
+tradeoffs:
+  - dimension: "Cc vs PM vs 带宽"
+    description: "Cc↑→主极点内移→PM↑，但UGBW↓→瞬态响应变慢"
+    bounds: "Cc ∈ [0.5pF, 2pF]，1pF时PM≈94°最佳"
+  - dimension: "Mpass m vs dropout vs 面积"
+    description: "m↑→Rds_on↓→dropout↓，但栅极电容↑→PM变化、面积↑"
+    bounds: "m ∈ [50, 200]，总宽250-1000µm"
+  - dimension: "Ibias vs IQ vs 速度"
+    description: "Ibias↑→gm↑→UGBW↑→瞬态快，但IQ↑"
+    bounds: "Ibias ∈ [5µA, 20µA]"
+  - dimension: "M1/M2 L vs 增益 vs 面积"
+    description: "L↑→ro↑→增益↑→PSRR↑，但gm↓→带宽↓、面积↑"
+    bounds: "L ∈ [0.5µm, 2µm]"
+
+optimization_dims:
+  - param: Cc
+    bounds: [0.5pF, 2pF]
+    affects: [phase_margin, ugbw, transient_response]
+    notes: "PM主调旋钮，1pF时PM≈94°"
+  - param: Ibias
+    bounds: [5, 20]
+    unit: µA
+    affects: [gm, ugbw, iq]
+    notes: "决定OTA尾电流，间接影响PM"
+  - param: Mpass_m
+    bounds: [50, 200]
+    affects: [dropout, phase_margin]
+    notes: "m↑降dropout但增栅极电容"
+  - param: M1_L
+    bounds: [0.5, 2]
+    unit: µm
+    affects: [dc_gain, psrr, bandwidth]
+    notes: "长L提增益但降带宽"
+
+when_to_use:
+  - "VREF中高电压（0.7-1.0V），PMOS输入VCM满足"
+  - "需要低IQ（<30µA）"
+  - "允许外部大电容（1-10µF）"
+  - "Iload ≤ 10mA，dropout要求150-300mV"
+  - "PSRR要求中等（60-80dB），无需超高"
+  - "通用降压场景，设计复杂度低"
+
+when_not_to_use:
+  - "需要超高增益（>80dB）→ 选两级OTA (002/005) 或折叠cascode (007)"
+  - "Iload > 20mA → 选两级OTA (002)"
+  - "capless需求 → 选 LDO_0p9 (002)"
+  - "VREF < 0.5V → PMOS输入VCM不足，选NMOS输入 (003)"
+  - "需要软启动浪涌抑制 → 选 LDO_DIG (003)"
+
+pitfalls:
+  - id: pitfall-ldo-001
+    description: "Cc过小导致PM不足"
+    root_cause: "Cc=0.5pF时主极点外移，次极点进入带宽，PM下降"
+    fix: "Cc取1pF，实测PM≈94°"
+  - id: pitfall-ldo-002
+    description: "PMOS传递管dropout余量不足"
+    root_cause: "m=100时VDSAT估算~200-300mV，VDD=1.15V时余量仅-50mV"
+    fix: "增大m到150-200，或降低VOUT目标"
+  - id: pitfall-ldo-003
+    description: "PMOS输入增益有限，PSRR受限"
+    root_cause: "单级PMOS OTA增益~80dB上限，PSRR_DC≈80dB"
+    fix: "需要>80dB PSRR时选两级OTA或折叠cascode"
+  - id: pitfall-ldo-004
+    description: "轻载时输出极点上移，PM变化"
+    root_cause: "大CL时轻载输出极点由ESR主导，PM反而更稳定"
+    fix: "确保ESR零点在UGBW附近"
+
+  - id: pitfall-ldo-005
+    description: "Rf1+Rf2总阻值影响IQ和PSRR"
+    root_cause: "总阻↑→IQ↓但反馈电流↓→噪声↑"
+    fix: "Rf1+Rf2∈[200K, 500K]"

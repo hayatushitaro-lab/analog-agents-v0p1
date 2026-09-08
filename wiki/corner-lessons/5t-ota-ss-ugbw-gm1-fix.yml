@@ -1,0 +1,31 @@
+id: corner-ota-002
+type: corner-lesson
+name: "5T OTA ss 角 ugbw 掉 18% 跌破 20MHz; W1 +54% 抬 gm1 修复且零回归"
+tags: [ota, 5t, corner, ss, ugbw, gm1, sizing]
+process_nodes: [65nm]
+
+content:
+  description: >
+    5T 单级 OTA (PMOS 输入对 + NMOS 电流镜负载, TSMC-65nm 3.3V IO, CL=2p, Itail=100uA) 在
+    ss_125c 角 (VDD=2.97V/125C) ugbw 从 TT 22.48MHz 掉到 18.36MHz (-18%, gm1 240.5uS),
+    跌破 20MHz 目标: 根因是 ss 角 gm1 相对 TT 293.3uS 掉 18% (mobility↓ / |Vov1|↑ @125C),
+    UGBW=gm1/(2π·CL) 同步 -18%。修复: W1 (输入对 M1/M2) 52u→80u (+54%),
+    强反型 gm∝sqrt(W) → ss gm1 抬到 303.7uS (+26.3%), ss ugbw 22.83MHz (+24.4%) PASS。
+    零功耗代价 (Itail/IREF 不变), 其他角零回归 (tt 27.56 / ff 32.86MHz 反升),
+    dc_gain 上抬 ~1.9dB, PM 微降 1.5-1.8° (仍 >>60°), M5 饱和裕度反增。
+  measured_values:
+    ss_125c_iter1: { ugbw: 18.36, gm1_uS: 240.5, dc_gain: 42.4, pm: 87.1, power_mW: 0.3180 }
+    ss_125c_iter2: { ugbw: 22.83, gm1_uS: 303.7, dc_gain: 44.27, pm: 85.0, power_mW: 0.3184 }
+    tt_27c_iter1:  { ugbw: 22.48 }
+    tt_27c_iter2:  { ugbw: 27.56 }
+  takeaways:
+    - "5T OTA 的 ugbw 贴线风险角是 ss_125c (Vth↑/mobility↓ → gm1↓), 不是 ff; iter1 后必须跑 L3 三角确认."
+    - "修 ugbw 优先提 W1 (输入对) 而非 Itail/改 L: gm1 单调抬升、零功耗代价、不影响镜像/负载/尾源, 零回归风险."
+    - "强反型 gm∝sqrt(W) 平方律外推够用: W1×1.54 → gm1×1.26, 预测 ss gm1 298uS vs 实测 303.7uS (基本命中)."
+    - "W1 增大是安全侧副作用: M1/M2 |Vov|↓ → vtail↓ → M5 |Vds|↑, 尾源饱和裕度反而增大 (ss 0.344→0.421V)."
+
+derived_from: ["proj-ota-5t-33v-r2"]
+confidence: verified
+source: "ota-5t-33v-r2 L3 PVT iter1 FAIL + iter2 re-verify (spectre 18.1 @ 192.168.16.100)"
+created: 2026-08-25
+updated: 2026-08-25

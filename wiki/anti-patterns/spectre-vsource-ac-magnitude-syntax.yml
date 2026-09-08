@@ -1,0 +1,26 @@
+id: anti-ota-005
+type: anti-pattern
+name: "Spectre vsource AC magnitude syntax mismatch"
+tags: [ota, spectre, ac, vsource, testbench, syntax, pre-sim]
+process_nodes: [65nm]
+
+content:
+  description: >
+    In this Spectre flow, an AC-enabled vsource must use `mag=1`; the SPICE-like
+    form `ac magnitude=1` is rejected by Spectre.
+  failure_mechanism: >
+    Spectre reports SFE-874 while parsing the AC testbench, so the AC/DC-gain
+    jobs fail before producing a frequency response.
+  detection:
+    - "Use the Spectre vsource syntax `dc=<value> mag=1`."
+    - "Run a pre-simulation syntax check before launching a corner batch."
+  fix: >
+    Replace `ac magnitude=1` with `mag=1`, then rerun the affected AC jobs.
+  measured_impact:
+    - "Three AC/DC-gain corner jobs required rerun; all passed after the syntax fix."
+
+derived_from: ["proj-009"]
+confidence: unverified
+source: "OTA 2-stage Miller verification, 2026-09-07"
+created: 2026-09-07
+updated: 2026-09-07

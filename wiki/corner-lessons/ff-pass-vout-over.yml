@@ -1,0 +1,24 @@
+id: corner-ldo-001
+type: corner-lesson
+name: "FF/fast corner heavy-load Vout drifts high (pass transistor over-drives)"
+tags: [pvt, ff-corner, vout, feedback-ratio, ldo]
+process_nodes: [65nm]
+
+content:
+  description: >
+    At FF/fast process (-40C) the PMOS pass transistor |Vth| drops, so its
+    drive strengthens and the regulated Vout drifts high: here 0.9235V,
+    beyond the 0.182V upper bound (0.9+2%). The error amplifier's PVT offset
+    lets VFB ride above VREF, so the closed-loop Vout is set too high.
+  manifestation: >
+    ff_m40c heavy-load Vout = 0.9235V (FAIL), while tt/ss stayed in window.
+  fix: >
+    Raise the feedback ratio (R2 200k->205k, beta 0.667->0.672) so Vout =
+    VFB/beta scales down equally across all corners; ff comes back into
+    window (0.9097V) without breaking ss (0.9002V). Re-run all corners.
+
+derived_from: [proj-ldo-analog]
+confidence: verified
+source: "LDO_ANALOG PVT iteration4"
+created: 2026-08-21
+updated: 2026-08-21

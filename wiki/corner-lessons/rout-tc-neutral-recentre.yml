@@ -1,0 +1,21 @@
+id: corner-bandgap-006
+type: corner-lesson
+name: "R_out is the TC-neutral re-centring lever (current-mode bandgap)"
+tags: [bandgap, current-mode, rout, re-centre, tc]
+process_nodes: [65nm]
+
+content:
+  description: >
+    With vref = R_out*(Iptat + Ictat), R_out scales the output level without
+    touching the TC null: 810k landed vref at 1.1904 V @27C (target ~1.200 V),
+    window [770,850]k. Re-centring to 1.200 V would need ~820k with zero TC
+    impact - the reason the current-mode output is REQUIRED for a 1.2 V spec
+    when the direct VBE+R-chain null sits at ~1.246 V.
+  measured_impact:
+    - "vref all 5 corners 1.18803..1.19288 V (window [1.15,1.25] V), TC unchanged."
+
+derived_from: ["proj-001"]
+confidence: unverified
+source: "WORK_bandgap_1v2_tc30 architect Phase 1 + verifier L3 (2026-08-29)"
+created: 2026-08-31
+updated: 2026-08-31

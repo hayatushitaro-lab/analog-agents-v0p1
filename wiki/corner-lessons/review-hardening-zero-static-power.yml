@@ -1,0 +1,22 @@
+id: corner-bandgap-005
+type: corner-lesson
+name: "Review-driven hardening closed all corners with zero static-power cost"
+tags: [bandgap, review, hardening, corner, power]
+process_nodes: [65nm]
+
+content:
+  description: >
+    The minimax-m3 cross-model review WARNs (OTA2 weak-inversion gain, startup
+    cold-FF leak race) were both confirmed actionable by simulation. The cheap
+    sizing fixes (Mct_p/n 20u, Mct_d/l 1u/4u, Msu_pd 8u) passed the full L3
+    5-corner matrix with no Idd change: TC TT 20.32 / SS 10.85 / FF 26.69 ppm/C,
+    power max 39.57 uW, startup <= 88.8 us no ring.
+  key_points:
+    - "Static-analysis WARNs can be real: verify them, don't dismiss them."
+    - "All three fixes were W/L changes with unchanged bias currents -> zero power cost."
+
+derived_from: ["proj-001"]
+confidence: unverified
+source: "WORK_bandgap_1v2_tc30 cross-model review + verifier L3 (2026-08-29)"
+created: 2026-08-31
+updated: 2026-08-31

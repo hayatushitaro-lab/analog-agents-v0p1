@@ -1,0 +1,75 @@
+# ============================================================
+# 5T OTA Checklist
+# Applies to: 5-transistor OTA (single-ended, current-mirror load)
+# ============================================================
+
+gain_path_continuity:
+  description: "Signal path from input to output must be continuous"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: []
+  how: >
+    Trace: vp/vn gate → M1/M2 drain (gain node net_d1 / vout) → mirror M3/M4 → vout.
+    5T 路径: M1 drain=net_d1 (diode M3 固定),M2 drain=vout (输出).
+    M4 gate 必须接 net_d1(镜像),M3 gate 接自己 drain(diode)。
+
+input_pair_type_vs_vcm:
+  description: "PMOS input pair needs LOW Vcm"
+  method: estimate
+  severity: error
+  effort: lite
+  auto_checkable: false
+  references: []
+  how: >
+    PMOS 输入:net_tail = Vcm + |Vsg|。需要 |Vds_tail| = VDD - net_tail >= Vdsat_tail。
+    Vcm 太高 → net_tail 逼近 VDD → M5 进线性区 → 增益崩塌。
+    3.3V 工艺:Vcm 建议 0.8~1.2V,Vsg~0.7V,net_tail~1.5~1.9V,留足 M5 余量。
+
+mirror_ratio:
+  description: "M4/M3 current mirror must be 1:1 (or intentional ratio)"
+  method: estimate
+  severity: warn
+  effort: lite
+  auto_checkable: false
+  references: []
+  how: >
+    M3、M4 必须同 L、同 finger width(W/nf),只靠 nf/multi 调比例。
+    单端 5T 默认 1:1(M4 镜像 M3 的电流给输出)。
+
+output_swing_low:
+  description: "Output low swing limited by load-mirror Vov"
+  method: estimate
+  severity: warn
+  effort: standard
+  auto_checkable: false
+  references: []
+  how: >
+    下摆幅 ≈ Vov3(M3 过驱动)。上摆幅 ≈ VDD - |Vov5| - |Vov1|。
+    要求 swing 时要核对两侧余量;不够就调 Vov(改 W 或 Itail)。
+
+dc_operating_point:
+  description: "All devices in saturation at DC"
+  method: semantic
+  severity: error
+  effort: standard
+  auto_checkable: true
+  references: []
+  how: >
+    OP 检查:M1/M2/M5 (PMOS) 和 M3/M4 (NMOS) region=2(saturation)。
+    任一进 triode → 先修偏置再做 AC。
+
+ss_corner_ugbw_gm_budget:
+  description: "L3 全角跑之前先按 ss 角 gm 缩放系数预算 ugbw 裕度"
+  method: estimate
+  severity: warn
+  effort: standard
+  auto_checkable: false
+  references: [corner-ota-002, strat-ota-001]
+  how: >
+    ugbw=gm1/(2π·CL) 是 5T 单级最贴线项, 且最紧角是 ss_125c (Vth↑/mobility↓ → gm1↓ 15~20%)。
+    L3 三角实测之前, 用 TT gm1 (或 gm/Id·Id 估算) 乘 ss 缩放系数 0.80~0.85,
+    预算 ss ugbw = gm1_tt·0.82/(2π·CL); 若预算 < 目标×1.15, 应在跑 L3 前就预提 W1 (输入对)
+    而非等 ss FAIL 后再返工一轮 (proj-ota-5t-33v-r2 iter1 TT 22.48MHz PASS → iter2 ss 18.36 FAIL
+    往返教训)。修 ugbw 只提 W1: 强反型 gm∝sqrt(W), 零功耗零回归, 不动 Itail/L。

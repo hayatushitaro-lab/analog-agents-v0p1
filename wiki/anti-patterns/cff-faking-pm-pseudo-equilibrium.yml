@@ -1,0 +1,29 @@
+id: anti-ldo-002
+type: anti-pattern
+name: "Feedforward Cap (CFF) Faking Phase Margin + Pseudo-Equilibrium"
+tags: [ldo, stb, phase-margin, feedforward, cff, pseudo-steady-state, testbench]
+process_nodes: [65nm]
+
+content:
+  description: >
+    A large feedback feedforward cap (CFF across R1) inflates phase margin at
+    the pass-drain loop port (STB probe on the power-device side sees a distorted
+    single-direction loop because CFF shunts the feedback node), and in time
+    domain creates a slow pseudo-equilibrium: cold-start with full load parks at
+    a wrong output voltage (e.g. 1.172V vs 1.201V) for milliseconds before
+    jumping to the true operating point.
+  failure_mechanism: >
+    CFF breaks the STB single-loop-port assumption: probing at the pass drain
+    (Vp) reads the feedforward-shunted path, giving PM=91 deg while the real
+    feedback-input port (vfb) shows PM=1.4 deg. In tran, CFF injects a dynamic
+    false-balance that holds Vout off the DC solution for ms-scale.
+  fix: >
+    Probe STB at the feedback input (vfb), not the pass drain; avoid large CFF;
+    verify with long-time/cold-start tran. Report PM from the feedback-input
+    port only.
+
+derived_from: ["proj-001"]
+confidence: verified
+source: "LDO_1V2_100mA project iteration 2 (reviewer-verified)"
+created: 2026-08-25
+updated: 2026-08-25

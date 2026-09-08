@@ -1,0 +1,23 @@
+id: strat-ldo-012
+type: strategy
+name: "OTA sizing 方程 (§8 ota-sizing)"
+tags: [ldo, ota, sizing, diff-pair, current-mirror, tail-current, two-stage]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    OTA 内差分对、电流镜、尾电流源、两级 OTA 的 gm/Id 法 sizing 方程，
+    以及增益与电流分配约束。
+  how:
+    - "差分对: gm_diff=gm/Id×Id_diff，W_diff=Id_diff/(Id/W)，L_diff=2-4×Lmin；增益 gain_diff=gm_diff×ro_diff=(gm/Id)×(1/(λ×Id_diff))。"
+    - "约束: A_OL ≥ PSRR_DC_spec/β，即 gm_diff×ro_diff×gmp/gds_pass ≥ 10^(PSRR_spec/20)/β。"
+    - "电流镜: gm_mirror=gm/Id×Id_mirror，L_mirror=2-4×Lmin，比例 I_mirror/I_diff=(W_mirror/W_diff)×(L_diff/L_mirror)；1:1 匹配时 W 与 L 相同。"
+    - "尾电流源: W_tail=Id_tail/(Id/W)，L_tail=1µm(高输出阻抗)，Id_tail=2×Id_diff，ro_tail=1/(λ×Id_tail)。"
+    - "两级 OTA: A_OL=A1×A2；Id_stage2/Id_stage1=2-4；Cc>4×gm2×Rout_s2×Cout（极点分离）或 Cc≈gm2/(2π×UGBW_target)。"
+  when_to_use: "对 OTA 内各管子用 gm/Id 法从 spec 反推尺寸、并做电流分配时。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

@@ -1,0 +1,27 @@
+id: corner-ota-001
+type: corner-lesson
+name: "Telescopic cascode OTA: VB2 headroom and CL sensitivity (TSMC-65nm 3V3)"
+tags: [ota, telescopic, corner, headroom, vb2, cl]
+process_nodes: [65nm]
+
+content:
+  description: >
+    Measured case (2026-08-18, TSMC-65nm 3.3V, tt, Itail=100uA, VDD=3.3V,
+    CL=2p): Av=52.8dB / GBW=45.1MHz / PM=84.5deg (relaxed spec Av>=52/GBW>=44).
+    VB2=1.8V is the success gate: at 1.5V the input pair Vds=0.09V enters
+    linear (Av only 44dB); at 1.8V Vds=0.4V, Av=52.6dB.
+  sizing_anchors:
+    - "W1=17u/L=380n (input pair gm/Id=12.6), W3=7.79u/L=2u (cascode), W5=16.2u/L=1u (PMOS mirror), W7=15.6u/L=1u (tail)"
+    - "VB2=1.8V mandatory; 1.5V -> input pair Vds=0.09V linear, Av 44dB"
+  key_points:
+    - "Raising Itail does not fix the telescopic gain bottleneck (strong-inversion gm efficiency drops, Av falls)."
+    - "GBW is CL-sensitive (single-stage): CL=3p -> 29.8MHz; ss corner -2% -> keep >=5% margin."
+    - "Theory limit ~50dB is conservative; measured ~53dB. 60dB needs two-stage or gain boosting."
+  measured:
+    - "CL=1p: GBW 86MHz pass; CL=3p: 29.8MHz warn; ff: 46.3 pass; ss: 43.1 warn (-2%)"
+
+derived_from: ["proj-ota-telescopic-33v"]
+confidence: verified
+source: "telescopic OTA verification 2026-08-18 (TSMC-65nm 3V3), ota-design sim/ota"
+created: 2026-08-18
+updated: 2026-08-31

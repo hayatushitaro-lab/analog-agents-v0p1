@@ -1,0 +1,73 @@
+id: topo-ota-002
+name: "5T OTA (PMOS input pair + NMOS current-mirror load)"
+level: 1
+topology: single_stage
+
+supply:
+  vdd: 3.3
+  vcm: 1.2
+  process: "TSMC-65nm 3.3V"
+  devices: [nch_33, pch_33]
+
+specs:
+  Av:     { unit: dB,   default: 40 }
+  GBW:    { unit: MHz,  default: 100 }
+  PM:     { unit: deg,  default: 60 }
+  CL:     { unit: pF,   default: 2 }
+  Itail:  { unit: uA,   default: 100 }
+  SR:     { unit: V/us, default: 50 }
+  Vin_cm: { unit: V,    default: 1.2 }
+  Vout_swing: { unit: V, default: 2.0 }
+
+nodes:
+  vin_p: vp
+  vin_n: vn
+  vout: vout
+  vbias: vbias
+  vdd: VDD
+  vss: VSS
+
+devices:
+  - { id: M1, role: input_p,      type: pch_33 }
+  - { id: M2, role: input_n,      type: pch_33 }
+  - { id: M3, role: load_mirror1, type: nch_33 }
+  - { id: M4, role: load_mirror2, type: nch_33 }
+  - { id: M5, role: tail,         type: pch_33 }
+
+equations:
+  gm1: "2 * pi * GBW * CL"
+  Id:  "Itail / 2"
+  gm_over_Id: "gm1 / Id"
+  Vov1: "vov_from_gmid(gm/Id)  # 分段:强反型 2/(gm/Id),中反型插值,弱反型亚阈"
+  W1: "W_from_gmid(Id, L1, gm/Id, muCox_p)  # 分段反推,弱反型 W 指数放大"
+  Av: "gm1 * (ro2 || ro4)"
+  SR: "Itail / CL"
+
+calibration:
+  muCox_p: { value: 62e-6, unit: "A/V^2", backout: "实测 65nm 3.3V PMOS ≈62uA/V²" }
+  muCox_n: { value: 187e-6, unit: "A/V^2", backout: "实测 65nm 3.3V NMOS ≈187uA/V²" }
+  lambda_n: { value: 0.1, unit: "1/V", backout: "1/(Av实测*Id*gds...)" }
+  lambda_p: { value: 0.1, unit: "1/V", backout: "..." }
+
+sensitivities:
+  - { param: "W1/W2", up: [GBW, Av], down: [PM], note: "输入对宽度↑ → gm↑" }
+  - { param: Itail, up: [GBW, SR, power], down: [], note: "尾电流↑ → gm/SR↑ 但功耗↑" }
+  - { param: "W3/W4", up: [Vout_swing_low], down: [Av], note: "负载镜宽↑ → 增益↓,下摆幅↓" }
+  - { param: L_all, up: [Av], down: [GBW], note: "L↑ → ro↑ → Av↑,寄生↑ → GBW↓" }
+
+sizing_rules:
+  - "finger width 默认 1u,镜像比只通过 nf/multi 调"
+  - "输入对 gm/Id 目标 10~15,负载镜/尾源 gm/Id ~10"
+  - "混合 L:输入对短 L,负载镜/尾源 2-4x 最小 L"
+  - "3.3V 档尺寸下限:Wmin=400n, Lmin=380n"
+  - "尾源用电流镜偏置(IREF 电流源 + diode 参考管),不靠 VB 电压源——VB 电压源偏置对 Vth 极敏感"
+
+pitfalls:
+  - "PMOS 输入 → Vcm 必须低(近 VSS),否则尾源进线性区"
+  - "5T 单端输出增益 ~30~45dB,要 60dB+ 用 cascode/两级"
+  - "M3/M4 是 diode 镜像负载,不是 cascode"
+  - "尾源电流镜:参考管 Mbias 和 M5 同 L 同 finger width,1:1 镜像(或按 nf 比例)"
+  - "实测 3.3V 器件 Vth≈0.69V(不是 0.6 或 0.8),偏置计算要用实测值"
+
+checklist: checklists/ota_5t.yml
+template: templates/5t_ota.scs

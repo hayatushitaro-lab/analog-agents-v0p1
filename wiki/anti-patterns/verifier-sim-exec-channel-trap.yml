@@ -1,0 +1,38 @@
+id: anti-shared-003
+type: anti-pattern
+name: "Verifier 派发声明 write_paths 后失去 bash/ssh 执行能力 → SIM-BLOCKED 空转"
+tags: [process, verifier, execution, spectre, remote, sim-blocked, orchestration]
+process_nodes: [65nm, 180nm]
+
+content:
+  description: >
+    需要跑远端 spectre 的 verifier 子代理若在派发时被声明了受限写通道（write_paths），
+    会话将只有 web_search/glob/grep/ls/read_file/write_file 等只读+受限写原语，
+    **没有 bash / ssh / exec**，无法 ssh 远端、无法上传网表、无法运行 spectre、
+    无法解析远端 PSF —— 即使 servers.yml 已完整配置（host/key/model/section 全有），
+    也会整轮 SIM-BLOCKED，Measured 缺失，只能退化为 ESTIMATED 报告。
+  failure_mechanism: >
+    派发时声明 write_paths 把子代理放入受限执行模式，工具面砍掉 shell 执行原语；
+    `servers.yml` 只是"配置存在"，不是"本会话可执行"。
+    本项目 iter1 的 L1/L2 实测 round1-3 全部 SIM-BLOCKED（sim_raw/EXEC-BLOCKED-round2/3
+    与 REVIEW_MODE-execution-blocked.md 记录），同一会话内反复重试均失败，
+    直到移交具备 bash/ssh/spectre 的执行通道才获得 tt27c 实测。
+  detection:
+    - "verifier 会话工具清单里没有 bash/ssh/exec/spectre skill → 立即判定无执行通道，不要重试"
+    - "报告标注 SIM-BLOCKED (not measured) 且只给 ESTIMATED 值 → 不能作为通过证据"
+    - "servers.yml 存在但报告仍 BLOCKED → 是派发层通道问题，不是电路/测试台问题"
+  fix: >
+    需要远端 spectre 实测的 verifier 必须由具备 bash/ssh 执行能力的通道承担，
+    派发时不得因声明 write_paths 而失去执行原语；一旦 SIM-BLOCKED 应立即移交
+    执行通道重跑（报告内附可复制命令），不要在同会话内反复空转。
+    review-mode 的 pre-sim 复核 / cross-model review 可与实测互补，但不能替代实测。
+  evidence:
+    - "proj-ota-5t-33v-r2 iter1: L1/L2 SIM-BLOCKED round1-3, 全部 Measured 缺失"
+    - "移交执行通道后 tt27c 实测成功 (dc_gain 44.5dB / ugbw 22.48MHz / PM 87.2° / power 0.353mW)"
+    - "sim_raw/EXEC-BLOCKED-round2-2026-08-25.md: 工具清单仅 web_search/complete_subtask/glob/grep/ls/read_file/write_file"
+
+derived_from: ["proj-ota-5t-33v-r2"]
+confidence: unverified   # 单项目观察（3 轮 BLOCKED + 移交后成功闭环）；待第二项目复现后升 verified
+source: "ota-5t-33v-r2 iter1 L1/L2 SIM-BLOCKED 记录 + 执行通道重跑成功"
+created: 2026-08-25
+updated: 2026-08-25

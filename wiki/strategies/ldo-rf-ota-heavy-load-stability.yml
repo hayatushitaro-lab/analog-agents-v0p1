@@ -1,0 +1,31 @@
+id: strat-ldo-003
+type: strategy
+name: "Stabilize two-stage RF short-channel OTA by pulling UGBW down with large Miller"
+tags: [ldo, miller, stability, ugbw, rf-short-channel]
+process_nodes: [65nm]
+
+content:
+  description: >
+    For a two-stage OTA made of RF short-channel devices (low intrinsic gain,
+    very low gds but huge ft), heavy-load stability is won by pulling UGBW
+    below the second-stage parasitic pole -- increase the Miller capacitance
+    to compress UGBW and split the dominant/non-dominant poles.
+  how:
+    - "Identify overloaded UGBW: heavy-load (large gm_pass) pushed UGBW to
+      100+MHz, trapping the second (net_gp) pole inside the loop -> PM 15deg."
+    - "Raise Cc (10p -> 25p) to scale UGBW down (~101M -> 28MHz)."
+    - "Re-place LHP zero via Rz (20k -> 6.5k) so the zero lands near the new
+      UGBW to add lead phase against the second pole."
+    - "Result: heavy-load PM 15 -> 66deg, GM 5 -> 33dB."
+  pitfalls:
+    - "Do NOT enlarge 1st/2nd stage gm to 'fix' stability -- that raises loop
+      gain and worsens the pole conflict."
+    - "Verify across full load sweep via STB; light-load PM is governed by the
+      no-external-cap low-frequency output pole (architectural limit, accept
+      if GM stays high)."
+
+derived_from: [proj-ldo-analog]
+confidence: verified
+source: "LDO_ANALOG project iteration3 (spectre STB)"
+created: 2026-08-21
+updated: 2026-08-21

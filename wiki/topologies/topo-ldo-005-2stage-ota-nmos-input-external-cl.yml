@@ -1,0 +1,111 @@
+id: topo-ldo-005
+type: topology
+name: "Two-Stage OTA LDO with NMOS Input and External CL"
+tags: [ldo, pmos-pass, 2stage-ota, nmos-input, external-cl, miller, sky130]
+process_nodes: [130nm]
+
+topology:
+  pass_device: pmos
+  output_cap: external_large
+  variant: traditional_analog
+  compensation: miller
+  ea_stages: 2
+
+content:
+  description: >
+    两级OTA LDO：第一级NMOS差分输入 + PMOS cascode负载，第二级NMOS共源输出 +
+    PMOS cascode。pass管为PMOS。两级结构提供高增益(>80dB)和高PSRR。
+    Miller补偿跨接两级之间。来自 AnalogGym/ldo_1，SKY130 130nm。
+
+  key_tradeoffs:
+    - "两级增益高但补偿复杂"
+    - "NMOS输入适合低VREF"
+    - "PMOS cascode提升输出阻抗"
+
+  typical_specs:
+    dropout: "150-300mV"
+    psrr_dc: "70-90 dB"
+    phase_margin: "60-80°"
+    iq: "中-高"
+
+  sizing_anchors:
+    diff_pair: "NMOS, 参数化"
+    cascode_p: "PMOS, 参数化"
+    second_stage: "NMOS, 参数化"
+    pass_device: "PMOS, 参数化"
+
+derived_from: ["proj-AnalogGym_ldo_1"]
+confidence: verified
+source: "AnalogGym/ldo_1 netlist"
+created: 2026-08-17
+updated: 2026-08-17
+
+key_params:
+  dropout:
+    formula: "|Vds_sat| = sqrt(2*Imax / (μp*Cox*W/L))"
+    typical_range: "150-300mV"
+    unit: mV
+  psrr_low_freq:
+    formula: "A_OL_stage1 × A_OL_stage2 × (gmp/gds_pass)"
+    typical_range: "70-90 dB"
+    unit: dB
+  iq:
+    formula: "I_stage1 + I_stage2 + I_FB"
+    typical_range: "中-高"
+    unit: µA
+
+sizing_equations:
+  pass_transistor:
+    goal: "满足dropout spec"
+    formula: "W/L = 2*Imax / (μp*Cox*dropout²)"
+  stability:
+    goal: "全负载PM>45°"
+    pole_conditions:
+      p1: "1/(2π*Rout_EA*Cc)  （主极点，OTA输出）"
+      p2: "1/(2π*Rout_pass*Cout)  （次极点，输出端）"
+      ugbw: "gm_stage1/(2π*Cc)"
+      stability_rule: "p2 > 4 × UGBW"
+  psrr:
+    formula: "PSRR_DC ≈ A_OL_stage1 × A_OL_stage2"
+
+tradeoffs:
+  - dimension: "Cc vs PM vs 带宽"
+    description: "Cc↑→PM↑但UGBW↓"
+    bounds: "Cc ∈ [1pF, 10pF]"
+  - dimension: "第二级W vs 增益 vs PM"
+    description: "W↑→增益↑但次极点变化"
+    bounds: "W ∈ [5µm, 50µm]"
+
+optimization_dims:
+  - param: Cc
+    bounds: [1pF, 10pF]
+    affects: [phase_margin, ugbw]
+  - param: W_pass
+    bounds: [10, 200]
+    unit: µm
+    affects: [dropout]
+  - param: W_stage2
+    bounds: [5, 50]
+    unit: µm
+    affects: [dc_gain, phase_margin]
+
+when_to_use:
+  - "需要高增益(>80dB)和高PSRR"
+  - "VREF较低，NMOS输入满足"
+  - "允许外部大电容"
+  - "130nm工艺"
+
+when_not_to_use:
+  - "低Iq需求 → 选001/004"
+  - "capless → 选002"
+  - "PMOS输入需求 → 选002"
+
+pitfalls:
+  - id: pitfall-ldo-018
+    description: "RHP零点恶化PM"
+    root_cause: "两级OTA的Cc跨接产生RHP零点"
+    fix: "加Rz>1/gm消除RHP零点"
+  - id: pitfall-ldo-019
+    description: "高负载时pass管进入线性区"
+    root_cause: "Iload↑→pass管VDS↓→输出极点外移"
+    fix: "增大Cc或减小第二级W"

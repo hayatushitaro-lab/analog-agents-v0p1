@@ -1,0 +1,26 @@
+id: anti-ldo-003
+type: anti-pattern
+name: "PMOS input pair at low input common-mode collapses in low-VDD LDO"
+tags: [ldo, pmos-input, common-mode, headroom, ota]
+process_nodes: [65nm]
+
+content:
+  description: >
+    In a low-VDD (1.2V) LDO whose feedback node sits around 0.6V, a PMOS
+    input pair cannot be biased: the source/tail node must reach Vcm+|Vsg|
+    ~1.1V, leaving <0.1V for the tail transistor, which enters triode and the
+    DC operating point never establishes.
+  failure_mechanism: >
+    PMOS input: net_tail = Vcm + |Vsg|. With Vcm=0.6V, |Vsg|~0.5V, net_tail
+    ~1.1V. |Vds_tail| = VDD - net_tail = 1.2 - 1.1 = 0.1V -> tail in triode,
+    no valid DC point.
+  fix: >
+    Use an NMOS input pair for moderate/high Vcm, or NMOS_lvt (Vth~0.36V) to
+    stretch low-Vcm headroom. Verifies: NMOS_lvt input at Vcm=0.6V runs in
+    sub-threshold (gm/Id~20) stably.
+
+derived_from: [proj-ldo-analog]
+confidence: verified
+source: "LDO_ANALOG first-stage experiments"
+created: 2026-08-21
+updated: 2026-08-21

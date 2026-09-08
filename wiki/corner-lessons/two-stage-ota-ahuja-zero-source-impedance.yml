@@ -1,0 +1,33 @@
+id: corner-ota-003
+type: corner-lesson
+name: "Two-stage Miller+Ahuja OTA: zero placement is limited by CG source impedance"
+tags: [ota, two-stage, ahuja, compensation, zero, phase-margin, 65nm]
+process_nodes: [65nm]
+module: ota
+
+content:
+  description: >
+    In a two-stage OTA with Ahuja compensation, the compensation zero is
+    z_ahuja = 1/(2*pi*Cc*(Rz + Z_s,Ma)), where the CG-transistor source impedance
+    is Z_s,Ma = 1/gm_a + R1/(gm_a*rds_a) (R1 = first-stage output resistance).
+    With R1 ~ 500k and Ma self-gain ~108 (L=1u), Z_s is ~9k, so z lands at
+    15-20MHz. If z < effective GBW, the |T| magnitude holds a +1-2dB plateau and
+    the 0dB crossing slides to 90-130MHz, consuming phase margin (PM 18-57deg).
+    The plateau level = 20*log10(gm1*Z_s) is INDEPENDENT of Cc (both z and GBW
+    scale as 1/Cc), so only gm1 reduction or Z_s reduction helps; raising gm_a
+    via longer L backfired here (LA 1u->3u halved gm_a in weak inversion,
+    227->150uS, because gm/Id is density-set and long-L raised Vth).
+  measured:
+    - "FINAL-2 (LA=1u, WA=22u, I_Mb=17uA): z=17-19MHz, plateau +1.7dB, PM 52-66deg across 5 corners (PM>=50 gate passed)"
+    - "FINAL-3 (LA=3u, Cc=0.8p, W1=6.8u): gm_a 227->150uS, z=12.5MHz, plateau +5.9dB, PM 18.6-20.7deg ALL corners (regression)"
+  fix: >
+    Either (a) accept PM>=50deg gate and keep z slightly below effective GBW
+    (measured stable, UGF 87-126MHz), or (b) raise gm_a by current (I_Ma up) and
+    raise Ma self-gain by a SHORT L with source bulk-tie, or (c) lower R1.
+    Do not trust z = gm_a/(2*pi*Cc) — it omits Rz + Z_s,Ma.
+
+derived_from: ["proj-ota-2stage-33v"]
+confidence: unverified
+source: "ota_2stage_33v project, verifier pole fits iter1-FINAL4 (2026-08-30)"
+created: 2026-08-30
+updated: 2026-08-30

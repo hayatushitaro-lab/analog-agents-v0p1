@@ -1,0 +1,27 @@
+id: anti-ldo-005
+type: anti-pattern
+name: "Behavioral AC model omitting TB elements (ESR zero, output-node parasitic) hides full/mid-load PM collapse"
+tags: [ldo, behavioral-model, ac-analysis, phase-margin, anti-pattern]
+process_nodes: [65nm]
+
+content:
+  description: >
+    A behavioral AC loop model that omits the testbench's real elements (Cout
+    ESR zero, error-amplifier output-node parasitic cap, Rz-Cc high-frequency
+    decoupling) can report a healthy PM table while the actual circuit collapses
+    at full/mid load. In ldo_1v1 the model quoted PM_min=80.4deg while nominal
+    parameters with TB elements gave 10mA PM~47deg / 100mA PM~20deg (ff_m40 9deg);
+    only the cross-model review caught it because the design-side self-check did
+    not diff the model element set against the TB. The same project's transient
+    model already contained ESR and c1par=1.5pF, making the AC/transient mismatch
+    self-evident in hindsight.
+  failure_mode: "PM/UGF claims from a model that does not mirror the TB -> missed stability gate"
+  fix: >
+    Diff model vs TB element sets before trusting PM tables; include ESR zero and
+    output-node parasitic in AC; gate on STB 4 loads x 5 corners.
+
+derived_from: ["proj-002"]
+confidence: unverified
+source: "ldo_1v1 cross-model review D1/Action 2 (proj-002)"
+created: 2026-08-31
+updated: 2026-08-31

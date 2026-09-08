@@ -1,0 +1,37 @@
+id: anti-ldo-004
+type: anti-pattern
+name: "RF MOS `multi` Parameter Silently Ignored -> Degraded Pass Device / Collapsed DC"
+tags: [tsmc65, rf-mos, multi, pass-device, dc-solution, nmos_rf, pdk]
+process_nodes: [65nm]
+
+content:
+  description: >
+    On TSMC65 RF MOS models (nmos_rf_33/pmos_rf_33 etc), the instance models are
+    inline subckts whose total width is `wr x nr` (內部 nch_rf_33 l=lr w=wr m=nr).
+    A user-supplied top-level `multi=` on the X-instance is NOT a valid parameter of
+    the inline subckt and, because toplevel models set `parOpt options redefinedparams=ignore`,
+    is SILENTLY IGNORED (no error, no warning). Result: a pass device written as
+    `wr=1u nr=16 multi=50` is actually only 16u, not 800u -> full-load requires a
+    gate voltage above VDD -> no valid DC solution -> Spectre converges to a non-physical
+    solution (vout<0, vds>VDD, gmoverid collapsed).
+  failure_mechanism: >
+    Silent param drop hides a 50x width error. DC op finds a garbage equilibrium
+    (e.g. vout=-3.7V, pass vds=6.17V > 2.5V supply) that passes "simulation ran OK
+    (0 errors)" checks and only shows up as a wildly wrong operating point / netlist
+    node levels. No-warning redefinedparams=ignore is the enabler.
+  fix: >
+    Express large pass devices as EXPLICIT parallel instances:
+    `XMpass_1..K (d g s b) nmos_rf_33 lr=L wr=WR nr=NF` (total W = WR x NF x K).
+    Verify op-point: pass gmoverid at full load should match gm/Id hand target
+    (e.g. ~7 for NMOS pass), and vds<=VDD. Cross-check netlist model: the inline
+    subckt definition (crn65lp_abs.scs) to confirm which params are real.
+  signs:
+    - "满载 DC 解非物理 (vout<0 / vds>VDD)"
+    - "simulation 0 errors 但 gmoverid 远低于设计目标"
+    - "net_pg/驱动节点顶到电源轨"
+
+derived_from: ["proj-002"]
+confidence: verified
+source: "LDO_0V9_20mA_DRY_65nm iteration 1 (oppoint + model grep)"
+created: 2026-08-25
+updated: 2026-08-25

@@ -1,0 +1,30 @@
+id: anti-bandgap-003
+type: anti-pattern
+name: "Passive ground-referenced VBE/R current mirror is impossible below VBE ~0.68 V"
+tags: [bandgap, ctat, mirror, headroom, active-ctat, tc]
+process_nodes: [65nm]
+
+content:
+  description: >
+    A passive mirror that tries to set Ictat = VBE/R2 in a ground-referenced CTAT leg has no
+    headroom for a sensing device below VBE ~ 0.68 V. In this project the series leg
+    (Pctat_d -> R2 -> Q3) set I(R2) by the PMOS mirror geometry, NOT by VBE/R2: measured
+    dIctat/dT = -0.28 nA/C, ~8x too weak vs the required -2.2 nA/C -> TC(vref) = +1405 ppm/C
+    (PTAT-tilted).
+  failure_mechanism: >
+    Below VBE ~ 0.68 V there is no voltage headroom to bias an NMOS sensing device in
+    saturation; a PMOS mirror referenced to the ~0.68 V node conducts based on geometry and
+    its own Vsg, so the current does not track VBE/R2 and the CTAT slope collapses.
+  fix: >
+    Replace the passive leg with an ACTIVE CTAT loop: a small 5-T PMOS-input OTA forces the
+    top of R2 (vx) to equal vb = VBE(Q1); a PMOS pass (source=VDD, drain at ~0.68 V) has ample
+    headroom; Ictat = VBE/R2 with the true -VBE/R slope; a 1:1 copy injects into vref.
+  signs:
+    - "dIctat/dT ~ -0.3 nA/C instead of -2+ nA/C for a uA-level leg."
+    - "TC(vref) strongly PTAT-tilted (+1000..1600 ppm/C) after switching to a current-mode output."
+
+derived_from: ["proj-bandgap-v1v0"]
+confidence: unverified
+source: "WORK_bandgap_1v0_tc25 iter-3 measured +1405 ppm/C; iter-5 measured -2.22 nA/C (active CTAT)"
+created: 2026-08-26
+updated: 2026-08-26

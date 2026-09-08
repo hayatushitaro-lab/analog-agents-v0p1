@@ -1,0 +1,150 @@
+id: topo-ldo-011
+type: topology
+name: "NMOS Cascode LDO with Charge Pump — Ultra Low Dropout"
+tags: [ldo, nmos-pass, nmos-cascode, chargepump, miller, external-cl, gpdk045]
+process_nodes: [45nm, 65nm, 28nm, 130nm]
+
+topology:
+  pass_device: nmos
+  output_cap: external_large
+  variant: traditional_analog
+  compensation: miller
+  ea_stages: 1
+
+content:
+  description: >
+    NMOS cascode LDO：NMOS pass管 + NMOS cascode管串联，cascode管栅极由OTA驱动
+    （非pass管栅极）。需要电荷泵为cascode管栅极提供VDD+VGS偏置电压。
+    高输出阻抗（NMOS cascode结构）→ 高DC增益和高PSRR。drop-down极低。
+    偏置电压需求高（VDD+2×VGS）。基于通用电路知识。
+
+  key_tradeoffs:
+    - "输出阻抗极高→DC增益极高"
+    - "PSRR优秀（cascode结构）"
+    - "drop-down极低（~50-150mV）"
+    - "电荷泵复杂，偏置电压需求高"
+    - "设计复杂度高"
+
+  typical_specs:
+    dropout: "50-150mV"
+    psrr_dc: "80-100 dB"
+    phase_margin: "55-75°"
+    iq: "50-200µA（含电荷泵）"
+    load_current_max: "10-100mA"
+    vdd_bias: "VDD + 2×VGS"
+
+  sizing_anchors:
+    nmos_pass: "NMOS, W大, L=2-4×Lmin"
+    nmos_cascode: "NMOS, W≈pass/2, L=2-4×Lmin"
+    chargepump: "2x或更高倍压, 提供VDD+2VGS"
+    ota: "共源OTA, 驱动cascode栅极"
+
+derived_from: []
+confidence: unverified
+source: "通用电路知识"
+created: 2026-08-17
+updated: 2026-08-17
+
+key_params:
+  dropout:
+    formula: "dropout = VDSAT_pass + VDSAT_cascode"
+    typical_range: "50-150mV"
+    unit: mV
+    note: "NMOS cascode结构drop-down极低"
+  psrr_low_freq:
+    formula: "PSRR_DC ≈ A_OL(OTA) × (gm_cas/gds_pass)"
+    typical_range: "80-100 dB"
+    unit: dB
+  psrr_high_freq:
+    formula: "PSRR_high ≈ gm_cas / (s×Cgd_cas)"
+    note: "cascode管G-D电容提供高频PSRR"
+  iq:
+    formula: "I_ota + I_chargepump + I_FB"
+    typical_range: "50-200µA"
+    unit: µA
+
+sizing_equations:
+  pass_transistor:
+    goal: "满足drop-down spec"
+    formula: "W/L_pass = 2*Iload / (μn*Cox*(VDSAT_pass)²)"
+    notes:
+      - "pass管栅极由电荷泵驱动，VGS=VDD+VGS_drive"
+      - "L=2-4×Lmin"
+  nmos_cascode:
+    goal: "提升输出阻抗"
+    formula: "W/L_cas = 2*Iload / (μn*Cox*(VDSAT_cas)²)"
+    notes:
+      - "cascode管栅极由OTA驱动"
+      - "OTA输出摆幅需覆盖cascode管栅极偏置范围"
+  charge_pump:
+    goal: "产生Vgate=VDD+2×VGS"
+    formula: "Vgate ≈ 2×VDD - 2×Vth (2x倍压)"
+    notes:
+      - "偏置电压需求高：VDD+2×VGS"
+      - "可能需要级联电荷泵"
+  stability:
+    goal: "全负载PM>45°"
+    pole_conditions:
+      p1: "1/(2π*Rout*CL)  （主极点，输出端）"
+      p2: "1/(2π*Rout_cas*Cpar)  （次极点，cascode栅极）"
+      ugbw: "gmp/(2π*CL)"
+      stability_rule: "p2 > 4 × UGBW"
+    note: "cascode管栅极节点引入附加极点"
+
+tradeoffs:
+  - dimension: "cascode管VDSAT vs drop-down vs PSRR"
+    description: "VDSAT_cas↓→drop-down↓但PSRR↓"
+    bounds: "VDSAT_cas ∈ [50mV, 200mV]"
+  - dimension: "电荷泵倍压比 vs 偏置电压 vs 效率"
+    description: "倍压比↑→偏置电压↑但效率↓"
+    bounds: "倍压比 ∈ [2x, 3x]"
+  - dimension: "Cc vs PM vs 带宽"
+    description: "Cc↑→PM↑但UGBW↓"
+    bounds: "Cc ∈ [0.5pF, 5pF]"
+
+optimization_dims:
+  - param: VDSAT_pass
+    bounds: [50, 150]
+    unit: mV
+    affects: [dropout, area]
+  - param: VDSAT_cas
+    bounds: [50, 200]
+    unit: mV
+    affects: [dropout, psrr]
+  - param: chargepump_ratio
+    bounds: [2.0, 3.0]
+    affects: [bias_voltage, efficiency]
+  - param: Cc
+    bounds: [0.5pF, 5pF]
+    affects: [phase_margin, ugbw]
+
+when_to_use:
+  - "需要极低drop-down（<150mV）"
+  - "需要极高PSRR（>80dB）"
+  - "对输出阻抗要求极高"
+  - "可接受高设计复杂度"
+  - "偏置电压裕度足够"
+
+when_not_to_use:
+  - "设计复杂度要求低 → PMOS pass (001-007)"
+  - "Iq严格约束 → FVF (008/010)"
+  - "偏置电压裕度不足 → FVF (008)"
+  - "PSRR要求不极端（<70dB）→ PMOS pass (001)"
+
+pitfalls:
+  - id: pitfall-ldo-035
+    description: "偏置电压需求高（VDD+2×VGS）"
+    root_cause: "cascode管栅极需要比VDD高2×VGS的偏置，电荷泵需级联"
+    fix: "使用2x或3x倍压电荷泵；确保偏置电压裕度"
+  - id: pitfall-ldo-036
+    description: "cascode管栅极附加极点"
+    root_cause: "OTA驱动cascode栅极，该节点引入附加极点"
+    fix: "确保该极点频率>4×UGBW"
+  - id: pitfall-ldo-037
+    description: "电荷泵纹波影响PSRR"
+    root_cause: "cascode管栅极由电荷泵偏置，纹波直接调制输出"
+    fix: "电荷泵时钟频率>10×UGBW；加旁路电容"
+  - id: pitfall-ldo-038
+    description: "启动时序复杂"
+    root_cause: "需确保电荷泵先建立偏置电压，再使能pass管"
+    fix: "加软启动时序控制：电荷泵→偏置建立→pass使能"

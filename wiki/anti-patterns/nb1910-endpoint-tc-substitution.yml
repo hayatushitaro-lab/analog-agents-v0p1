@@ -1,0 +1,30 @@
+id: anti-bandgap-007
+type: anti-pattern
+name: "Endpoint temperature slope is used as a substitute for dense local TC"
+tags: [bandgap, temperature-sweep, tc, verification, signoff]
+process_nodes: [40nm]
+
+content:
+  description: >
+    Computing temperature coefficient only from the endpoints of a temperature
+    range can hide an interior curvature or local slope peak. For a tight
+    bandgap TC requirement, endpoint agreement is diagnostic information, not
+    a sign-off measurement.
+  failure_mechanism: >
+    Nonlinear VBE, resistor, and current-mirror temperature dependencies can
+    make the endpoint secant slope small while the 1 C local slope is much
+    larger in the interior of the range.
+  measured_impact: >
+    nb1910 candidate-3 showed endpoint slopes of approximately -9.4 to
+    -21.0 ppm/C, while the required dense 1 C local-slope calculation gave
+    38.17 ppm/C in FF, 60.54 ppm/C in TT, and 72.76 ppm/C in SS.
+  fix: >
+    Use the specified dense temperature grid and local-slope criterion for the
+    TC gate. Report endpoint slope separately as a diagnostic and inspect the
+    full curve for interior extrema.
+
+derived_from: ["proj-kb-bandgap"]
+confidence: unverified
+source: "WORK_NB1910_BANDGAP/verifier-reports/candidate3/margin-report.md"
+created: 2026-09-03
+updated: 2026-09-03

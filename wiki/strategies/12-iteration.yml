@@ -1,0 +1,21 @@
+id: strat-ldo-016
+type: strategy
+name: "LDO 迭代收敛方程 (§12 iteration)"
+tags: [ldo, iteration, sensitivity, proxy-model, convergence]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    参数敏感度矩阵、代理模型与收敛判据，用于指导设计迭代。
+    敏感度量化各参数对 PM/VOUT/dropout/t_settle 的影响方向与量级。
+  how:
+    - "敏感度: ∂PM/∂Cc≈+15°/pF(最敏感)，∂PM/∂Iload≈-5°/mA，∂PM/∂Ibias≈+2°/µA；∂VOUT/∂R1=VREF×R2/(R1+R2)²，∂VOUT/∂VREF=(R1+R2)/R2；∂dropout/∂m_pass=-dropout/(2×m_pass)，∂dropout/∂VDD=+1；∂t_settle/∂Cc=-t_settle/Cc。"
+    - "代理模型: Cc×2→PM↑10-15°、UGBW↓2×；Cx÷2 反之；pass m×2→dropout÷√2、PM↑5-10°；Ibias×2→IQ×2、gm×√2、UGBW×√2；差分对 L×2→gain+6dB、gm÷√2；R1+10%→VOUT+~10%×(1/β-1)。"
+    - "收敛判据: DC |VOUT-Vtarget|/Vtarget<1%、IQ≤IQ_max、dropout≤spec；STB PM≥45°(推荐≥60°)、GM≥30dB(推荐≥40dB)、全负载 sweep；AC PSRR_DC≥60dB(推荐≥80)；TRAN t_settle/I_inrush/droop≤spec；PVT 全 15 corner(5P×3T)。"
+  when_to_use: "多参数迭代调尺寸时用敏感度定优先级、用代理模型快速推演、按收敛判据判定完成。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

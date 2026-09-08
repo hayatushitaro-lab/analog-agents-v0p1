@@ -1,0 +1,119 @@
+id: topo-ldo-004
+type: topology
+name: "NMOS Input 5T OTA LDO with External CL — Basic Reference"
+tags: [ldo, pmos-pass, nmos-input, 5t-ota, external-cl, miller, basic, sky130]
+process_nodes: [130nm]
+
+topology:
+  pass_device: pmos
+  output_cap: external_large
+  variant: traditional_analog
+  compensation: miller
+  ea_stages: 1
+
+content:
+  description: >
+    最基础的LDO拓扑：五管OTA（NMOS差分输入 + PMOS电流镜负载）+ PMOS传递管 +
+    外部电容。单级OTA，结构简单，器件数最少（6管+反馈网络）。
+    米勒补偿电容跨接在OTA输出与差分对输入之间。
+    来自 AnalogGym/ldo_simple，SKY130 130nm工艺。适合作为LDO入门学习参考。
+
+  key_tradeoffs:
+    - "器件最少但增益有限"
+    - "PMOS传递管驱动由OTA输出直接提供"
+    - "无软启动，无ESR零点优化"
+
+  typical_specs:
+    dropout: "150-300mV"
+    psrr_dc: "50-70 dB"
+    phase_margin: "60-80°"
+    iq: "中等"
+    load_current_max: "中等"
+
+  sizing_anchors:
+    diff_pair: "NMOS, 参数化 W/L"
+    mirror: "PMOS, 参数化 W/L"
+    tail_current: "NMOS, 参数化 W/L"
+    pass_device: "PMOS, 参数化 W/L"
+    miller_cap: "参数化"
+
+derived_from: ["proj-AnalogGym_ldo_simple"]
+confidence: verified
+source: "AnalogGym/ldo_simple netlist"
+created: 2026-08-17
+updated: 2026-08-17
+
+key_params:
+  dropout:
+    formula: "|Vds_sat| = sqrt(2*Imax / (μp*Cox*W/L))"
+    typical_range: "150-300mV"
+    unit: mV
+  psrr_low_freq:
+    formula: "A_OL(OTA) × (gmp/gds_pass)"
+    typical_range: "50-70 dB"
+    unit: dB
+  iq:
+    formula: "I_EA + VOUT/(Rfb)"
+    typical_range: "中等"
+    unit: µA
+
+sizing_equations:
+  pass_transistor:
+    goal: "满足dropout spec"
+    formula: "W/L = 2*Imax / (μp*Cox*dropout²)"
+    notes:
+      - "L通常取2-4×Lmin"
+      - "W按dropout需求计算"
+  stability:
+    goal: "全负载PM>45°"
+    pole_conditions:
+      p1: "1/(2π*Rout*CL)  （主极点，输出端）"
+      p2: "1/(2π*Rout_EA*Cpar)  （次极点，OTA输出）"
+      ugbw: "gmp/(2π*CL)"
+      stability_rule: "p2 > 4 × UGBW"
+  psrr:
+    goal: "PSRR > 50dB @ DC"
+    formula: "PSRR_DC ≈ A_OL(OTA)"
+
+tradeoffs:
+  - dimension: "pass管W vs dropout vs 面积"
+    description: "W↑→dropout↓但面积↑"
+    bounds: "W ∈ [10µm, 200µm]"
+  - dimension: "Cc vs PM vs 带宽"
+    description: "Cc↑→PM↑但带宽↓"
+    bounds: "Cc ∈ [0.5pF, 5pF]"
+
+optimization_dims:
+  - param: Cc
+    bounds: [0.5pF, 5pF]
+    affects: [phase_margin, ugbw]
+  - param: W_pass
+    bounds: [10, 200]
+    unit: µm
+    affects: [dropout, area]
+  - param: W_diff
+    bounds: [1, 20]
+    unit: µm
+    affects: [dc_gain, bandwidth]
+
+when_to_use:
+  - "入门学习LDO基础结构"
+  - "低复杂度需求"
+  - "允许外部大电容"
+  - "Iq约束不严格"
+
+when_not_to_use:
+  - "需要高增益/高PSRR → 选002/005/007"
+  - "需要软启动 → 选003"
+  - "capless需求 → 选002"
+  - "130nm以外的工艺 → 需重新验证"
+
+pitfalls:
+  - id: pitfall-ldo-016
+    description: "单级OTA增益有限，PSRR受限"
+    root_cause: "五管OTA增益~50-70dB，PSRR_DC≈增益"
+    fix: "需要更高PSRR时选两级OTA或折叠cascode"
+  - id: pitfall-ldo-017
+    description: "无ESR零点优化，轻载稳定性可能不足"
+    root_cause: "纯Miller补偿，轻载时输出极点下移"
+    fix: "确保ESR零点在UGBW附近，或加自适应零点"

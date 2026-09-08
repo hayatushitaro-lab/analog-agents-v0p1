@@ -1,0 +1,37 @@
+id: corner-bandgap-002
+type: corner-lesson
+name: "0.13um 3.3V Bandgap: SS/FF Shifts Vref ~+/-2.5%, TC Stays < 20 ppm/C"
+tags: [bandgap, corner, ss, ff, tc, reference, 0.13um]
+process_nodes: [0.13um]
+
+content:
+  description: >
+    On the fm377 VBE + R-chain bandgap, SS and FF model sections move Vref at
+    27 C by roughly +2.5% / -1.7% relative to TT, while the temperature
+    coefficient remains below 20 ppm/C in all three corners.
+  measured_values:
+    tt:
+      vbg_27c: 1.2038
+      vbg_min: 1.2003
+      vbg_max: 1.2038
+      tc_ppm_c: 17.6
+    ss:
+      vbg_27c: 1.2300
+      vbg_min: 1.2272
+      vbg_max: 1.2301
+      tc_ppm_c: 14.0
+    ff:
+      vbg_27c: 1.1802
+      vbg_min: 1.1765
+      vbg_max: 1.1802
+      tc_ppm_c: 19.4
+  takeaways:
+    - "For a +/-1% absolute Vref target, this structure needs trim; for 'Vref ~ 1.2 V' it passes un-trimmed."
+    - "TC is robust across process corners even when Vref absolute value moves."
+    - "Power also moves (FF max 32.5 uW vs TT 26.7 uW) but stays far below 100 uW."
+
+derived_from: ["proj-fm377-bandgap"]
+confidence: verified
+source: "fm377 bandgap verification 2026-08-23, tb_bg_v02_temp_{ss,ff}.scs"
+created: 2026-08-23
+updated: 2026-08-23

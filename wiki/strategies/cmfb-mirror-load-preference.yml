@@ -1,0 +1,16 @@
+id: strat-shared-002
+type: strategy
+name: "CMFB Error Amp — Prefer Mirror-Load"
+tags: [cmfb, ota, differential, feedback, analog]
+content:
+  description: "For CMFB error amplifiers in fully differential OTAs, prefer mirror-load over diode-load when the output drives a high-impedance PMOS load gate."
+  key_points:
+    - "Mirror-load diff pair provides high CM gain and is the recommended baseline."
+    - "Diode-load CMFB that drives a high-Z node converts that node to low impedance, collapsing DM gain."
+    - "Measured on a 5T FD OTA: 23 dB -> 2.6 dB with diode-load CMFB."
+    - "If using resistive sensing, choose R >= 10x Rout of OTA to avoid gain degradation."
+derived_from: ["shared-references/cmfb.md"]
+confidence: verified
+source: "shared-references/cmfb.md"
+created: 2026-08-23
+updated: 2026-08-23

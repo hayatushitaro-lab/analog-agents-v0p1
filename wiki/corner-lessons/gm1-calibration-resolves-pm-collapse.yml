@@ -1,0 +1,27 @@
+id: corner-ldo-004
+type: corner-lesson
+name: "Measured gm1 (0.51x square-law, in calibration band) resolves nominal-parameter PM-collapse predictions"
+tags: [ldo, corner, gm-calibration, phase-margin, 65nm]
+process_nodes: [65nm]
+
+content:
+  description: >
+    In ldo_1v1, cross-model review predicted 10/100mA PM collapse to 20-47deg
+    from nominal square-law parameters (gm1=620uS, gmp=200mS). L1 dcop measured
+    gm1=316uS (0.51x nominal, inside the 0.4-0.7x calibration band from the
+    previous project) and gmp=211mS; the lower mid-band plateau meant the
+    predicted collapse did NOT occur (measured PM_min=72.1deg @ ff_m40/100mA,
+    tt 100mA 96.5deg).
+  failure_mechanism: >
+    Platform-dependent risks (gain plateau x ESR zero x parasitic pole) scale
+    with nominal gm; judging them on nominal parameters without calibration
+    produces false alarms in one direction and false confidence in the other.
+  mitigation: >
+    Recalibrate gm from the dcop op-table (gm/Id anchors) before adjudicating
+    PM/UGF risk; keep review caveats that explicitly depend on nominal gm.
+
+derived_from: ["proj-002"]
+confidence: unverified
+source: "ldo_1v1 L1 dcop + L3 STB (proj-002)"
+created: 2026-08-31
+updated: 2026-08-31

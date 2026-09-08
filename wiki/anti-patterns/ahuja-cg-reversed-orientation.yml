@@ -1,0 +1,32 @@
+id: anti-ota-003
+type: anti-pattern
+name: "Ahuja compensation CG drain connected to the OUTPUT instead of the first-stage high-gain node"
+tags: [ota, two-stage, ahuja, compensation, topology-error, phase-margin]
+process_nodes: [65nm]
+module: ota
+
+content:
+  description: >
+    Canonical Ahuja compensation requires Cc from the OUTPUT to the CG transistor
+    SOURCE, with the CG DRAIN injecting into the first-stage high-impedance node
+    (net_b). If the CG drain is wired to the output instead (Cc still at the CG
+    source), the compensation current tracks V_netb, not Vout — Cc is NOT
+    Miller-multiplied at net_b. The dominant pole stays at ~65kHz instead of
+    ~16kHz, GBW flies to ~54MHz, and all secondary poles land inside the
+    bandwidth (PM ~29-34deg).
+  failure_mechanism: >
+    The CG acts as a cascode from source to output rather than a current buffer
+    from output to the gain node. Netlist signature: `Ma (vout vb_cg net_cc VSS)`
+    with Cc between net_b-side and net_cc, and no path from vout through Cc into
+    the CG source. Correct signature: `Ma (net_b vb_cg net_cc VSS)` with
+    `Cc (vout net_rz)` + `Rz (net_rz net_cc)`.
+  measured_impact: "fp1 16kHz -> 65kHz; GBW 24.7MHz -> 54.4MHz; PM 60+ target -> 33.8deg (iter3)"
+  fix: >
+    Swap the CG drain to net_b and route Cc from vout to the CG source (series Rz
+    optional). Verify Miller is restored by checking fp1 ~= 1/(2*pi*R1*Cc*(1+A2)).
+
+derived_from: ["proj-ota-2stage-33v"]
+confidence: unverified
+source: "ota_2stage_33v project, verifier iter3 pole fit (2026-08-30)"
+created: 2026-08-30
+updated: 2026-08-30

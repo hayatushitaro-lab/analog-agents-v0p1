@@ -1,0 +1,106 @@
+id: topo-ldo-006
+type: topology
+name: "Cascode OTA with Feedforward and Miller Compensation LDO"
+tags: [ldo, pmos-pass, cascode-ota, feedforward, miller, nmos-input, sky130]
+process_nodes: [130nm]
+
+topology:
+  pass_device: pmos
+  output_cap: external_large
+  variant: traditional_analog
+  compensation: feedforward_miller
+  ea_stages: 2
+
+content:
+  description: >
+    复杂OTA结构：NMOS差分输入 + PMOS cascode级 + 前馈路径(MC4跨级前馈) +
+    Miller补偿 + 偏置链。前馈路径提升带宽和PM，cascode提升输出阻抗。
+    器件数多(~20管)，设计复杂度高。来自 AnalogGym/ldo_2，SKY130 130nm。
+
+  key_tradeoffs:
+    - "前馈提升PM和带宽但增加设计复杂度"
+    - "cascode提升输出阻抗→高增益"
+    - "器件多→Iq高、面积大"
+
+  typical_specs:
+    dropout: "150-300mV"
+    psrr_dc: "70-90 dB"
+    phase_margin: "60-80°"
+    iq: "高"
+
+  sizing_anchors:
+    diff_pair: "NMOS, 参数化"
+    cascode: "PMOS/NMOS, 参数化"
+    feedforward_cap: "参数化"
+    pass_device: "PMOS, 参数化"
+
+derived_from: ["proj-AnalogGym_ldo_2"]
+confidence: verified
+source: "AnalogGym/ldo_2 netlist"
+created: 2026-08-17
+updated: 2026-08-17
+
+key_params:
+  dropout:
+    formula: "|Vds_sat| = sqrt(2*Imax / (μp*Cox*W/L))"
+    typical_range: "150-300mV"
+    unit: mV
+  psrr_low_freq:
+    formula: "A_OL_cascode × (gmp/gds_pass)"
+    typical_range: "70-90 dB"
+    unit: dB
+
+sizing_equations:
+  pass_transistor:
+    goal: "满足dropout spec"
+    formula: "W/L = 2*Imax / (μp*Cox*dropout²)"
+  stability:
+    goal: "全负载PM>45°"
+    pole_conditions:
+      p1: "1/(2π*Rout_EA*Cc)  （主极点）"
+      p2: "1/(2π*Rout_pass*Cout)  （次极点）"
+      ugbw: "gm_stage1/(2π*Cc)"
+      stability_rule: "p2 > 4 × UGBW"
+      feedforward_note: "前馈零点辅助提升PM"
+  psrr:
+    formula: "PSRR_DC ≈ A_OL_cascode"
+
+tradeoffs:
+  - dimension: "前馈电容 vs PM vs 带宽"
+    description: "Cff↑→前馈零点左移→PM↑但带宽↑"
+    bounds: "Cff ∈ [0.1pF, 2pF]"
+  - dimension: "Cc vs PM vs 带宽"
+    description: "Cc↑→PM↑但UGBW↓"
+    bounds: "Cc ∈ [0.5pF, 5pF]"
+
+optimization_dims:
+  - param: Cc
+    bounds: [0.5pF, 5pF]
+    affects: [phase_margin, ugbw]
+  - param: Cff
+    bounds: [0.1pF, 2pF]
+    affects: [phase_margin, bandwidth]
+  - param: W_pass
+    bounds: [10, 200]
+    unit: µm
+    affects: [dropout]
+
+when_to_use:
+  - "需要高PM和宽带宽同时满足"
+  - "对设计复杂度容忍度高"
+  - "130nm工艺"
+
+when_not_to_use:
+  - "低复杂度需求 → 选001/004"
+  - "低Iq需求 → 选001/004"
+  - "45nm工艺 → 选用户已验证拓扑(001/002/003)"
+
+pitfalls:
+  - id: pitfall-ldo-020
+    description: "前馈路径失调导致VOUT误差"
+    root_cause: "前馈电容将输入失调直接耦合到输出"
+    fix: "确保前馈路径增益远小于主路径"
+  - id: pitfall-ldo-021
+    description: "cascode偏置电压要求高"
+    root_cause: "cascode管需要VDD-VDSAT的偏置电压"
+    fix: "确保偏置链提供足够裕度"

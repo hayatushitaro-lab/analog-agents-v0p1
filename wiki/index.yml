@@ -1,0 +1,665 @@
+entries:
+  anti-shared-001:
+    path: anti-patterns/diode-load-cmfb-trap.yml
+    type: anti-pattern
+    module: _shared
+    summary: Diode-load CMFB kills DM gain on high-Z nodes
+  anti-shared-002:
+    path: anti-patterns/vcm-half-vdd-pmos-input.yml
+    type: anti-pattern
+    module: _shared
+    summary: Vcm=VDD/2 with PMOS input pair collapses tail headroom
+  anti-shared-003:
+    path: anti-patterns/verifier-sim-exec-channel-trap.yml
+    type: anti-pattern
+    module: _shared
+    summary: Verifier 派发声明 write_paths 后失去 bash/ssh 执行能力 → SIM-BLOCKED 空转; servers.yml
+      存在≠可执行, 须移交执行通道
+  strat-shared-001:
+    path: strategies/mixed-l-for-matching.yml
+    type: strategy
+    module: _shared
+    summary: Use longer L for mirrors/cascodes, short L only for input pair
+  strat-shared-002:
+    path: strategies/cmfb-mirror-load-preference.yml
+    type: strategy
+    module: _shared
+    summary: CMFB error amp prefers mirror-load over diode-load
+  strat-shared-003:
+    path: strategies/gmid-sizing-targets.yml
+    type: strategy
+    module: _shared
+    summary: gm/Id sizing targets
+  strat-shared-004:
+    path: strategies/crossmodel-review-opencode-anthropic.yml
+    type: strategy
+    module: _shared
+    summary: 'Cross-model review channel: opencode-go-anthropic (Anthropic Messages),
+      x-api-key, manual JSON (avoids ConvertTo-Json 107MB & chinese-token 500)'
+  strat-shared-005:
+    path: strategies/l3-pvt-and-crossmodel-review.yml
+    type: strategy
+    module: _shared
+    summary: 'OTA 验证双轨: L3 PVT 全角(section+真实温度 simulatorOptions temp) + 跨模型review
+      互补判案; review 静态可对 DC 偏置误判, 结论以仿真为准, 有效点进 known_limits'
+  topo-ota-001:
+    path: topologies/fully-differential-ota-cmfb.yml
+    type: topology
+    module: ota
+    summary: Fully differential OTA with CMFB
+  strat-ota-001:
+    path: strategies/gm-id-bandwidth-sizing.yml
+    type: strategy
+    module: ota
+    summary: GBW drives gm1, budget drives gm/Id; size from gm1 not W
+  strat-ota-003:
+    path: strategies/spectre-simulation-method.yml
+    type: strategy
+    module: ota
+    summary: Spectre sim method (remote spectre + PSF real/imag + no-BOM/no-multi).
+      Applies LDO sim method to OTA.
+  strat-ota-004:
+    path: strategies/bias-mirror-ratio-power-savings.yml
+    type: strategy
+    module: ota
+    summary: '单级 OTA 内部自偏置用大镜像比(10:1)压 bias 支路功耗: bias 0.33→0.033mW, 信号路径不动 (proj-ota-5t-33v-r2
+      实测)'
+  anti-ota-001:
+    path: anti-patterns/gbw-cl-itail-contradiction.yml
+    type: anti-pattern
+    module: ota
+    summary: GBW/CL/Itail contradiction pushes input pair to weak inversion, W explodes
+  corner-ota-001:
+    path: corner-lessons/telescopic-ota-2026-08-18.yml
+    type: corner-lesson
+    module: ota
+    summary: 'telescopic-cascode OTA TSMC-65nm: Av=52.8dB GBW=45.1MHz PM=84.5deg (tt,
+      Itail=100uA, CL=2p)'
+  corner-ota-002:
+    path: corner-lessons/5t-ota-ss-ugbw-gm1-fix.yml
+    type: corner-lesson
+    module: ota
+    summary: 5T OTA ss_125c ugbw 掉 18% 跌破 20MHz (gm1 240.5uS); W1 52u→80u (+54%) 抬
+      gm1 至 303.7uS, ugbw 22.83MHz PASS, 零功耗零回归
+  topo-bandgap-001:
+    path: topologies/vbe-r-chain-bandgap.yml
+    type: topology
+    module: bandgap
+    summary: VBE + R-chain bandgap with tap-selected Vntat
+  strat-bandgap-001:
+    path: strategies/bandgap-temp-sweep-startup-verify.yml
+    type: strategy
+    module: bandgap
+    summary: 'Bandgap verification: temp-swept DC + startup transient'
+  corner-bandgap-001:
+    path: corner-lessons/fixed-rchain-bandgap-tc-corner-conflict.yml
+    type: corner-lesson
+    module: bandgap
+    summary: Fixed R-chain bandgap cannot meet tight TC at TT/SS/FF simultaneously
+  corner-bandgap-002:
+    path: corner-lessons/bandgap-ss-ff-vref-shift.yml
+    type: corner-lesson
+    module: bandgap
+    summary: '0.13um 3.3V Bandgap: SS/FF shifts Vref ~+/-2.5%, TC stays < 20 ppm/C'
+  anti-bandgap-001:
+    path: anti-patterns/gf013-model-include-without-design-sections.yml
+    type: anti-pattern
+    module: bandgap
+    summary: GF 0.13um model include without design.scs + section= selections
+  proj-bandgap-v1v0:
+    path: projects/bandgap_v1v0/summary.yml
+    type: project
+    module: bandgap
+    summary: '1.0V bandgap TSMC-65nm 3V3 IO: VBE+R-chain core + active-CTAT current-mode
+      output; TC tt16.81/SS9.39/FF21.36, 7 iters CONVERGED at L3'
+  case-bandgap-01:
+    path: projects/bandgap_v1v0/blocks/bandgap.yml
+    type: block-case
+    module: bandgap
+    summary: 'Bandgap block case: R1=128k R_chain=887k R2=806k R_out=679k, active
+      CTAT OTA2, CGO/CCTAT/CVR; TC<25 all corners, FF worst +3.64'
+  topo-bandgap-002:
+    path: topologies/current-mode-bandgap-active-ctat.yml
+    type: topology
+    module: bandgap
+    summary: Current-mode ground-referenced bandgap output with active CTAT loop (sub-1.2V
+      vref); R_out TC-neutral scale; CGO/CCTAT/CVR dominant-pole caps
+  strat-bandgap-002:
+    path: strategies/sub-1v-current-mode-output.yml
+    type: strategy
+    module: bandgap
+    summary: 'Sub-1.2V bandgap output: ground-referenced current-mode (vref=R_out*(Iptat+Ictat)),
+      not a VBE-tap (provably CTAT-tilted)'
+  strat-bandgap-003:
+    path: strategies/measured-slope-tc-null.yml
+    type: strategy
+    module: bandgap
+    summary: Derive TC null ratios from measured VBE/dVBE/dT/dIptat/dT/TCR_R, re-derive
+      after topology change (8.98->6.93->6.2 here)
+  strat-bandgap-004:
+    path: strategies/active-ctat-ota2-diffpair-sizing.yml
+    type: strategy
+    module: bandgap
+    summary: Active-CTAT OTA2 diff pair 20u/1u fixes weak-inversion null gain (A_ota
+      49.7dB, |vx-vb|<1.1mV all corners)
+  strat-bandgap-005:
+    path: strategies/active-ctat-ota2-load-length.yml
+    type: strategy
+    module: bandgap
+    summary: Active-CTAT OTA2 NMOS load 1u/4u doubles ro, recovers null gain (Rout~17M)
+  strat-bandgap-006:
+    path: strategies/startup-pulldown-leak-margin.yml
+    type: strategy
+    module: bandgap
+    summary: Startup pulldown 8u beats cold-FF pull-up leak (1.7x) with zero static
+      power
+  strat-bandgap-007:
+    path: strategies/netlist-analysis-in-testbench-only.yml
+    type: strategy
+    module: bandgap
+    summary: Analysis statements live in testbenches only; SPICE .op in spectre netlist
+      is a hard SFE-679 error
+  anti-bandgap-002:
+    path: anti-patterns/bandgap-vbe-tap-sub-1v-ctat-tilted.yml
+    type: anti-pattern
+    module: bandgap
+    summary: VBE-referenced divider tap to sub-1.2V output provably CTAT-tilted (~-820
+      ppm/C); only nulls internal vbg
+  anti-bandgap-003:
+    path: anti-patterns/passive-ground-referenced-vbe-mirror.yml
+    type: anti-pattern
+    module: bandgap
+    summary: Passive ground-referenced VBE/R mirror impossible below VBE~0.68V (slope
+      8x too weak -> +1405 ppm/C); use active CTAT loop
+  anti-bandgap-004:
+    path: anti-patterns/emitter-leg-rchain-ln2n.yml
+    type: anti-pattern
+    module: bandgap
+    summary: Emitter-leg R_chain makes dVbe_eff=VT*ln(2N) (82.1mV not 64.2mV for N=12);
+      null ratio must be measured not assumed
+  anti-bandgap-005:
+    path: anti-patterns/nb1910-model-selector-section-mismatch.yml
+    type: anti-pattern
+    module: bandgap
+    summary: Model selector must match the device's actual Spectre model section
+  anti-bandgap-006:
+    path: anti-patterns/nb1910-partial-tmi-disable.yml
+    type: anti-pattern
+    module: bandgap
+    summary: Partial TMI disable leaves a hidden model-path dependency
+  anti-bandgap-007:
+    path: anti-patterns/nb1910-endpoint-tc-substitution.yml
+    type: anti-pattern
+    module: bandgap
+    summary: Endpoint temperature slope is not a substitute for dense local TC
+  anti-bandgap-008:
+    path: anti-patterns/nb1910-r10-only-tc-fix.yml
+    type: anti-pattern
+    module: bandgap
+    summary: R10 or current scaling can pass Vref/power while leaving TC unsolved
+  corner-bandgap-003:
+    path: corner-lessons/bandgap-active-ctat-all-corners-trim.yml
+    type: corner-lesson
+    module: bandgap
+    summary: Active CTAT + measured-slope R2 trim closes all-corners TC<25 (TT16.81/SS9.39/FF21.36);
+      FF worst margin +3.64
+  corner-bandgap-004:
+    path: corner-lessons/pre-sim-sfe679-op-lesson.yml
+    type: corner-lesson
+    module: bandgap
+    summary: Pre-sim verifier caught SPICE .op in spectre netlist (SFE-679); analysis
+      belongs in testbenches
+  corner-bandgap-005:
+    path: corner-lessons/review-hardening-zero-static-power.yml
+    type: corner-lesson
+    module: bandgap
+    summary: Review-driven hardening (OTA2 + startup) passed all corners with zero
+      static-power cost
+  corner-bandgap-006:
+    path: corner-lessons/rout-tc-neutral-recentre.yml
+    type: corner-lesson
+    module: bandgap
+    summary: R_out is the TC-neutral re-centring lever; 810k -> vref 1.1904V, window
+      [770,850]k
+  corner-bandgap-007:
+    path: corner-lessons/ff-tc-ss-offset-tightest.yml
+    type: corner-lesson
+    module: bandgap
+    summary: FF tightest TC (26.69 ppm/C) and SS tightest va-vb (1.839mV vs 2mV) -
+      drive trim/mismatch work
+  topo-ldo-001:
+    path: topologies/topo-ldo-001-pmos-input-5t-ota-external-cl-miller.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: PMOS-input 5T OTA + external CL + Miller'
+  topo-ldo-002:
+    path: topologies/topo-ldo-002-2stage-ota-pmos-diff-internal-cl-miller.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: 2-stage OTA + PMOS diff input + internal CL Miller'
+  topo-ldo-003:
+    path: topologies/topo-ldo-003-nmos-input-5t-ota-external-cl-softstart.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: NMOS-input 5T OTA + external CL + soft-start'
+  topo-ldo-004:
+    path: topologies/topo-ldo-004-nmos-input-5t-ota-external-cl-basic.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: NMOS-input 5T OTA + external CL basic'
+  topo-ldo-005:
+    path: topologies/topo-ldo-005-2stage-ota-nmos-input-external-cl.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: 2-stage OTA + NMOS input + external CL'
+  topo-ldo-006:
+    path: topologies/topo-ldo-006-cascode-ota-feedforward-miller.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: cascode OTA + feedforward Miller'
+  topo-ldo-007:
+    path: topologies/topo-ldo-007-folded-cascode-ota-external-cl.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: folded-cascode OTA + external CL'
+  topo-ldo-008:
+    path: topologies/topo-ldo-008-fvf-ldo.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: FVF LDO'
+  topo-ldo-009:
+    path: topologies/topo-ldo-009-nmos-pass-chargepump.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: NMOS pass + charge pump'
+  topo-ldo-010:
+    path: topologies/topo-ldo-010-fvf-pmos-cascode-ldo.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: FVF + PMOS cascode LDO'
+  topo-ldo-011:
+    path: topologies/topo-ldo-011-nmos-cascode-ldo.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: NMOS cascode LDO'
+  topo-ldo-2stage-rf-ota-65nm:
+    path: topologies/topo-ldo-2stage-rf-ota-65nm.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: 2-stage RF OTA (TSMC-65nm)'
+  strat-ldo-001:
+    path: strategies/big-cout-ldo-compensation.yml
+    type: strategy
+    module: ldo
+    summary: LDO compensation for large Cout
+  strat-ldo-002:
+    path: strategies/gmid-tsmcN65-lookup.yml
+    type: strategy
+    module: ldo
+    summary: gm/Id LUT for TSMC N65
+  strat-ldo-003:
+    path: strategies/ldo-rf-ota-heavy-load-stability.yml
+    type: strategy
+    module: ldo
+    summary: LDO RF-OTA heavy-load stability
+  strat-ldo-004:
+    path: strategies/spectre-ac-injection.yml
+    type: strategy
+    module: ldo
+    summary: Spectre AC injection technique
+  strat-ldo-005:
+    path: strategies/01-gain.yml
+    type: strategy
+    module: ldo
+    summary: LDO loop-gain design guide (§1 gain)
+  strat-ldo-006:
+    path: strategies/02-bandwidth.yml
+    type: strategy
+    module: ldo
+    summary: LDO bandwidth design guide (§2)
+  strat-ldo-007:
+    path: strategies/03-poles.yml
+    type: strategy
+    module: ldo
+    summary: LDO pole-placement guide (§3)
+  strat-ldo-008:
+    path: strategies/04-zeros.yml
+    type: strategy
+    module: ldo
+    summary: LDO zero-placement guide (§4)
+  strat-ldo-009:
+    path: strategies/05-stability.yml
+    type: strategy
+    module: ldo
+    summary: LDO stability analysis guide (§5)
+  strat-ldo-010:
+    path: strategies/06-psrr.yml
+    type: strategy
+    module: ldo
+    summary: LDO PSRR analysis guide (§6)
+  strat-ldo-011:
+    path: strategies/07-pass-sizing.yml
+    type: strategy
+    module: ldo
+    summary: LDO pass-transistor sizing guide (§7)
+  strat-ldo-012:
+    path: strategies/08-ota-sizing.yml
+    type: strategy
+    module: ldo
+    summary: LDO OTA sizing guide (§8)
+  strat-ldo-013:
+    path: strategies/09-compensation.yml
+    type: strategy
+    module: ldo
+    summary: LDO compensation guide (§9)
+  strat-ldo-014:
+    path: strategies/10-transient.yml
+    type: strategy
+    module: ldo
+    summary: LDO transient analysis guide (§10)
+  strat-ldo-015:
+    path: strategies/11-gmid.yml
+    type: strategy
+    module: ldo
+    summary: LDO gm/Id design guide (§11)
+  strat-ldo-016:
+    path: strategies/12-iteration.yml
+    type: strategy
+    module: ldo
+    summary: LDO iteration/closure guide (§12)
+  strat-ldo-017:
+    path: strategies/appendix-symbols.yml
+    type: strategy
+    module: ldo
+    summary: LDO symbol / notation appendix
+  anti-ldo-001:
+    path: anti-patterns/ac-source-parallel-short.yml
+    type: anti-pattern
+    module: ldo
+    summary: AC source parallel short anti-pattern
+  anti-ldo-002:
+    path: anti-patterns/cff-faking-pm-pseudo-equilibrium.yml
+    type: anti-pattern
+    module: ldo
+    summary: CFF faking phase margin via pseudo-equilibrium
+  anti-ldo-003:
+    path: anti-patterns/pmos-input-low-vcm-ldo.yml
+    type: anti-pattern
+    module: ldo
+    summary: PMOS-input low-Vcm LDO headroom trap
+  anti-ldo-004:
+    path: anti-patterns/rf-mos-multi-silently-ignored.yml
+    type: anti-pattern
+    module: ldo
+    summary: RF MOS multi silently ignored
+  corner-ldo-001:
+    path: corner-lessons/ff-pass-vout-over.yml
+    type: corner-lesson
+    module: ldo
+    summary: FF pass Vout overshoot corner lesson
+  corner-ldo-002:
+    path: corner-lessons/pvt-temp-not-applied.yml
+    type: corner-lesson
+    module: ldo
+    summary: PVT temp not applied corner lesson
+  corner-ldo-003:
+    path: corner-lessons/ss-light-load-pm-worst.yml
+    type: corner-lesson
+    module: ldo
+    summary: SS light-load PM worst corner lesson
+  topo-ota-002:
+    path: topologies/5t_ota.yml
+    type: topology
+    module: ota
+    summary: 'OTA 配方: 5-transistor single-stage OTA'
+  topo-ota-003:
+    path: topologies/current_mirror_load_ota.yml
+    type: topology
+    module: ota
+    summary: 'OTA 配方: current-mirror load OTA'
+  topo-ota-004:
+    path: topologies/folded_cascode_ota.yml
+    type: topology
+    module: ota
+    summary: 'OTA 配方: folded-cascode OTA'
+  topo-ota-005:
+    path: topologies/telescopic_ota.yml
+    type: topology
+    module: ota
+    summary: 'OTA 配方: telescopic-cascode OTA'
+  topo-ota-006:
+    path: topologies/two_stage_miller_ota.yml
+    type: topology
+    module: ota
+    summary: 'OTA 配方: two-stage Miller OTA'
+  topo-ota-007:
+    path: topologies/fully_diff_cmfb_ota.yml
+    type: topology
+    module: ota
+    summary: 'OTA 配方: fully-differential two-stage Miller with CMFB (telescopic 1st
+      + symmetric CS 2nd)'
+  strat-ota-002:
+    path: strategies/ota-spec-ranges.yml
+    type: strategy
+    module: ota
+    summary: OTA 指标范围手册 (spec_ranges)
+  anti-ota-002:
+    path: anti-patterns/ota-pitfalls.md
+    type: anti-pattern
+    module: ota
+    summary: OTA 雷区手册 (pitfalls)
+  topo-ldo-012:
+    path: topologies/pmos-pass-ldo-two-stage.yml
+    type: topology
+    module: ldo
+    summary: 'LDO: PMOS-pass two-stage OTA (big output cap)'
+  proj-ota-cases:
+    path: projects/ota-cases/README.md
+    type: project
+    module: ota
+    summary: OTA 达标案例库 (9 cases + examples)
+  proj-fivetrans-ota:
+    path: projects/fivetrans-ota/spec.yml
+    type: project
+    module: ota
+    summary: LDO 设计者 fivetrans OTA 练习项目
+  proj-ota-5t-33v:
+    path: projects/ota-5t-33v/summary.yml
+    type: project
+    module: ota
+    summary: '5T 单级 OTA (TSMC-65nm 3.3V IO, PMOS input + NMOS mirror): review-mode
+      迭代, M5 尾源欠尺寸陷阱 + DC gain 估算紧裕度(待 EDA)'
+  proj-ota-5t-33v-r2:
+    path: projects/ota-5t-33v-r2/summary.yml
+    type: project
+    module: ota
+    summary: '5T 单级 OTA (TSMC-65nm 3.3V IO, PMOS input + NMOS mirror, 内部 10:1 自偏置):
+      L3 PVT SIMULATED (spectre @100), 3 corners PASS tt46.2dB/27.56MHz/85.5deg/0.353mW
+      等; ss ugbw FAIL→W1 52u→80u 修复(22.83MHz), 2 迭代收敛'
+  proj-ota-telescopic-33v:
+    path: projects/ota-telescopic-33v/summary.yml
+    type: project
+    module: ota
+    summary: 'Telescopic cascode OTA (NMOS input + cascode + PMOS mirror, TSMC-65nm
+      3.3V IO): L3 PVT SIMULATED @130 (spectre), 5 corners PASS 53.4-55dB/39-57MHz/PM~83deg;
+      VB2=1.8V key, isource-direction fix'
+  proj-ota-33v:
+    path: projects/ota_33v/summary.yml
+    type: project
+    module: ota
+    summary: 'Telescopic cascode OTA (TSMC-65nm 3.3V IO): reuse-verified, L3 PVT SIMULATED
+      @192.168.16.100, 3 corners PASS iter1 (51.99-54.85dB/39.4-57.5MHz/PM~83deg/0.317mW);
+      复用案例尺寸零迭代收敛'
+  proj-ldo-dig2:
+    path: projects/ldo_dig2/04_deliverables/LDO_DIG2_final_summary.md
+    type: project
+    module: ldo
+    summary: LDO_DIG2 项目（未分类归档）
+  proj-ldo-0v9-20ma:
+    path: projects/ldo_0v9_20ma/spec.yml
+    type: project
+    module: ldo
+    summary: LDO 0.9V/20mA 完整项目 (spec/circuit/testbench/verifier-reports)
+  proj-ldo-1v2-100ma:
+    path: projects/LDO_1V2_100mA/summary.yml
+    type: project
+    module: ldo
+    summary: LDO 1.2V/100mA 项目沉淀
+  proj-ldo-0v9-drx65:
+    path: projects/LDO_0V9_20mA_DRY_65nm/summary.yml
+    type: project
+    module: ldo
+    summary: LDO 0.9V/20mA DRY 65nm 项目沉淀
+  proj-ldo-analog:
+    path: projects/ldo_analog/spec.yml
+    type: project
+    module: ldo
+    summary: ldo_analog 项目沉淀
+  proj-fm377:
+    path: projects/fm377/bandgap/summary.yml
+    type: project
+    module: bandgap
+    summary: fm377 bandgap (bg_v02) KB 项目
+  proj-kb-bandgap:
+    path: projects/2026-08-23-nb1601-bandgap/summary.yml
+    type: project
+    module: bandgap
+    summary: kb bandgap 项目群 (fm393/fm394/fm399/fm436/fm449/fm460/fm524/fm544/nb1601/nb1910/nb2415)
+  proj-001:
+    path: projects/2026-08-29-bandgap_v1v2_tc30/summary.yml
+    type: project
+    summary: bandgap_v1v2_tc30
+  proj-002:
+    path: projects/2026-08-30-ldo_1v1/summary.yml
+    type: project
+    summary: ldo_1v1
+  corner-ota-003:
+    path: corner-lessons/two-stage-ota-ahuja-zero-source-impedance.yml
+    type: corner-lesson
+    module: ota
+    summary: 'Two-stage Miller+Ahuja OTA: zero z=1/(2pi*Cc*(Rz+Z_s,Ma)), Z_s=1/gm_a+R1/(gm_a*rds_a);
+      plateau level 20log10(gm1*Z_s) Cc-independent; LA↑ in weak inv halves gm_a (measured
+      regression)'
+  anti-ota-003:
+    path: anti-patterns/ahuja-cg-reversed-orientation.yml
+    type: anti-pattern
+    module: ota
+    summary: Ahuja CG drain wired to OUTPUT (not stage-1 high-Z node) -> no Miller
+      multiplication, fp1 65kHz, GBW 54MHz, PM 34deg
+  strat-ota-005:
+    path: strategies/two-stage-ota-dc-feedback-tb.yml
+    type: strategy
+    module: ota
+    summary: 'Two-stage OTA TB: unity-gain Rfb=1G dcop + STB loop gain (Vbr 0V bridge);
+      non-inverting input is the high-Z side (vn)'
+  proj-ota-2stage-33v:
+    path: projects/ota-2stage-33v/summary.yml
+    type: project
+    module: ota
+    summary: 'Two-stage Miller+Ahuja OTA (TSMC-65nm 3.3V IO): L3 PVT SIMULATED 5 corners
+      PASS (FINAL-4), Av 77.7-82.4dB / UGF 87-126MHz / PM 52.1-65.6deg / P 0.436-0.532mW
+      / 11-11 sat; PM>=50 & P<=0.55 amended gates'
+  case-ota-2stage-33v:
+    path: projects/ota-2stage-33v/trajectory.yml
+    type: block-case
+    module: ota
+    summary: 'Two-stage OTA trajectory: VBP re-bias (mirror pole 33->126MHz) + canonical
+      Ahuja wiring + Ma bulk-tie; 4 iterations / 7 verifier passes; zero-placement
+      lesson'
+  proj-003:
+    path: projects/2026-08-30-ldo_0v9_10m/summary.yml
+    type: project
+    summary: ldo_0v9_10m
+  corner-001:
+    path: corner-lessons/ff-corner-input-pair-vds-collapse-in-low-vdd-ldo-fixed-by-cascoded-pair.yml
+    type: corner-lesson
+    summary: FF-corner input-pair Vds collapse in low-VDD LDO fixed by cascoded pair
+  anti-001:
+    path: anti-patterns/nmos-input-pair-with-pmos-tail-source-causes-dc-dead-state.yml
+    type: anti-pattern
+    summary: NMOS input pair with PMOS tail source causes DC dead state
+  proj-004:
+    path: projects/2026-08-30-div2_4to6g/summary.yml
+    type: project
+    summary: div2_4to6g
+  strat-ldo-018:
+    path: strategies/fast-settle-ldo-droop-in-band.yml
+    type: strategy
+    summary: 'Fast-settle LDO: droop-in-band with large Cout (settle = edge end, not
+      loop recovery)'
+  strat-ldo-019:
+    path: strategies/behavioral-ac-model-must-match-tb.yml
+    type: strategy
+    summary: 'Behavioral AC loop model must mirror TB: ESR zero + output-node parasitic
+      before PM table claims'
+  corner-ldo-004:
+    path: corner-lessons/gm1-calibration-resolves-pm-collapse.yml
+    type: corner-lesson
+    summary: Measured gm1 (0.51x square-law, in calibration band) resolves nominal-parameter
+      PM-collapse predictions
+  corner-ldo-005:
+    path: corner-lessons/esr-zero-flips-worst-case-corner-direction.yml
+    type: corner-lesson
+    summary: With ESR zero in-band, full/mid-load becomes worst-case PM (direction
+      flip vs light-load-worst)
+  anti-ldo-005:
+    path: anti-patterns/behavioral-ac-model-mismatch-tb.yml
+    type: anti-pattern
+    summary: Behavioral AC model omitting TB elements (ESR zero, output-node parasitic)
+      hides full/mid-load PM collapse
+  proj-005:
+    path: projects/2026-09-01-ota_5t_new/summary.yml
+    type: project
+    summary: ota_5t_new
+  proj-006:
+    path: projects/2026-09-01-ota_5t/summary.yml
+    type: project
+    summary: ota_5t
+  proj-007:
+    path: projects/2026-09-03-fm524_bandgap/summary.yml
+    type: project
+    summary: fm524_bandgap
+  corner-bandgap-008:
+    path: corner-lessons/fm524-bg-trim-code-11-vref-centering.yml
+    type: corner-lesson
+    module: bandgap
+    summary: 'Fixed FM524 bandgap: existing bg_trim code 11 centers Vref near 1.20
+      V without transistor-level edits'
+  corner-bandgap-009:
+    path: corner-lessons/fm524-bg-tt-sweep-not-signoff.yml
+    type: corner-lesson
+    module: bandgap
+    summary: Bandgap TT/27 C trim sweep alone is not sign-off; PVT and startup coverage
+      are required
+  proj-008:
+    path: projects/2026-09-06-ota_5t/summary.yml
+    type: project
+    summary: ota_5t
+  proj-009:
+    path: projects/2026-09-07-ota_2stage_miller_20260907/summary.yml
+    type: project
+    summary: ota_2stage_miller_20260907
+  proj-010:
+    path: projects/2026-09-07-ldo_default/summary.yml
+    type: project
+    summary: ldo_default
+  anti-ota-004:
+    path: anti-patterns/stale-spectre-model-include-path.yml
+    type: anti-pattern
+    module: ota
+    summary: Stale Spectre model include path blocks first simulation
+  anti-ota-005:
+    path: anti-patterns/spectre-vsource-ac-magnitude-syntax.yml
+    type: anti-pattern
+    module: ota
+    summary: Spectre vsource AC uses mag=1; ac magnitude=1 causes SFE-874
+  corner-ota-004:
+    path: corner-lessons/ota-ss-current-gbw-tight-corner.yml
+    type: corner-lesson
+    module: ota
+    summary: SS/125C limits current and GBW in the two-stage Miller OTA
+  anti-ota-006:
+    path: anti-patterns/miller-compensation-parameter-drift.yml
+    type: anti-pattern
+    module: ota
+    summary: Keep Miller compensation values consistent across spec, netlist, and testbench

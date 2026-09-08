@@ -1,0 +1,16 @@
+id: strat-shared-003
+type: strategy
+name: "gm/Id Sizing Targets"
+tags: [sizing, gm-id, analog, design]
+content:
+  description: "Reference gm/Id targets for common analog building blocks from designer-prompt.md."
+  key_points:
+    - "Input pair: gm/Id ~ 15-20 (moderate inversion, balance noise/speed/gm)."
+    - "Current mirrors / tail: gm/Id ~ 10-15 (saturation, good matching)."
+    - "Cascode: gm/Id ~ 10-15 (saturation)."
+    - "gm/Id ~ 10 = typical saturation; ~20 = typical subthreshold."
+derived_from: ["prompts/designer-prompt.md"]
+confidence: verified
+source: "prompts/designer-prompt.md"
+created: 2026-08-23
+updated: 2026-08-23

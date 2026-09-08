@@ -1,0 +1,114 @@
+id: topo-ota-007
+name: "Fully-differential two-stage Miller OTA with CMFB (telescopic 1st + symmetric CS 2nd)"
+level: 5
+topology: two_stage_fully_diff
+
+supply:
+  vdd: 3.3
+  vcm: 1.2                 # NMOS 输入 → Vcm_in 高(近 VDD)
+  vcm_out: 1.65            # 输出共模目标 = VDD/2(CMFB 设定,与 Vcm_in 独立)
+  process: "TSMC-65nm 3.3V"
+  devices: [nch_33, pch_33]
+
+specs:
+  Av:     { unit: dB,   default: 60 }
+  GBW:    { unit: MHz,  default: 20 }
+  PM:     { unit: deg,  default: 60 }
+  CL:     { unit: pF,   default: 2 }
+  Itail:  { unit: uA,   default: 200 }   # 总功耗预算(IREF + CMFB + 两级,第二级 ×2)
+  SR:     { unit: V/us, default: 30 }
+  Vin_cm: { unit: V,    default: 1.2 }   # NMOS 输入 → Vcm 高(近 VDD)
+  Vout_cm: { unit: V,   default: 1.65 }  # 输出共模(CMFB 参考)
+  Vout_swing: { unit: V, default: 2.0 }
+
+nodes:
+  vin_p: vp
+  vin_n: vn
+  vout_p: vout_p
+  vout_n: vout_n
+  vbias: nbias               # 尾源 + IREF 参考
+  pbias: pbias               # 第一级 PMOS 电流源负载偏置
+  vcmfb: vcmfb               # CMFB 误差放大器输出 → 第二级 NMOS 负载栅
+  vdd: VDD
+  vss: VSS
+  internal: [net_tail, net_ap, net_an, net_xp, net_xn, net_cm, net_mcp, tail_cm]
+
+devices:
+  - { id: M1p, role: input_p,      type: nch_33 }   # 第一级 NMOS 输入对(对称)
+  - { id: M1n, role: input_n,      type: nch_33 }
+  - { id: M3p, role: cascode_p,    type: nch_33 }   # NMOS cascode(VB2)
+  - { id: M3n, role: cascode_n,    type: nch_33 }
+  - { id: M5p, role: load_cs_p,    type: pch_33 }   # 第一级 PMOS 电流源负载(栅=pbias,非镜)
+  - { id: M5n, role: load_cs_n,    type: pch_33 }
+  - { id: M7,  role: tail,         type: nch_33 }   # 第一级尾源
+  - { id: M8p, role: cs_stage2_p,  type: pch_33 }   # 第二级 PMOS 共源(对称)
+  - { id: M8n, role: cs_stage2_n,  type: pch_33 }
+  - { id: M9p, role: load_stage2_p,type: nch_33 }   # 第二级 NMOS 负载(栅=vcmfb,CMFB 控制!)
+  - { id: M9n, role: load_stage2_n,type: nch_33 }
+  - { id: Mbias, role: bias_ref,   type: nch_33 }   # nbias 参考 diode
+  - { id: Mpb,  role: bias_ref_p,  type: pch_33 }   # pbias 参考 diode
+  - { id: Mcmp, role: cmfb_sense,  type: pch_33 }   # CMFB 误差放大器输入对(检测 net_cm)
+  - { id: Mcmn, role: cmfb_ref,    type: pch_33 }   # CMFB 输入对(参考 VCM_out)
+  - { id: Mcm3, role: cmfb_load1,  type: nch_33 }   # CMFB 镜负载 diode(Mcmp 侧)
+  - { id: Mcm4, role: cmfb_load2,  type: nch_33 }   # CMFB 镜输出 → vcmfb
+  - { id: Mcm5, role: cmfb_tail,   type: nch_33 }   # CMFB 误差放大器尾源
+
+equations:
+  # 全差分两级:差模增益/GBW/PM 与单端两级相同(对称半电路)
+  CC: "CL / 2 .. CL"                     # Miller 补偿电容(起手 0.8·CL)
+  gm1: "2 * pi * GBW * CC"               # GBW = gm1/(2π·CC),与 CL 无关
+  A1: "gm1 * (ro1 || ro3 || ro5)"        # telescopic 第一级 ≈53dB(实测,与电流无关)
+  A2: "gm8 * (ro8 || ro9)"               # 第二级(每侧)
+  Av: "A1 * A2"                          # 两级相乘(60dB 目标:53 + 17)
+  p2: "gm8 / (2 * pi * CL)"              # 第二极点(65nm IO 受 Cgs8 拖累,实际更低)
+  PM_req: "p2 >= 2.2 * GBW"              # PM≥60° 条件
+  # CMFB:输出共模检测 net_cm=(vout_p+vout_n)/2,误差放大 → vcmfb → M9 栅(负反馈)
+  A_cm: "A_cmfb * gm9 * (ro8 || ro9)"    # 共模环路增益(需 ≥ 20dB 且稳定)
+  SR: "min(Itail1/CC, 2*I6/CL)"          # 摆率(全差分:第二级两侧电流)
+
+calibration:
+  muCox_n: { value: 187e-6, unit: "A/V^2", backout: "实测(device_params.md)" }
+  muCox_p: { value: 62e-6,  unit: "A/V^2", backout: "实测(device_params.md)" }
+  A1_telescopic: { value: 53, unit: dB, backout: "实测(telescopic 案例)" }
+  vth_mismatch_factor: { value: 0.41, unit: "", backout: "两级 v7 实测:M8 静态匹配需乘 (|Vov5|/|Vov8|)²" }
+  gds_effect: { value: 1.36, unit: "", backout: "两级 v7 实测:第二级负载电流沟道调制 +36%" }
+
+sensitivities:
+  - { param: CC,      up: [PM], down: [GBW, SR], note: "补偿电容↑ → 主极点下移,PM↑ 但 GBW↓" }
+  - { param: "gm1/W1", up: [GBW], down: [PM], note: "第一级 gm↑ → GBW↑" }
+  - { param: "I6/W8", up: [PM], down: [power], note: "第二级电流↑ → p2↑,PM↑(功耗换相位裕度)" }
+  - { param: RS, up: [CM_stability], down: [A2], note: "CMFB 检测电阻↑ → 输出加载小,但 net_cm 节点极点↓(CM 环路慢)" }
+  - { param: "A_cmfb", up: [CM_accuracy], down: [CM_stability], note: "CMFB 误差放大器增益↑ → 共模收敛准,但易振荡;振荡时降增益/用 partial CMFB" }
+  - { param: VCM_out, up: [swing_headroom], down: [], note: "输出共模参考,设 VDD/2 得最大摆幅" }
+
+sizing_rules:
+  - "finger width 默认 1u,镜像比只通过 nf/multi 调"
+  - "输入对 gm/Id 8~12;cascode/电流源/偏置 gm/Id ~10"
+  - "混合 L:第一级 L1=380n(cascode L3=1u、PMOS 负载 L5=1u);第二级 380n(ro 小→p2 高)"
+  - "镜像对(Mbias/M7 同 L=380n;Mpb/M5 同 L=1u)必须同 L,否则镜像比=(W/L)比失真"
+  - "Wmin=400n, Lmin=380n(3.3V 档)"
+  - "Itail 预算(总 200u):IREF 5% + IPB 5% + 输出 CMFB 尾源 2.5% + 第一级 CMFB 5% + 第一级 15% + 第二级每侧剩余"
+  - "CMFB 尾源是独立 VDD→VSS 支路,必须独立计入功耗预算(不能靠镜像参考管不额外计)"
+  - "第一级感测电阻 RS1 ≥ 10×Rout1(第一级 Rout1≈1.09M → RS1=3M);输出感测 RS ≥ 10×Rout2(≈200k)"
+  - "CMFB 误差放大器用镜负载(NOT diode 负载直连 vcmfb——diode-load CMFB trap)"
+
+pitfalls:
+  - "GBW = gm1/(2π·CC),不是 gm1/(2π·CL)——全差分同理(对称半电路)"
+  - "第二极点 p2 = gm8/(2π·CL) 必须 ≥ 2.2×GBW 才有 PM≥60°(65nm IO 实际受 Cgs8 拖累更低)"
+  - "两级 Miller 在 65nm IO 的 GBW 物理上限:受 p2 约束(GBW=20MHz+PM60+Itotal200u 不可达,实测极限 ~17.2MHz;案例已降标 17MHz 达标)"
+  - "**全差分 telescopic 第一级输出是高阻无反馈节点**:PMOS 负载 vs NMOS cascode 电流源对顶,静态镜像 ±4% 失配就把 net_ap/an 推到轨(3.2V/0.16V),第二级深度导通、Itotal 爆炸。**根治:加第一级 CMFB 钳 net_ap/an 共模,不靠调 W**"
+  - "**第一级 CMFB 输入共模高(VCM1≈2.2V)→ 必须 NMOS 输入对 + PMOS 镜负载**(PMOS 输入会重蹈尾源电平坑)"
+  - "**第一级 CMFB 输出 vcmfb1 接 M5 负载栅;输出 CMFB 输出 vcmfb 接 M9 负载栅**——两环路分别钳 net_ap/an 共模与 vout 共模,独立电压源(VCM1/VCM_OUT)"
+  - "CMFB 误差放大器**必须用镜负载**,不能用 diode 负载直连 vcmfb(wiki anti-001:DM 增益 23→2.6dB)"
+  - "CMFB 极性必须负反馈:第一级 net_ap↑→net_cm1↑→Mc1p(Id↑)→vcmfb1↑→M5 电流↓→net_ap↓ ✓;输出 vout↑→net_cm↑→vcmfb↑→M9 电流↑→vout↓ ✓。接反锁 rail"
+  - "输出共模与输入共模独立:Vcm_in 由输入对决定(高,近 VDD);Vcm_out 由 CMFB 定(VDD/2),不要混"
+  - "第二级 M8 栅=net_ap(高电平,VCM1=2.5)→ **PMOS CS**;|Vov8|=(VDD−VCM1)−|Vth_p|=0.227V,W8 由此反推(别 clamp 到 0.15 否则 W8 大 5 倍)"
+  - "第二级 M9(NMOS 负载)栅=vcmfb(输出 CMFB 控制),不接 nbias——CMFB 通过调 M9 电流钳输出共模"
+  - "CM 环路有自己的增益/带宽/相位裕度,需单独验证(振荡 → 降 A_cmfb 或 partial CMFB)"
+  - "全差分理想仿真(无失配)PSRR/CMRR 是数值地板(-600dB 无意义),要 MC/dcmatch 才有意义"
+  - "LUT(nch_33/pch_33)是 L=380n 表征,查表定 W 后必须按 L/380n 缩放"
+  - "AC 低频相位:两级差分链同相 ≈0°(非单端两级 −180°),PM=180+phase 直接算"
+  - "全差分输出 CMFB 参考电压必须有独立 vsource(VCM_OUT=1.65 只写 parameters 不接电源 → 参考栅 0V,共模错位)"
+
+checklist: checklists/fully_diff_cmfb_ota.yml
+template: templates/fully_diff_cmfb_ota.scs

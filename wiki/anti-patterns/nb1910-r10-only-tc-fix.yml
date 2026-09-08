@@ -1,0 +1,32 @@
+id: anti-bandgap-008
+type: anti-pattern
+name: "R10 or current scaling passes Vref and power but leaves TC unsolved"
+tags: [bandgap, resistor-chain, r10, current-scaling, tc, optimization]
+process_nodes: [40nm]
+
+content:
+  description: >
+    In a fixed VBE/PTAT resistor-chain bandgap, centering Vref and reducing
+    power by changing the R10 scale or mirror current does not guarantee that
+    the temperature-coefficient null has been restored.
+  failure_mechanism: >
+    R10 and current scaling primarily change the output operating point and
+    branch currents. They do not independently correct the corner-dependent
+    ratio between CTAT and PTAT temperature slopes, so a design can meet Vref
+    and power while retaining a large local TC.
+  measured_impact: >
+    Candidate-2 reached approximately 1.57 V with low nominal power after R10
+    and mirror scaling. Candidate-3 changed the six R10 segments from 102.5u
+    to 78.5u and reached 1.202-1.206 V with maximum power 74.63 uW, but dense
+    TC still reached 72.76 ppm/C.
+  fix: >
+    Treat Vref centering, power, and TC nulling as separate optimization
+    objectives. After voltage and power are centered, retune the PTAT/CTAT
+    ratio or an explicitly available trim mechanism and rerun dense TC across
+    all required corners.
+
+derived_from: ["proj-kb-bandgap"]
+confidence: unverified
+source: "WORK_NB1910_BANDGAP/verifier-reports/candidate3/margin-report.md"
+created: 2026-09-03
+updated: 2026-09-03

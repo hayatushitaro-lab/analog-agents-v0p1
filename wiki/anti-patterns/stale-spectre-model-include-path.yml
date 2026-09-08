@@ -1,0 +1,30 @@
+id: anti-ota-004
+type: anti-pattern
+name: "Stale Spectre model include path blocks first simulation"
+tags: [ota, spectre, model-include, pdk, pre-sim, simulation-setup, workflow]
+process_nodes: [65nm]
+
+content:
+  description: >
+    A reachable Spectre server does not guarantee that the configured model
+    include path is still valid. The remote PDK filename and directory must be
+    checked before the first circuit simulation.
+  failure_mechanism: >
+    The simulator fails during model-file read-in, before DC operating point or
+    circuit behavior is evaluated, when the configured include path points to a
+    retired or renamed PDK file.
+  detection:
+    - "Probe the remote PDK path before dispatching the first Spectre job."
+    - "Confirm that the requested corner sections exist in the selected file."
+    - "Classify a missing model file as an environment failure, not a circuit failure."
+  fix: >
+    Locate the reachable PDK model file and its section names using a read-only
+    remote check, then update the testbench include before rerunning verification.
+  measured_impact:
+    - "One pre-simulation block; no circuit result was available until the include path was corrected."
+
+derived_from: ["proj-009"]
+confidence: unverified
+source: "OTA 2-stage Miller verification, 2026-09-07"
+created: 2026-09-07
+updated: 2026-09-07

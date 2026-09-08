@@ -1,0 +1,32 @@
+id: anti-bandgap-001
+type: anti-pattern
+name: "GF 0.13um Model Include Without design.scs and section= Selections"
+tags: [spectre, model-include, gf, 0.13um, simulation-setup]
+process_nodes: [0.13um]
+
+content:
+  description: >
+    Including the GF 0.13um Spectre library files (`sm142001.scs`,
+    `sm158001_10.scs`) as plain `include "file.scs"` without the pre-parameters
+    file and without selecting sections fails at read-in or elaboration.
+  failure_mechanism: >
+    The files are organized as `library MyLib / section ...`. A plain include
+    either trips `SFE-675 (Illegal library definition)` or, when a section is
+    selected, misses parameters `res_vcr_sw` and `fnoicor` that are defined in
+    `design.scs`, producing `SFE-1996 (unknown parameter)`. The sm158001_10.scs
+    file also starts with a UTF-8 BOM, which Spectre reports as an unexpected
+    character.
+  measured_impact: >
+    fm377 bandgap verification failed twice before the correct include order
+    was found: SFE-675/SFE-841 on plain include, then SFE-1996 on
+    section-selected include without design.scs.
+  fix: >
+    Include `design.scs` first, then the model file once per needed section,
+    e.g. section=typical + section=bjt_typical + section=res_typical (and
+    cap_ee_typical from sm158001_10.scs). Strip the BOM from sm158001_10.scs.
+
+derived_from: ["proj-fm377-bandgap"]
+confidence: verified
+source: "fm377 bandgap verification 2026-08-23"
+created: 2026-08-23
+updated: 2026-08-23

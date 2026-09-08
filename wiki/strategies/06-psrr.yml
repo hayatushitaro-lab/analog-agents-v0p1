@@ -1,0 +1,22 @@
+id: strat-ldo-010
+type: strategy
+name: "LDO PSRR 分析方程 (§6 psrr)"
+tags: [ldo, psrr, power-supply, cascode, rejection]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    低频 PSRR 由环路增益决定，高频随频率以 -20/-40dB/dec 滚降，频带之上的固有 PSRR
+    由 pass 管 gmp/gds 决定。cascode 结构提供额外高频 PSRR。
+  how:
+    - "低频 PSRR_DC=20log(T_0)=20log(A_OL×β×gmp×Rout_pass)。单级 PSRR_DC≈A_OL×β×gmp/gds_pass；两级乘上第二级增益。"
+    - "高频: UGBW<f<p2 时 PSRR=20logT_0-20log(f/UGBW)；f>p2 变为 -40dB/dec；f>>p2 到固有值 PSRR≈20log(gmp/gds_pass)。"
+    - "要 PSRR>X dB@f0 需 UGBW>f0；要固有 PSRR>Y dB 需 gmp/gds_pass>10^(Y/20)。"
+    - "cascode PSRR: FVF+cascode 为 gm_cas×rout_ota，PMOS cascode 双下为 gm_n×gm_p×rout_ota；高频约 gm_cas/(s×Cgd_cas) 衰减。"
+  when_to_use: "LDO 需要满足低频/特定频率 PSRR 指标、或选 cascode 结构提纯抑制时。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

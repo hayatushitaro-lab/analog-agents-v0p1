@@ -1,0 +1,22 @@
+id: strat-ldo-015
+type: strategy
+name: "gm/Id 设计方程 (§11 gmid)"
+tags: [gm-id, sizing, weak-inversion, intrinsic-gain, ota, ldo]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    gm/Id 法核心定义与 W/L 推导。强反型 gm/Id=2/Veff≈4-10，中等反型≈10-20，
+    弱反型≈1/(n×VT)≈20-32。不同器件角色选择不同 gm/Id 目标。
+  how:
+    - "W/L 推导: W/L=gm²/(2×μ×Cox×Id)=(gm/Id)²×Id/(2×μ×Cox)；查表法输入(model,Id,gm/Id_target,L_options) 输出(W,L,Veff,gain,Id/W)。"
+    - "本征增益 gain_0=gm/gds=(gm/Id)×(1/(λ×Id))；λ=1/(V_A×L)，V_A≈0.5-1V/µm。L↑→gain↑。"
+    - "器件 gm/Id 目标: pass 管 2-6(高 Id/W 低 dropout)；差分对 8-15；电流镜 8-12；尾电流 6-10；cascode 4-6。"
+    - "温度: 温度↑→gm/Id↓。工艺: SS Vth↑→gm/Id↑但 gm↓；FF 相反。"
+  when_to_use: "用 gm/Id 方法论对 OTA/pass 各管子做反型区选择与 W/L 推导、评估本征增益与温度/工艺漂移时。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

@@ -1,0 +1,24 @@
+id: strat-ldo-006
+type: strategy
+name: "LDO 带宽设计方程 (§2 bandwidth)"
+tags: [ldo, bandwidth, ugbw, gbw, psrr]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    环路带宽 UGBW 分外部大电容 LDO 与 capless LDO 两种估算。
+    外部大电容（输出主极点）: UGBW = gmp/(2π×CL)，须满足 UGBW < p2/4。
+    Capless（EA 主极点）: UGBW = gm_EA/(2π×Cc)，其中
+    gm_EA = gm_stage1×(ro_stage1/(ro_stage1+1/gm_stage2))。带宽越高，PSRR 滚降点越高。
+  how:
+    - "外部大电容: UGBW=gmp/(2π×CL)，gmp=2×Iload/Veff_pass，p2=1/(2π×Rout_EA×Cpar_EA)，约束 UGBW < p2/4。"
+    - "Capless: UGBW=gm_EA/(2π×Cc)，p2=1/(2π×Rout_pass×Cout)，同样约束 UGBW < p2/4。"
+    - "OTA 增益带宽积 GBW_EA = gm_diff/(2π×Cload_EA)，Cload_EA=Cc+Cpar_diff，gm_diff=2×gm_M1。"
+    - "带宽- PSRR: PSRR(f)=20log(T_0)-20log(f/UGBW) (f>UGBW)。要 PSRR>X dB @f0 需 UGBW > f0×10^((X-20logT_0)/20)。"
+  when_to_use: "需要把 spec 的带宽/PSRR 需求换算成器件的 gm、电流、补偿电容预算时。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

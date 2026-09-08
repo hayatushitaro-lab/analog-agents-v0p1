@@ -1,0 +1,21 @@
+id: corner-bandgap-007
+type: corner-lesson
+name: "FF is the tightest TC corner, SS the tightest va-vb offset gate"
+tags: [bandgap, corner, ff, ss, tc, offset, mismatch]
+process_nodes: [65nm]
+
+content:
+  description: >
+    L3 five-corner matrix on the current-mode bandgap: FF holds the tightest
+    TC (26.69 ppm/C vs 30, margin 3.31) and SS holds the tightest OTA1 offset
+    gate (va-vb @27C = 1.839 mV vs 2 mV, margin 0.161 mV; sweep max 2.090 mV
+    off-27C is informational). Any future trim/mismatch/MC work should target
+    these two corners first.
+  measured_impact:
+    - "TC: TT 20.32 / SS 10.85 / FF 26.69 ppm/C; va-vb@27C: TT 1.678 / SS 1.839 / FF 1.509 mV."
+
+derived_from: ["proj-001"]
+confidence: unverified
+source: "WORK_bandgap_1v2_tc30 verifier L3 (2026-08-29)"
+created: 2026-08-31
+updated: 2026-08-31

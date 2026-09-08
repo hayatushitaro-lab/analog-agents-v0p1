@@ -1,0 +1,59 @@
+# ============================================================
+# Current-mirror load OTA Checklist (NMOS input + PMOS mirror load)
+# ============================================================
+
+gain_path_continuity:
+  description: "Signal path from input to output must be continuous"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: []
+  how: >
+    Trace: vp/vn gate → M1/M2 drain (net_d1 / vout) → PMOS mirror M3/M4 → vout.
+    M1 drain=net_d1 (diode M3),M2 drain=vout (输出).
+    M4 gate 接 net_d1(镜像),M3 gate 接自己 drain(diode)。
+
+input_pair_type_vs_vcm:
+  description: "NMOS input pair needs HIGH Vcm"
+  method: estimate
+  severity: error
+  effort: lite
+  auto_checkable: false
+  references: []
+  how: >
+    NMOS 输入:net_tail = Vcm - Vgs。需要 Vds_tail = net_tail >= Vdsat_tail。
+    Vcm 太低 → net_tail 逼近 VSS → M5 进线性区 → 增益崩塌。
+    3.3V 工艺:Vcm 建议 1.8~2.6V,Vgs~0.7V,net_tail~1.1~1.9V,留足 M5 余量。
+
+mirror_ratio:
+  description: "M4/M3 PMOS current mirror must be 1:1 (or intentional ratio)"
+  method: estimate
+  severity: warn
+  effort: lite
+  auto_checkable: false
+  references: []
+  how: >
+    M3、M4 同 L、同 finger width,只靠 nf/multi 调比例,默认 1:1。
+
+output_swing_high:
+  description: "Output high swing limited by load-mirror Vov"
+  method: estimate
+  severity: warn
+  effort: standard
+  auto_checkable: false
+  references: []
+  how: >
+    上摆幅 ≈ VDD - |Vov3|。下摆幅 ≈ Vov5 + Vov1。
+    要求 swing 时核对两侧余量。
+
+dc_operating_point:
+  description: "All devices in saturation at DC"
+  method: semantic
+  severity: error
+  effort: standard
+  auto_checkable: true
+  references: []
+  how: >
+    OP 检查:M1/M2/M5 (NMOS) 和 M3/M4 (PMOS) region=2(saturation)。
+    任一进 triode → 先修偏置再做 AC。

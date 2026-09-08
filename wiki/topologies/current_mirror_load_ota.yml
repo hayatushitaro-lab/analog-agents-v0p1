@@ -1,0 +1,71 @@
+id: topo-ota-003
+name: "Current-mirror load OTA (NMOS input pair + PMOS current-mirror load)"
+level: 2
+topology: single_stage
+
+supply:
+  vdd: 3.3
+  vcm: 2.1
+  process: "TSMC-65nm 3.3V"
+  devices: [nch_33, pch_33]
+
+specs:
+  Av:     { unit: dB,   default: 40 }
+  GBW:    { unit: MHz,  default: 100 }
+  PM:     { unit: deg,  default: 60 }
+  CL:     { unit: pF,   default: 2 }
+  Itail:  { unit: uA,   default: 100 }
+  SR:     { unit: V/us, default: 50 }
+  Vin_cm: { unit: V,    default: 2.1 }
+  Vout_swing: { unit: V, default: 2.0 }
+
+nodes:
+  vin_p: vp
+  vin_n: vn
+  vout: vout
+  vbias: vbias
+  vdd: VDD
+  vss: VSS
+
+devices:
+  - { id: M1, role: input_p,      type: nch_33 }
+  - { id: M2, role: input_n,      type: nch_33 }
+  - { id: M3, role: load_mirror1, type: pch_33 }
+  - { id: M4, role: load_mirror2, type: pch_33 }
+  - { id: M5, role: tail,         type: nch_33 }
+
+equations:
+  gm1: "2 * pi * GBW * CL"
+  Id:  "Itail / 2"
+  gm_over_Id: "gm1 / Id"
+  Vov1: "vov_from_gmid(gm/Id)  # 分段"
+  W1: "W_from_gmid(Id, L1, gm/Id, muCox_n)  # NMOS 输入对"
+  Av: "gm1 * (ro2 || ro4)"
+  SR: "Itail / CL"
+
+calibration:
+  muCox_n: { value: 60e-6, unit: "A/V^2", backout: "从 W1 反推 gm1 实测" }
+  muCox_p: { value: 30e-6, unit: "A/V^2", backout: "从负载镜反推" }
+  lambda_n: { value: 0.1, unit: "1/V", backout: "1/(Av实测*Id*gds...)" }
+  lambda_p: { value: 0.1, unit: "1/V", backout: "..." }
+
+sensitivities:
+  - { param: "W1/W2", up: [GBW, Av], down: [PM], note: "输入对宽度↑ → gm↑" }
+  - { param: Itail, up: [GBW, SR, power], down: [], note: "尾电流↑ → gm/SR↑ 但功耗↑" }
+  - { param: "W3/W4", up: [Vout_swing_high], down: [Av], note: "负载镜宽↑ → 增益↓,上摆幅↓" }
+  - { param: L_all, up: [Av], down: [GBW], note: "L↑ → ro↑ → Av↑,寄生↑ → GBW↓" }
+
+sizing_rules:
+  - "finger width 默认 1u,镜像比只通过 nf/multi 调"
+  - "输入对 gm/Id 目标 10~15,负载镜/尾源 gm/Id ~10"
+  - "混合 L:输入对短 L,负载镜/尾源 2-4x 最小 L"
+  - "3.3V 档尺寸下限:Wmin=400n, Lmin=380n"
+
+pitfalls:
+  - "NMOS 输入 → Vcm 必须高(近 VDD,约 0.7~VDD),否则尾源 M5 进线性区"
+  - "与 5T(PMOS 输入)对偶:低 Vcm 用 PMOS 输入,高 Vcm 用 NMOS 输入"
+  - "单端输出增益 ~30~45dB,要 60dB+ 用 cascode/两级"
+  - "PMOS 负载镜 M3/M4 源接 VDD,体接 VDD"
+
+checklist: checklists/current_mirror_load_ota.yml
+template: templates/current_mirror_load_ota.scs

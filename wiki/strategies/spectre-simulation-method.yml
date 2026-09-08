@@ -1,0 +1,45 @@
+id: strat-ota-003
+type: strategy
+name: "Spectre 仿真方法: 远端 spectre 调用 + PSF real/imag 解析 + netlist 兼容性 (OTA 套用 LDO 方法)"
+tags: [spectre, simulation, psf, remote, netlist, ota, ldo, review-verify]
+process_nodes: [65nm, 180nm]
+
+content:
+  description: >
+    从 LDO 项目 (ldo_0v9_20ma）沉淀、并在 OTA (ota-5t-33v）实际验证的工作仿真方法。
+    LDO 本来就是靠 SSH 到远端 Cadence 服务器跑 Spectre（servers.yml runtime），不是本地 EDA。
+    方法分三层：调用、testbench、结果解析。
+  remote_execution:
+    - "远端 spectre: ssh -i <key> <user>@<host> 后 /opt/eda/cadence/SPECTRE181/bin/spectre -format psfascii tb_xxx.scs"
+    - "工作目录 /home/IC/wa_sim; 现用服务器 IC@192.168.16.130 (原 .128 已变更)。"
+    - "模型 include 由 testbench 提供: include \".../toplevel_abs.scs\" section=tt_lib (corner 用 ss_lib/ff_lib)"
+    - "3.3V 器件 section=tt_33/ss_33/ff_33; 器件模型 nch_33/pch_33 (普通) 或 nch_rf_33/pch_rf_33 (rf)。"
+    - "本机 PowerShell 下远端命令引号会被 ssh 剥掉: 用 base64 编码脚本再 echo|base64 -d|bash，避免 ( ) | 解析错。"
+  testbench_convention:
+    - "dcop  : oppoint dc + save 各管 gm/gds/ids/region/vgs/vds/vdsat/vth/gmoverid; 测 Itail/总电流用 save VDD:p"
+    - "dcgain: dc1 dc dev=<输入源> param=dc start stop step; 测线性区斜率=dVout/dVinp"
+    - "ac    : <源> ... vsource dc=X mag=1; ac1 ac start stop dec; save vout"
+    - "loopgain(环路/PM): 开反馈, 断点用理想源该处工作点 dc + mag=1, 环路增益 T=vout/注入; PM=180+phase(T)@|T|=1"
+  psf_parsing:
+    - "- CRITICAL: Spectre AC 的复数 PSF 存为 (real, imag)，不是 (phase, mag)。"
+    - "  例: \"vout\" (-165.03 0.00119) 实为 real=-165.03 imag=0.00119 -> |vout|~165 (44dB)，不是 mag=0.00119。"
+    - "  必须 mag=sqrt(re^2+im^2), phase=atan2(im,re). 否则低频平台被误读成 -58dB。"
+    - "dc PSF: 每 2 行一组 独立变量值 + 信号值"
+  netlist_pdk_compat:
+    - "toplevel_abs.scs 是 library 型 .scs，netlist 内不要写 .end (SPICE 语法, spectre 语言报 SFE-679)。subckt...ends 即结束。"
+    - "pch_33/nch_33 bsim4 model 不接受 multi 参数 (报 SFE-30 warn, 忽略); 直接用 w=总宽即可。"
+    - "本机写入 .scs 会带 UTF-8 BOM -> Spectre 'Unexpected character' 报错: 必须用无 BOM UTF8 写 (UTF8Encoding $false)。"
+    - "注释保持 ASCII (→/μ 等 unicode 在注释里也无碍, 但 BOM 是硬错)。"
+  benefits:
+    - "无需本地 EDA; 复用仓库已有 servers.yml/远端 spectre 链条即可真实仿真, 把 review-verify 升级为 simulation-verify。"
+  when_to_use: "任何模拟块 (OTA/opamp/LDO) 在 analog-agents 中做 Spectre 仿真时。"
+  # 2026-08-24 ota-telescopic-33v 增补经验 (incremental):
+  iterative_additions:
+    - "NMOS 电流镜 isource 方向: NMOS 参考 isource 必须写 isource(VSS wg) 注入将 wg 抬高铁电位; 写成 (wg VSS) 会抽低 wg 使 NMOS tail 关断。LDO 的 Iref0(net_bp vss) 配 PMOS 参考(gate 低调), 不能直接套到 NMOS 案。仅仿真 op 能暴露。"
+    - "L3 PVT 真实温度: 在 corner TB 尾部追加 `simulatorOptions options temp=125` (ss_125c) 与 `temp=-40` (ff_m40c); 仅 section(tt_lib/ss_lib/ff_lib) 不带温度。"
+    - "GBW=0dB 穿越用 log-f 线性插值, PM=180+phase(穿越处); 完整 L3 PVT + review 互补判案见 strat-shared-005。"
+  derived_from: [proj-ota-5t-33v, proj-ota-telescopic-33v]
+confidence: verified
+source: "scenario 2026-08-24 ota-5t-33v 实测 (remote spectre IC@192.168.16.130); + ota-telescopic-33v L3 PVT"
+created: 2026-08-24
+updated: 2026-08-24

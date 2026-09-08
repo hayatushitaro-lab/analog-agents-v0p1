@@ -1,0 +1,33 @@
+id: strat-ldo-018
+type: strategy
+name: "Fast-settle LDO: droop-in-band with large Cout (settle = edge end, not loop recovery)"
+tags: [ldo, settle, droop-in-band, big-cout, 65nm]
+process_nodes: [65nm]
+
+content:
+  description: >
+    For a hard settling-time spec (e.g. settle < 30us on a 1mA->100mA step into
+    a +/-1% band), do NOT chase recovery speed with a small Cout + high UGF.
+    That classical route hits three coupled limits: (1) light-load PM vs a fixed
+    compensation zero (fz must sit below UGF_light/2, forcing impractically large
+    Cc or low EA gain), (2) the Rz-Cc pole-zero doublet tail (tau ~ Rz*Cc) that
+    makes any out-of-band excursion recover in hundreds of us, and (3) light-load
+    UGF too low for the loop to catch the initial droop. Instead choose a large
+    Cout (e.g. 47uF, ESR<=0.1ohm) with a mid-high UGF (~222kHz at full load) so
+    the worst-corner peak droop lands INSIDE the +/-1% band; then settle time is
+    the load-edge end itself (measured ~0us / ~1us in ldo_1v1), fully decoupled
+    from loop recovery. 30x margin over a 30us spec was measured at L3.
+  design_equations:
+    droop: "deltaV_droop ~ deltaI / (2*pi*UGF*Cout)"
+    settle_1pct: "t_settle ~ 4/(2*pi*UGF) @ PM~60deg (only matters if droop exits the band)"
+    esr_zero: "fz_esr = 1/(2*pi*Resr*Cout) -- ESR zero lifts the gain plateau to MHz"
+  key_tradeoffs:
+    - "Cout area/cost vs droop-in-band guarantee"
+    - "High UGF record (222kHz full load) vs old 10kHz anchor -- deliberate for settle spec"
+  when_to_use: "Any LDO with a hard settle/transient spec and board-level Cout budget"
+
+derived_from: ["proj-002"]
+confidence: unverified
+source: "ldo_1v1 project (proj-002), L3 5-corner Spectre sign-off"
+created: 2026-08-31
+updated: 2026-08-31

@@ -1,0 +1,56 @@
+id: strat-ldo-002
+type: strategy
+name: "gm/Id lookup table for tsmcN65 (CRN65LP RF short-channel)"
+tags: [gmid, sizing, 65nm, lookup, ldo, crn65lp]
+process_nodes: [65nm]
+
+content:
+  description: >
+    Measured gm/Id lookup table for the tsmcN65 (CRN65LP) RF short-channel
+    devices -- the only analog-class devices in this PDK besides >10um
+    long-channel. Use these numbers when sizing LDO / OTA transistor channels
+    via the gm/Id method. Data measured on IC618 VM (spectre 18.1), TT/27C,
+    psf dcOp, device instance = pmos_rf/nmos_rf inline subckt (wr per-finger,
+    nr fingers). Full-width Id scales with (nr * total-finger ratio); the
+    table below is for single instance wr=4u nr=2 (total W = 8um).
+  how:
+    - "Step1: pick Vgs or Vsg that gives the target gm/Id for the device role."
+    - "Step2: target Id / (Id_at_8um) = scaling multiplicity m (or nr)."
+    - "W_total = 8um * m for same bias."
+  table_nmos:
+    vds: "0.6 V"
+    wr_nr: "wr=4u nr=2 (8um)"
+    svt:
+      L_by_vgs:  # gm/Id at Vgs=0.6/0.8/1.0
+        L0.1u:  [10.43, 5.07, 2.89]
+        L0.15u: [10.83, 5.25, 3.00]
+        L0.2u:  [10.92, 5.32, 3.05]
+        L0.24u: [10.92, 5.34, 3.09]
+      id_uA_by_vgs:  # Id(uA) at Vgs=0.6/0.8/1.0
+        L0.2u: [138, 617, 1333]
+    lvt:
+      gm_id_L0.2u_by_vgs: [6.91, 3.72, 2.32]
+      id_uA_L0.2u_by_vgs: [433, 1142, 1995]
+  table_pmos:
+    vsd: "0.4 V"
+    wr_nr: "wr=4u nr=2 (8um)"
+    svt_gm_id_by_vgp:  # gm/Id at Vgp=0.2/0.3/0.4
+      L0.1u: [2.89, 3.89, 5.38]
+      L0.2u: [2.77, 3.71, 5.08]
+      L0.24u: [2.74, 3.67, 5.02]
+    svt_id_uA_by_vgp_L0.2u: [451, 330, 215]
+    lvt_gm_id_by_vgp:
+      L0.2u: [2.01, 2.65, 3.61]
+    lvt_id_uA_by_vgp_L0.2u: [633, 506, 375]
+  notes:
+    - "SVT Vth ~0.51V; LVT Vth ~0.36V."
+    - "gm/Id range observed: NMOS 2.3-15.9, PMOS 1.6-7.2 within scanned bias."
+    - "pass/LVT PMOS target gm/Id 2-6 -> set Vgp 0.1-0.4."
+    - "diff-pair NMOS svt target gm/Id 8-15 -> vgs around 0.5-0.7 (weak/moderate)."
+    - "Values are single-point dcOp at Vds fixed; recheck at final bias."
+
+derived_from: [proj-ldo-analog]
+confidence: verified
+source: "spectre dcOp on IC618 VM (tsmcN65), TT/27C, 2026-08"
+created: 2026-08-23
+updated: 2026-08-23

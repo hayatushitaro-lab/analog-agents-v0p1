@@ -1,0 +1,136 @@
+id: topo-ldo-010
+type: topology
+name: "FVF + PMOS Cascode LDO — Ultra High Output Impedance"
+tags: [ldo, nmos-pass, fvf, pmos-cascode, no-chargepump, gpdk045]
+process_nodes: [45nm, 65nm, 28nm, 130nm]
+
+topology:
+  pass_device: nmos
+  output_cap: external_large
+  variant: fvf_cascode
+  compensation: miller
+  ea_stages: 1
+
+content:
+  description: >
+    FVF基础结构 + PMOS cascode管叠加在NMOS pass管上方。NMOS pass管以源跟随器方式
+    连接（栅极接VDD），源极接PMOS cascode管源极，PMOS cascode管漏极接输出。
+    PMOS cascode进一步抬高输出阻抗，提供超高PSRR和DC增益。无需电荷泵。
+    PMOS cascode栅极需要独立偏置（在VDD范围内）。基于通用电路知识。
+
+  key_tradeoffs:
+    - "输出阻抗极高→DC增益极高→PSRR极优"
+    - "PMOS cascode引入附加极点，补偿复杂"
+    - "drop-down增加（多一级VDSAT）"
+    - "偏置链复杂"
+
+  typical_specs:
+    dropout: "300-600mV"
+    psrr_dc: "70-100 dB"
+    psrr_high_freq: "极优（双cascode天然衰减）"
+    phase_margin: "55-75°"
+    iq: "10-40µA"
+    load_current_max: "10-50mA"
+
+  sizing_anchors:
+    nmos_pass: "NMOS, W大, L=2-4×Lmin"
+    pmos_cascode: "PMOS, W≈nmos_pass/2, L=2-4×Lmin"
+    ota: "共源或折叠cascode, 驱动NMOS pass管栅极偏置"
+
+derived_from: []
+confidence: unverified
+source: "通用电路知识"
+created: 2026-08-17
+updated: 2026-08-17
+
+key_params:
+  dropout:
+    formula: "dropout ≈ VDSAT_nmos_pass + VDSAT_pmos_cascode"
+    typical_range: "300-600mV"
+    unit: mV
+    note: "比纯FVF增加一级VDSAT"
+  psrr_low_freq:
+    formula: "PSRR_DC ≈ gm_nmos × gm_pmos × rout_ota"
+    typical_range: "70-100 dB"
+    unit: dB
+    note: "双cascode提供超高PSRR"
+  psrr_high_freq:
+    formula: "PSRR_high ≈ (gm_cas1 × gm_cas2) / (s²×Cgd1×Cgd2)"
+    note: "两级cascode电容提供二阶衰减"
+  iq:
+    formula: "I_ota + I_pass_leakage + I_cascode_bias"
+    typical_range: "10-40µA"
+    unit: µA
+
+sizing_equations:
+  pass_transistor:
+    goal: "满足满载电流"
+    formula: "W/L_nmos = Iload / (μn*Cox*(VGS-Vth)^2 / 2)"
+    notes:
+      - "栅极接VDD，VGS=VDD-VOUT"
+      - "W按Iload需求计算"
+  pmos_cascode:
+    goal: "提升输出阻抗"
+    formula: "W/L_pmos = Iload / (μp*Cox*(VSG-Vthp)^2 / 2)"
+    notes:
+      - "PMOS cascode栅极偏置在VDD范围内"
+      - "VDSAT_pmos决定额外drop-down"
+  stability:
+    goal: "全负载PM>45°"
+    pole_conditions:
+      p1: "1/(2π*(1/gm_nmos)*CL)  （主极点，输出端）"
+      p2: "1/(2π*rout_pmos_cas*Cpar)  （次极点，PMOS cascode节点）"
+      ugbw: "gm_nmos/(2π*CL)"
+      stability_rule: "p2 > 4 × UGBW"
+    note: "PMOS cascode引入附加极点，需特别注意补偿"
+
+tradeoffs:
+  - dimension: "PMOS cascode VDSAT vs PSRR vs drop-down"
+    description: "VDSAT_pmos↓→drop-down↓但PSRR↓"
+    bounds: "VDSAT_pmos ∈ [100mV, 500mV]"
+  - dimension: "OTA增益 vs PSRR vs 稳定性"
+    description: "OTA增益↑→PSRR↑但极点增多"
+    bounds: "A_OL ∈ [50dB, 80dB]"
+  - dimension: "CL vs 稳定性 vs 瞬态"
+    description: "CL↑→PM↑但瞬态慢"
+    bounds: "CL ∈ [1µF, 10µF]"
+
+optimization_dims:
+  - param: VDSAT_nmos
+    bounds: [100, 400]
+    unit: mV
+    affects: [dropout, area]
+  - param: VDSAT_pmos
+    bounds: [100, 500]
+    unit: mV
+    affects: [dropout, psrr]
+  - param: A_OL
+    bounds: [50, 80]
+    unit: dB
+    affects: [psrr, stability]
+
+when_to_use:
+  - "需要极高PSRR（>80dB）"
+  - "RF/高速ADC对电源噪声极度敏感"
+  - "可接受较高drop-down（>300mV）"
+  - "无电荷泵需求"
+  - "先进工艺"
+
+when_not_to_use:
+  - "drop-down要求严格（<200mV）→ NMOS+CP (009) 或 纯FVF (008)"
+  - "补偿简单需求 → 纯FVF (008)"
+  - "Iq严格约束（<10µA）→ 纯FVF (008)"
+
+pitfalls:
+  - id: pitfall-ldo-032
+    description: "PMOS cascode附加极点导致PM恶化"
+    root_cause: "PMOS cascode管栅极节点引入额外极点，可能进入UGBW"
+    fix: "确保PMOS cascode栅极节点电容足够大，或加局部反馈"
+  - id: pitfall-ldo-033
+    description: "PMOS cascode偏置电压精度要求高"
+    root_cause: "PMOS cascode栅极偏置电压决定其工作点，偏置误差直接影响PSRR"
+    fix: "使用精密偏置链；偏置电压温度系数需匹配"
+  - id: pitfall-ldo-034
+    description: "drop-down增加（双级VDSAT）"
+    root_cause: "NMOS pass + PMOS cascode两级VDSAT叠加"
+    fix: "确保VDD-VOUT > VDSAT_nmos + VDSAT_pmos + 裕量"

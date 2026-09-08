@@ -1,0 +1,61 @@
+# ============================================================
+# Telescopic Cascode OTA Checklist (NMOS input + NMOS cascode + PMOS mirror)
+# ============================================================
+
+stack_headroom:
+  description: "5-layer stack must leave Vdsat for every device"
+  method: estimate
+  severity: error
+  effort: lite
+  auto_checkable: false
+  references: []
+  how: >
+    堆叠: VSS → M7(尾源) → net_tail → M1/M2(输入对) → net_a/net_b
+    → M3/M4(cascode) → net_c/vout → M5/M6(PMOS镜像) → VDD。
+    每层 Vds > Vdsat(~0.15-0.2V)。5 层合计 Vov < VDD,否则进线性区。
+    3.3V 电源:每层 Vov~0.2V 时 net 阶梯约 0.1/0.6/2.5V(参考实测)。
+
+cascode_bias:
+  description: "VB2 must keep both input pair and cascode saturated"
+  method: estimate
+  severity: error
+  effort: lite
+  auto_checkable: false
+  references: []
+  how: >
+    NMOS cascode: net_a = VB2 - Vgs_cas,需 net_a 让 M1 的 Vds > Vov1
+    且 M3 的 Vds = net_c - net_a > Vov3。
+    VB2 太低 → cascode 截止(之前踩坑:PMOS 输入版 VB2=1.2 导致增益 -111dB);
+    VB2 太高 → 输入对 Vds 不够。
+
+mirror_type:
+  description: "PMOS mirror load M5/M6 must match (S/B=VDD)"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: []
+  how: >
+    M5 diode(net_c 接 gate),M6 镜像。两者 S=VDD、B=VDD。
+    M5/M6 同 L、同 finger width,1:1。
+
+gain_expectation:
+  description: "Telescopic gain should be 40-80dB (higher than 5T)"
+  method: semantic
+  severity: warn
+  effort: standard
+  auto_checkable: false
+  references: []
+  how: >
+    单 cascode 版 ~40dB;双 cascode(上下都 cascode)可达 60-80dB。
+    Av 明显低于 40dB → 检查 cascode 是否真的提高了 ro(可能进 triode)。
+
+dc_operating_point:
+  description: "All 7 devices in saturation"
+  method: semantic
+  severity: error
+  effort: standard
+  auto_checkable: true
+  references: []
+  how: >
+    OP 检查 M1-M7 region=2。cascode 进 triode = 增益崩塌。

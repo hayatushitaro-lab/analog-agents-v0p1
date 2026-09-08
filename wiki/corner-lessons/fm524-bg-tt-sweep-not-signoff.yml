@@ -1,0 +1,25 @@
+id: corner-bandgap-009
+type: corner-lesson
+name: "Bandgap TT/27 C trim sweep alone is not sign-off; PVT and startup coverage are required"
+tags: [bandgap, fm524, corner, pvt, startup, trim, verification]
+
+content:
+  description: >
+    A TT/27 C sweep of the four legal `bg_trim` codes is sufficient to rank
+    nominal Vref choices but is not sufficient to sign off a bandgap trim.
+    The FM524 code-11 choice was accepted only after SS/FF/FS/SF temperature
+    coverage and startup transient checks were completed.
+  measured_impact: >
+    The final code 11 was checked over TT/SS/FF at -40/27/125 C and FS/SF at
+    -40/27/125 C, with maximum TC 43.559 ppm/C and maximum total power 56.120
+    uW. Startup at TT/27 C, SS/125 C, and FF/-40 C left the zero-current state
+    and ended inside the Vref window.
+  takeaways:
+    - "Use TT/27 C trim results for candidate ranking only, not final sign-off."
+    - "At minimum, repeat the selected code over process/temperature corners and run explicit startup-escape tests."
+
+derived_from: [proj-007]
+confidence: unverified
+source: "FM524 bandgap L2/L3 verification, 2026-09-03"
+created: 2026-09-03
+updated: 2026-09-03

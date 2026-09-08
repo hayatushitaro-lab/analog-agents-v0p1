@@ -1,0 +1,44 @@
+id: topo-bandgap-002
+type: topology
+name: "Current-Mode Ground-Referenced Bandgap Output with Active CTAT Loop (sub-1.2V vref)"
+tags: [bandgap, reference, current-mode, active-ctat, ground-referenced, sub-1v, 65nm]
+process_nodes: [65nm]
+
+content:
+  description: >
+    A ~1.2V-class first-order VBE+R-chain core (Q1/Q2 N=12, R1, R_chain returning to the
+    Q1 emitter so dVbe_eff = VT*ln(2N) = 82.1 mV) plus a GROUND-REFERENCED current-mode
+    output: vref = R_out*(Iptat + Ictat), Iptat = dVbe_eff/R1, Ictat = VBE(Q1)/R2 forced by
+    an ACTIVE CTAT loop. The active CTAT loop is a second small 5-T PMOS-input OTA comparing
+    vx (top of R2) to vb (Q1 emitter): equilibrium vx == vb, so Ictat = VBE/R2 with the true
+    -VBE/R temperature slope. A PMOS pass (source=VDD, drain at ~0.68 V node) has ample
+    headroom; a matched 1:1 copy injects the same current into vref. R_out is a pure scale
+    (TC-neutral) so vref re-centring never disturbs TC.
+  key_tradeoffs:
+    - "Active CTAT adds a second OTA (power/area) but is REQUIRED below VBE~0.68V: a passive ground-referenced VBE/R mirror has no sensing-device headroom (slope ~8x too weak, TC +1405 ppm/C)."
+    - "The 1:1 pass:copy ratio (not the absolute W/L) sets Ictat; absolute W/L must fit the 5-T OTA2 output swing (~0.2..1.33 V) -- a long-channel pass (400n/45u) is needed for uA-level Ictat."
+    - "Three dominant-pole caps (CGO at the main OTA output, CCTAT at the CTAT loop output, CVR at vref) are required: without CGO the main loop limit-cycles (vbg rings 0.7V pk-pk) and startup never settles to DC."
+  typical_specs:
+    vref: "1.000 V at 27C (window 0.90-1.10)"
+    tc: "16.8 ppm/C TT / 9.4 SS / 21.4 FF (box -40..125C, < 25 spec)"
+    power: "35.9 uW TT / 39.6 uW worst corner (3.3 V)"
+    startup: "settles to DC +/-1% in <= 88 us, no ring"
+  sizing_anchors:
+    Q1_Q2: "pnp5 m=1 / m=12 (N=12)"
+    R1: "128k (Iptat = 82.1mV/128k = 0.641 uA)"
+    R_chain: "887k single string vbg->vb (vbg ~1.237 V diagnostic)"
+    R2: "806k (active-CTAT null from MEASURED slopes, window [760,880]k)"
+    R_out: "679k (TC-neutral scale; vref = R_out*(Iptat+Ictat) = 1.000 V)"
+    OTA2: "5-T PMOS diff (Mct_p/Mct_n 10u/1u), tail 8u/2u, NMOS diode+mirror 1u/2u"
+    Pctat_pass_copy: "400n/45u, exactly 1:1 (ratio sets Ictat)"
+    caps: "CGO 5p @go, CCTAT 20p @u_ctat_ctrl, CVR 10p @vref"
+  key_notes:
+    - "TC null ratio R2/R1 ~= 6.2 (from measured dVBE/dT=-1.78, dIptat/dT=+2.18, TCR_R~0); NOT the textbook 6.93/8.98."
+    - "VBE(Q1)@27C measured 0.6772 V (assumed 0.63 V was 47 mV low)."
+    - "L1 gates: |va-vb| <= 2 mV (core OTA) and |vx-vb| <= 5 mV (active-CTAT null, new)."
+
+derived_from: ["proj-bandgap-v1v0"]
+confidence: unverified
+source: "WORK_bandgap_1v0_tc25 iterations 3-7 (architect architecture.md 1b/1c, rationale, verifier L2/L3)"
+created: 2026-08-26
+updated: 2026-08-26

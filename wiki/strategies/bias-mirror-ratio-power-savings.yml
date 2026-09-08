@@ -1,0 +1,28 @@
+id: strat-ota-004
+type: strategy
+name: "单级 OTA 内部自偏置用大镜像比(10:1)压 bias 支路功耗"
+tags: [ota, 5t, bias, mirror, power, self-bias, sizing]
+process_nodes: [65nm]
+
+content:
+  description: >
+    单级 OTA 的内部自偏置支路（Mbp diode + IREF）功耗可以独立于信号路径压缩：
+    把 bias 参考电流与尾电流做成 N:1 大镜像比（如 10:1，IREF=10u → Itail=100u），
+    bias 支路只流 1/N 的电流，功耗占比从 ~50% 压到 ~9%，
+    而信号路径（输入对/负载镜/尾源）尺寸与性能完全不动。
+  how:
+    - "镜像链: IREF sink 抽 10uA → Mbp PMOS diode 提供 10uA → vbias 由 Mbp Vsg 决定 → M5 栅同为 vbias, 按 W 比例给 Itail=10×10u=100uA。"
+    - "M5/Mbp 必须同 L、同 finger width(1u/finger)，只靠 W 比例(40u/4u=10)调镜像比，不靠改 finger width。"
+    - "IREF 方向: `IREF (vbias vss) isource dc=10u` 从 vbias 抽流，Mbp 从 VDD 注入补偿（KCL 平衡）——Spectre isource 第一节点→第二节点为电流方向。"
+    - "代价: 大镜像比匹配精度低于 1:1 → Itail 实测 -3% (97uA vs 100uA)，spec 接受 ±10%；Vth 失配 ΔVth/Vov≈2-3%。"
+  measured:
+    - "proj-ota-5t-33v-r2: 10:1 自偏置 (IREF=10u, Mbp=4u, M5=40u) 压 bias 支路功耗 0.33mW→0.033mW，总 I(VDD) 210u→110uA，0.66mW→0.363mW，闭合 power budget。"
+    - "信号路径性能与 1:1 参考项目一致 (L2 全 PASS, Itail≈100u)。"
+  when_to_use: "任何含内部自偏置支路的单级 OTA/LDO-OTA，power budget 偏紧且 bias 支路占比过高时。"
+  references: ["corner-ota-002", "anti-ota-001"]
+
+derived_from: ["proj-ota-5t-33v-r2"]
+confidence: verified   # 本项目全角实测支撑 (3 corners power 0.318-0.387mW 全 PASS)
+source: "ota-5t-33v-r2 相对 proj-ota-5t-33v 的唯一结构差异 (10:1 vs 1:1 bias 镜像), L3 PVT spectre 实测"
+created: 2026-08-25
+updated: 2026-08-25

@@ -1,0 +1,28 @@
+id: corner-bandgap-001
+type: corner-lesson
+name: "Fixed R-chain bandgap TC corner conflict (TT/FF vs SS)"
+tags: [bandgap, reference, TC, corner, R-chain, trim]
+process_nodes: [0.13um]
+
+content:
+  description: >
+    A first-order VBE + R-chain bandgap with a fixed resistor ratio and a
+    trim DAC that only shorts R-chain segments cannot satisfy a tight TC spec
+    (<= 15 ppm/C) simultaneously at TT, SS, and FF. TT and FF pull the
+    R_chain/R1 ratio in one direction while SS pulls it in the opposite
+    direction, so no single fixed code closes all corners.
+  measured_impact: >
+    R10=29u -> TT 17.63 / SS 14.00 / FF 19.39 ppm/C.
+    R10=37u -> TT 13.82 / SS 19.56 / FF 13.03 ppm/C.
+    R10=34u -> TT 13.74 / SS 17.34 / FF 15.29 ppm/C.
+    vref and power pass at all three R10 values.
+  fix: >
+    Either relax the TC spec (<= 20 ppm/C passes all measured corners), or add
+    second-order curvature compensation / temperature-segmented trim. Do not
+    rely on a single fixed R-chain ratio for tight multi-corner TC.
+
+derived_from: [proj-fm377-bandgap]
+confidence: unverified
+source: "WORK_fm377_bandgap iteration 3 escalation"
+created: 2026-08-23
+updated: 2026-08-23

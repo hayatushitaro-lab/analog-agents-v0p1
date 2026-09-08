@@ -1,0 +1,32 @@
+id: anti-bandgap-006
+type: anti-pattern
+name: "Partial TMI disable leaves a hidden model-path dependency"
+tags: [bandgap, spectre, tmi, model-include, portable-verification]
+process_nodes: [40nm]
+
+content:
+  description: >
+    Disabling only the TMI flag in a portable Spectre work copy is insufficient
+    when other TMI path directives remain active. The deck can continue to
+    reference an unavailable companion directory even though the main TMI
+    switch is off.
+  failure_mechanism: >
+    `etmiusrinput` and related path configuration are evaluated independently
+    of the main `tmiflag` setting. A missing companion directory therefore
+    produces a path-resolution failure (`SFE-868`) after the first TMI error
+    has been removed.
+  measured_impact: >
+    Setting `tmiflag=0` removed `CMI-2742`, but the remaining `etmiusrinput`
+    reference still caused `SFE-868`. Removing the residual references was
+    required before the DC deck completed successfully.
+  fix: >
+    Either stage the complete TMI companion directory or, in a clearly labeled
+    DC-only work copy, disable `tmiflag`, `tmipath`, and `etmiusrinput`
+    together. Do not use that reduced model copy for TMI noise or mismatch
+    sign-off.
+
+derived_from: ["proj-kb-bandgap"]
+confidence: unverified
+source: "WORK_NB1910_BANDGAP/verifier-reports/baseline_retry4/pre-sim-review.md"
+created: 2026-09-03
+updated: 2026-09-03

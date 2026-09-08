@@ -1,0 +1,76 @@
+# ============================================================
+# Two-stage Miller OTA Checklist (NMOS diff pair + PMOS mirror, PMOS CS stage2)
+# ============================================================
+
+compensation_sizing:
+  description: "Cc must set GBW=gm1/(2π·Cc) and p2=gm6/(2π·CL) ≥ 2.2·GBW"
+  method: estimate
+  severity: error
+  effort: lite
+  auto_checkable: false
+  references: []
+  how: >
+    两级 Miller 的带宽由补偿电容决定,不是 CL。
+    GBW = gm1/(2π·CC):CC 定了就不能随意改 gm1 目标。
+    PM≥60° 需要 p2 = gm6/(2π·CL) ≥ 2.2·GBW → gm6 ≥ 2.2·gm1·CL/CC。
+    CC 太小 → PM 崩;CC 太大 → GBW/SR 不够。
+
+rhp_zero:
+  description: "RHP zero z=gm6/CC must be cancelled or pushed >10×GBW"
+  method: estimate
+  severity: warn
+  effort: lite
+  auto_checkable: false
+  references: []
+  how: >
+    RZ≈1/gm6 可把 RHP 零点消掉(变 LHP/无穷)。
+    无 RZ 时需 gm6/CC ≥ 10×GBW,否则相位裕度被零点吃。
+    注意 RZ 过大反而会把零点移到 LHP 低频,起反作用。
+
+gain_budget:
+  description: "Two-stage gain = A1·A2, 70dB needs ~35dB per stage"
+  method: semantic
+  severity: warn
+  effort: standard
+  auto_checkable: false
+  references: []
+  how: >
+    简单两级(非 cascode 第一级)A1=gm1·(ro1||ro3)、A2=gm6·(ro6||ro7),
+    65nm IO 器件 L=1u 时 gm/gds≈60、L=2u≈85 → 每级 ~30dB,总 ~60dB 封顶。
+    目标 70dB:先拉 L(L1=L3=2u、L6=L7=4u)试,实测反推 gm/gds;
+    仍不足 → 第一级 cascode 化(telescopic 第一级 + CS 第二级)上报 architect。
+
+stage2_quiescent:
+  description: "vout quiescent sits at VDD-|Vgs6| (not VDD/2), verify M6/M7 saturation"
+  method: estimate
+  severity: warn
+  effort: lite
+  auto_checkable: false
+  references: []
+  how: >
+    开环 vout ≈ VDD − |Vgs6|(由 M6 栅压 net_a 决定),偏下是正常的。
+    检查 M6 |Vds|、M7 Vds 都 > Vdsat;摆幅验证看 vout_min/vout_max 而非中点。
+
+bias_mirror:
+  description: "IREF→Mbias diode → M5(tail) and M7(stage2 load) mirror ratios"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: []
+  how: >
+    偏置链: Mbias(nbias diode) 参考 IREF;M5 镜像 → Itail = IREF·W5/Wb;
+    M7 镜像 → I6 = IREF·W7/Wb。三管同 L(2u)、同 finger width,只调 nf 改镜像比。
+    I_total = IREF + Itail + I6 ≤ 预算。
+
+dc_operating_point:
+  description: "All 8 devices in saturation (region=2)"
+  method: semantic
+  severity: error
+  effort: standard
+  auto_checkable: true
+  references: []
+  how: >
+    OP 检查 M1-M7、Mbias region=2。第一级 M1/M2 Vds = net_diode−net_tail
+    (≈VDD−|Vgs3|−net_tail)应 > Vov;第二级 M6/M7 各自 Vds 应 > Vov。
+    任一管 triode → 该级增益崩塌,Av 远低于预估。

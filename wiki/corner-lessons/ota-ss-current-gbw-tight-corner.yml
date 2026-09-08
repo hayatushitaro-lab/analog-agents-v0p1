@@ -1,0 +1,24 @@
+id: corner-ota-004
+type: corner-lesson
+name: "Two-stage Miller OTA SS/125C current and GBW corner"
+tags: [ota, two-stage, miller, corner, ss, temperature, gbw, current, 65nm]
+process_nodes: [65nm]
+
+content:
+  description: >
+    For the verified 3.3-V two-stage Miller OTA, SS/125C was the limiting corner
+    for both core current and bandwidth. The measured current was 198.4806 uA
+    against a 200 uA limit, and STB GBW was 3.8591 MHz against a 3.5 MHz target.
+  measured_impact:
+    - "Core-current margin: 1.5194 uA."
+    - "GBW margin: 0.3591 MHz."
+    - "All 27 signal MOS devices remained in saturation across TT/SS/FF."
+  design_lesson: >
+    When sizing a similar two-stage Miller OTA, reserve additional current and
+    GBW margin at SS/high temperature instead of sizing only at TT.
+
+derived_from: ["proj-009"]
+confidence: unverified
+source: "OTA 2-stage Miller L3 PVT verification, 2026-09-07"
+created: 2026-09-07
+updated: 2026-09-07

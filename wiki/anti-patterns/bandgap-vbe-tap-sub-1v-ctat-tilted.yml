@@ -1,0 +1,31 @@
+id: anti-bandgap-002
+type: anti-pattern
+name: "VBE-referenced divider tap to a sub-1.2V output is provably CTAT-tilted"
+tags: [bandgap, tap, divider, ctat, sub-1v, tc]
+process_nodes: [65nm]
+
+content:
+  description: >
+    Using a divider tap on a VBE-referenced R_chain as the OUTPUT when the target is below
+    the first-order null voltage (~1.25 V) cannot meet a tight TC spec. vref = VBE +
+    (Rch_low/R1)*dVbe_eff; at vref = 1.00 V the ratio Rch_low/R1 = 3.93 is forced, giving
+    d(vref)/dT = -1.9 + 3.93*0.274 = -0.82 mV/K (~-820 ppm/C, CTAT-tilted). TC-null would
+    need Rch_low/R1 = 6.93 -> vref = 1.246 V, outside [0.90,1.10]. The null voltage is pinned
+    at VBE + |dVBE/dT|*T independent of the Q2 area ratio.
+  failure_mechanism: >
+    A tap can only move vref along the VBE-referenced stack; the 1.0 V position forces a PTAT
+    fraction too small to cancel VBE's CTAT slope. Changing R1, R_chain, or Q2 area moves the
+    internal vbg null but leaves the sub-1.2V tap CTAT-tilted (800-1000 ppm/C).
+  fix: >
+    Use a ground-referenced current-mode output: vref = R_out*(Iptat + Ictat), where Iptat =
+    dVbe_eff/R1 and Ictat = VBE/R2 (active CTAT loop). The internal ~1.2 V vbg remains as a
+    diagnostic only.
+  signs:
+    - "TC(vref) ~ -800 ppm/C (CTAT-tilted) while internal vbg is flat."
+    - "vref target < ~1.2 V and output implemented as a tap on the R_chain."
+
+derived_from: ["proj-bandgap-v1v0"]
+confidence: unverified
+source: "WORK_bandgap_1v0_tc25 architect iter-3 proof (architecture.md 1b), iter-1 measured +278 ppm/C"
+created: 2026-08-26
+updated: 2026-08-26

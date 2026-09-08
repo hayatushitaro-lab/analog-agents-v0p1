@@ -1,0 +1,22 @@
+id: strat-bandgap-005
+type: strategy
+name: "Active-CTAT OTA2 load length: double ro to recover null gain"
+tags: [bandgap, active-ctat, ota2, load, gain, mirror]
+process_nodes: [65nm]
+
+content:
+  description: >
+    The 5-T OTA2 NMOS diode+mirror load Mct_d/Mct_l raised from 1u/2u to
+    1u/4u (strict 1:1 ratio kept) doubles ro_l, pushing the mirror-node
+    impedance to Rout ~17 M-ohm and A_ota from ~30-40 dB to ~43-48 dB.
+    No current change; same finger width rule applies (ratio via L, both
+    devices together).
+  key_points:
+    - "Anchor: Mct_d/Mct_l 1u/4u, exactly 1:1; tail unchanged ~1uA."
+    - "Measured L3: A_ota 49.7 dB (TT op-est), |vx-vb| gate passed all 5 corners."
+
+derived_from: ["proj-001"]
+confidence: unverified
+source: "WORK_bandgap_1v2_tc30 iteration 2 (designer) + verifier L3 (2026-08-29)"
+created: 2026-08-31
+updated: 2026-08-31

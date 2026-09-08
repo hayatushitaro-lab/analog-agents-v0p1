@@ -1,0 +1,28 @@
+id: strat-ldo-001
+type: strategy
+name: "Big Output-Cap (uF-level) LDO Compensation"
+tags: [ldo, compensation, stability, big-cout, miller, 47uf, bandwidth]
+process_nodes: [65nm, 180nm]
+
+content:
+  description: >
+    When Cout is uF-level, the full-load output pole fp_out = 1/(2*pi*Rload*Cout)
+    is the hard bandwidth ceiling (e.g. 12R || 47uF -> ~282 Hz). PM>=50 and
+    fast settling are physically mutually exclusive beyond that pole; set the
+    acceptance bar at spec level (user decision), not at the compensation level.
+    Use internal Miller Cc-Rz across stage-2: large Cc pulls the dominant pole
+    low (bounded by the output pole), large Rz injects a low-frequency zero that
+    rescues light-load PM (light load has tiny gmpass -> lowest margin).
+  key_tradeoffs:
+    - "Rz*Cc time constant directly trades light-load PM vs full-load settling"
+    - "Larger Cc lowers UGF (more PM) but slower transient response"
+  benefits:
+    - "Predictable full-load stability when UGF kept below output pole"
+    - "No feedforward cap needed (avoids STB loop-port distortion)"
+  when_to_use: "Any LDO with Cout >= 1uF and tight Iq budget"
+
+derived_from: ["proj-001", "proj-002"]
+confidence: verified
+source: "LDO_1V2_100mA project iteration 4; validated by ldo_1v1 (proj-002) L3 sign-off"
+created: 2026-08-25
+updated: 2026-08-31

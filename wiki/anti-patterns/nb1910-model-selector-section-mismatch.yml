@@ -1,0 +1,32 @@
+id: anti-bandgap-005
+type: anti-pattern
+name: "Model selector does not match the device's actual model section"
+tags: [bandgap, spectre, model-include, section-selection, simulation-setup]
+process_nodes: [40nm]
+
+content:
+  description: >
+    Selecting a Spectre model section from a similar device name instead of
+    the device's actual model definition can make a valid bandgap netlist fail
+    before any circuit result is produced. In nb1910, the resistor model
+    `rppolywo_m` is defined in the `disres` library, not in the initially
+    selected `res` library.
+  failure_mechanism: >
+    The selected section does not define the instantiated primitive. Spectre
+    therefore reports an undefined model (`SFE-23`) during elaboration. The
+    failure is a model-library dependency error, not evidence that the circuit
+    topology is electrically invalid.
+  measured_impact: >
+    The initial model selection failed at read-in with undefined `rppolywo_m`.
+    Switching to the matching `tt_disres`, `ss_disres`, and `ff_disres`
+    sections enabled 9/9 baseline PVT DC runs to read in successfully.
+  fix: >
+    Resolve the exact model definition and its library-section dependencies
+    from the primitive declaration before simulation. Select the matching
+    process section for each corner and record the mapping in the testbench.
+
+derived_from: ["proj-kb-bandgap"]
+confidence: unverified
+source: "WORK_NB1910_BANDGAP/verifier-reports/baseline_retry4/margin-report.md"
+created: 2026-09-03
+updated: 2026-09-03

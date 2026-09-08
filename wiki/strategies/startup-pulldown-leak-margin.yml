@@ -1,0 +1,25 @@
+id: strat-bandgap-006
+type: strategy
+name: "Startup pulldown must beat pull-up leak at cold FF (zero static cost)"
+tags: [bandgap, startup, leak, cold, ff, pulldown]
+process_nodes: [65nm]
+
+content:
+  description: >
+    Bandgap startup with an always-leaky PMOS pull-up (Msu_pu 400n/40u,
+    ~2-3 uA leak) and a vbg-gated NMOS pulldown can race at FF/-40C where
+    NMOS Vth rises: 4u/500n pulled only 2.5 uA vs 3.0 uA leak (losing).
+    Widening Msu_pd to 8u/500n (nf=8, 1u/finger) pulls 5.0 uA vs 3.0 uA at
+    vbg = 0.70 V (1.7x margin), flip point vbg ~0.69 V, with ZERO added
+    static current. Auto-disconnect preserved: at vbg = 1.24 V the pulldown
+    pulls ~230 uA, far above the leak, and the Msu branch turns off.
+  key_points:
+    - "Anchor: Msu_pd 8u/500n nf=8; Msu_pu 400n/40u (leak-limited)."
+    - "Measured L3 startup: tt 85.9 / ss125 88.8 / ffn40 86.4 us, no ring, all <= 200 us."
+    - "Avoid an always-on pulldown (kills the kick); avoid a resistive divider (delays flip)."
+
+derived_from: ["proj-001"]
+confidence: unverified
+source: "WORK_bandgap_1v2_tc30 iteration 2 (designer) + verifier L3 (2026-08-29)"
+created: 2026-08-31
+updated: 2026-08-31

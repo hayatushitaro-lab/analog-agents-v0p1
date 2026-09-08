@@ -1,0 +1,41 @@
+id: topo-ldo-2stage-rf-ota-65nm
+type: topology
+name: "Two-stage RF short-channel OTA + PMOS pass LDO (65nm)"
+tags: [ldo, 65nm, two-stage-ota, pmos-pass, nmos-input, miller]
+process_nodes: [65nm]
+
+content:
+  description: >
+    Low-dropout regulator using a two-stage OTA built entirely from RF
+    short-channel devices (L <= 0.24um, the only analog-class devices in
+    CRN65LP besides >10um long-channel) plus a 480um PMOS pass transistor.
+    First stage NMOS_lvt differential pair + PMOS active-mirror load; second
+    stage NMOS common-source + PMOS current-source pull-up; Miller Cc-Rz
+    compensation across the second stage.
+  suitable_for:
+    - "low Iq (<100uA) LDO at 1.2V supply, ~10mA max load"
+  key_constraints:
+    - "no 0.5-2um short-moderate channel devices exist -> use RF short channel"
+    - "NMOS_lvt (Vth~0.36V) needed for 0.6V input common-mode"
+  key_tradeoffs:
+    - "Stability at heavy load vs UGBW: must pull Cc up to 25p to drop 101M->28M"
+    - "PSRR capped by limited two-stage-open-loop gain of short-channel OTAs (~23dB)"
+  sizing_anchors:
+    input_pair: "nmos_rf_lvt lr=0.2u wr=4u nr=4, Vcm=0.6V, sub-threshold gm/Id~20"
+    pmos_mirror: "pmos_rf lr=0.2u wr=2u nr=4"
+    second_cs: "nmos_rf_lvt lr=0.2u wr=1u nr=1"
+    pass: "pmos_rf lr=0.15u wr=4u nr=120 (480um), 0.3V dropout @ 10mA"
+    compensation: "Cc=25p, Rz=6.5k"
+    feedback: "R1=100k R2=205k, VREF=0.6V, beta=0.672"
+  measured_specs:
+    vout: "0.907V (0.9+1%)"
+    iq: "70uA (<=80)"
+    phase_margin_heavy: "66deg @ 10mA"
+    psrr_1k: "23.4dB (below 40 target, architectural floor)"
+    pvt_vout: "0.907-0.910V across tt/ss/ff (real temperature)"
+
+derived_from: [proj-ldo-analog]
+confidence: verified
+source: "LDO_ANALOG project @ tsmcN65 (spectre validated tt/ss/ff)"
+created: 2026-08-21
+updated: 2026-08-21

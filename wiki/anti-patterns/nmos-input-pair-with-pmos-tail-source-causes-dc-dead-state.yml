@@ -1,0 +1,35 @@
+id: anti-001
+type: anti-pattern
+name: NMOS input pair with PMOS tail source causes DC dead state
+tags:
+- ldo
+- nmos-input
+- tail
+- polarity
+- dc-convergence
+- low-vdd
+content:
+  description: >
+    In a low-VDD (1.2V) LDO with an NMOS input pair (e.g. nmos_rf_lvt at
+    Vcm=0.6V), the pair's drains inject current INTO the source node n_tail.
+    If the tail is implemented as a PMOS current source from VDD (the habit
+    from PMOS-input-pair designs), it ALSO pushes current into n_tail. KCL at
+    n_tail is then unsatisfiable in the intended bias state (tail + 2 arm
+    currents all into the node), so the intended DC operating point does not
+    exist; Spectre converges to a dead state (n_tail=VDD, pair off, pass gate
+    ~0, Vout=rail).
+  failure_mechanism: >
+    NMOS input pair: n_tail = Vcm - Vgs; pair current flows drain->source into
+    n_tail. PMOS tail sources current VDD->n_tail: 10u + 5u + 5u all into one
+    node with no sink -> node pushed to VDD -> pair off. Dead state confirmed
+    by plain DC, seeded nodeset (returns to dead state), and transient power-up.
+  fix: >
+    Use a SINKING tail from n_tail to VSS: ideal `Itail (n_tail vss) isource
+    dc=10u` (ldo_analog precedent, corner-flat) or an NMOS tail mirror. Keep
+    PMOS mirror family only for stage-2 pull-ups. When porting a PMOS-input-pair
+    EA design to NMOS input at low VDD, check tail polarity first.
+derived_from: ["proj-003"]
+confidence: verified
+source: "ldo_0v9_10m project iteration 1 (verifier BLOCKER)"
+created: '2026-08-30'
+updated: '2026-08-30'

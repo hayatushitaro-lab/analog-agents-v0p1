@@ -1,0 +1,34 @@
+id: strat-ota-002
+type: strategy
+name: "OTA 各结构可达指标范围 (spec_ranges)"
+tags: [ota, spec-range, feasibility, tsmp-65nm, gm-id]
+process_nodes: [tsmc-65nm]
+
+content:
+  description: >
+    各 OTA 结构在 TSMC-65nm、Itail=100u / CL=2p 基准下的可达指标范围速查，
+    用于 Step 0/1 接收指标时预判可达性、提前暴露不可达需求避免盲目迭代。
+    ✓=实测校准，◆=理论估算(配方待建/待 Phase 0 表征+迭代校准)。
+  how:
+    - "5T OTA(3.3V): Av 30~35dB(极限35.7)✓，GBW ~20-40MHz✓，PM≥60°；最简单，增益低。5T(1.2V lvt): Av 26~29dB(上限~31)✓，GBW 40-55MHz✓，PM≥60°；Av/GBW 互斥不可兼得。"
+    - "电流镜负载差分对(3.3V): Av ~35-40dB◆，GBW 同 5T 量级；NMOS 输入高 Vcm。"
+    - "telescopic(3.3V): Av 48~53dB(实测52.8)✓，GBW 30-60MHz✓，PM≥60°；4 管堆叠摆幅小，60dB 不可达。"
+    - "folded-cascode(3.3V): Av ~28-31dB✓，GBW 同 telescopic；增益是摆幅不是瓶颈；40dB 需换 telescopic。"
+    - "两级 Miller(3.3V): Av 60-80dB✓(实测72.6)，GBW 17-20MHz✓(p2 物理约束上限)；PM≥60°(实测61.7)。"
+    - "轨到轨(3.3V): Av ~50-60dB◆，GBW 同单级；双差分对，摆幅全轨。"
+    - "全差分 CMFB(3.3V): Av 72.6dB✓，GBW 17-20MHz✓(可 CMFB 架构)；高阻节点 net_ap/an 须加第一级 CMFB，不能靠静态镜像匹配。"
+    - "增益自举/AB 类(3.3V): Av ~70-80dB◆，辅助环路受限需细查；最复杂。"
+  when_to_use: "OTA 指标接收时对照结构可选范围预判可行性：Av≤35dB 取 5T；Av 35-53dB 取 telescopic；Av 40-80dB+摆幅取两级；大摆幅+中增益取 folded-cascode/轨到轨；低压 1.2V+高速取 5T lvt(仅~28dB)。"
+  key_limits:
+    - "增益上限≈输入管本征增益 gm/gds；3.3V nch_33 gm/gds≈37→单级≤35dB(5T)/~53dB(telescopic)，1.2V lvt≈26-30→5T 上限~31dB。"
+    - "GBW=gm1/(2πCL) 受 Itail 限制: gm1=2π×GBW×CL ≤ Itail/2×(gm/Id)_max；Itail=100u,CL=2p→GM1≤700uS→GBW≤55MHz。"
+    - "功率/带宽/增益四角矛盾(物理非调参可解): 5T lvt 实测 Av30/GBW50/Itail100/CL2p 四者不可同时满足。"
+  measured:
+    - "telescopic 2-stage+CS 全差分案例 2026-08: 72.6dB / 17.2MHz / PM61.7°。"
+    - "两级 Miller 实测 72.6dB / 17.2MHz / PM61.7°，折叠/增益自举为待表征的◆项。"
+
+derived_from: []
+confidence: unverified
+source: "OTA 达标指标范围手册 + 实测案例 2026-08 + Phase 0 表征"
+created: 2026-08-18
+updated: 2026-08-18

@@ -1,0 +1,21 @@
+id: corner-bandgap-004
+type: corner-lesson
+name: "Pre-sim verifier caught SPICE .op inside spectre netlist (SFE-679)"
+tags: [bandgap, spectre, pre-sim, analysis, lesson]
+process_nodes: [65nm]
+
+content:
+  description: >
+    Workflow lesson (not a PVT corner): the verifier's pre-simulation review
+    rejected the iteration-2 netlist for a top-level SPICE `.op` inside the
+    spectre language section (SFE-679) before any simulation ran. Fix was a
+    one-line deletion; analysis ownership (testbench only) is now enforced by
+    the block spec conventions.
+  measured_impact:
+    - "1 pre-sim rejection, 0 wasted sim cycles; re-approval after fix."
+
+derived_from: ["proj-001"]
+confidence: unverified
+source: "WORK_bandgap_1v2_tc30 verifier pre-sim review (2026-08-29)"
+created: 2026-08-31
+updated: 2026-08-31

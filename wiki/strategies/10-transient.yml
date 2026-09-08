@@ -1,0 +1,21 @@
+id: strat-ldo-014
+type: strategy
+name: "LDO 瞬态方程 (§10 transient)"
+tags: [ldo, transient, droop, settle, recovery, load-step]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    负载阶跃 droop、恢复时间、启动建立时间的估算方程，区分大 CL 与 capless LDO。
+  how:
+    - "大 CL droop: ΔV_droop=ΔI×ESR+ΔI×dt/CL，dt≈1/(2π×UGBW)。ESR 主导≈ΔI×ESR；CL 主导≈ΔI×dt/CL。"
+    - "Capless droop: ΔV_droop=ΔI/(gmp×BW_loop)，纯靠环路速度，不依赖 ESR。"
+    - "恢复时间: t_recovery=1/(2π×UGBW×cos(PM))；PM=60°→≈1/(π×UGBW)，PM=90°→≈1/(2π×UGBW)(临界阻尼)。"
+    - "启动建立: t_settle=ln(overshoot/tolerance)/(2π×UGBW×cos(PM))；PM≈60°→≈4/(2π×UGBW)，PM≈90°→≈3/(2π×UGBW)。"
+  when_to_use: "评估瞬态 droop/settle/recovery 是否满足 spec，或反推所需 UGBW/gmp 时。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

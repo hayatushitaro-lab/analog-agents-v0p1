@@ -1,0 +1,168 @@
+id: topo-ldo-002
+type: topology
+name: "Two-Stage OTA LDO with Internal Cout and Miller Compensation"
+tags: [ldo, pmos-pass, 2stage-ota, pmos-diff, internal-cl, capless, miller, gpdk045]
+process_nodes: [45nm]
+
+topology:
+  pass_device: pmos
+  output_cap: internal_small
+  variant: traditional_analog
+  compensation: miller
+  ea_stages: 2
+
+content:
+  description: >
+    两级OTA（PMOS差分输入级 + NMOS cascode级 + NMOS共源输出级）+ PMOS传递管 +
+    片内Cout(100pF)。capless架构，无需片外大电容。两级OTA提供高增益(80-100dB)，
+    Miller补偿跨级。PMOS差分输入提供宽VCM。基于 LDO_0p9 项目验证，
+    gpdk045 45nm CMOS，VDD=1.05-1.3V, VOUT=0.9V, Iload_max=30mA。
+
+  key_tradeoffs:
+    - "两级OTA增益高(80-100dB)但补偿复杂，RHP零点需处理"
+    - "Cc极度敏感：Cc=12pF时PM达标，10pF可能不足"
+    - "片内Cout=100pF决定主极点，不能省略"
+    - "大电流(30mA)需要pass管m很大"
+
+  typical_specs:
+    dropout: "150-300mV"
+    psrr_dc: "80-100 dB"
+    phase_margin: "60-80°"
+    gain_margin: "30-50 dB"
+    iq: "~50-100µA"
+    load_current_max: "30mA"
+    vdd_range: "1.05-1.3V"
+
+  sizing_anchors:
+    diff_pair: "PMOS, W=8µm, L=100nm, m=1"
+    cascode_n: "NMOS, W=2µm, L=200nm, m=1"
+    cascode_p: "PMOS, W=3µm, L=200nm, m=1"
+    output_stage: "NMOS, W可调, L=200nm, m=1"
+    pass_device: "PMOS, W=20µm, L=100nm, m=1"
+    miller_cap: "Cc=12pF"
+    internal_cout: "100pF"
+
+derived_from: ["proj-LDO_0p9"]
+confidence: verified
+source: "LDO_0p9 sensitivity_design_guide + OTA_2STG iterations"
+created: 2026-08-17
+updated: 2026-08-17
+
+key_params:
+  dropout:
+    formula: "|Vds_sat| = sqrt(2*Imax / (μp*Cox*W/L))"
+    typical_range: "150-300mV"
+    unit: mV
+  psrr_low_freq:
+    formula: "A_OL_stage1 × A_OL_stage2 × (gmp/gds_pass)"
+    typical_range: "80-100 dB"
+    unit: dB
+  psrr_high_freq:
+    formula: "PSRR(f) ≈ A_OL(f) × gmp/gds_pass"
+    note: "两级OTA提供额外滚降，PSRR高频保持更好"
+  iq:
+    formula: "I_stage1 + I_stage2 + I_pass_leakage + I_FB"
+    typical_range: "50-100µA"
+    unit: µA
+  transient_droop:
+    formula: "droop = ΔI/(gmp×BW_loop)"
+    typical_range: "5-30mV"
+    unit: mV
+    note: "capless时droop由环路速度和gmp决定，不靠ESR"
+  area:
+    typical_range: "0.01-0.03 mm²"
+    note: "pass管W大(30mA×20µm)占主要面积"
+
+sizing_equations:
+  pass_transistor:
+    goal: "满足30mA满载dropout"
+    formula: "W/L = 2*Imax / (μp*Cox*dropout²)"
+    notes:
+      - "L=100nm（短沟道高Id/W）"
+      - "W=20µm/finger，m=1"
+      - "VDD=1.05V时dropout=150mV，余量紧"
+  stability:
+    goal: "全负载PM>45°，capless稳定性"
+    pole_conditions:
+      p1: "1/(2π*Rout_EA*Cc)  （主极点，OTA输出，Cc主导）"
+      p2: "1/(2π*Rout_pass*Cout)  （次极点，输出端）"
+      ugbw: "gm_stage1/(2π*Cc)"
+      stability_rule: "p2 > 4 × UGBW"
+    failure_mode: "Cc对PM极度敏感；Iload↑→pass管线性区→输出极点外移→PM↓"
+  psrr:
+    goal: "PSRR > 80dB @ DC"
+    formula: "PSRR_DC ≈ A_OL_stage1 × A_OL_stage2 × (gmp/gds_pass)"
+    note: "两级增益提供高PSRR"
+  transient:
+    goal: "capless droop < spec"
+    formula: "droop = ΔI/(gmp×BW_loop)"
+    note: "不依赖ESR，纯靠环路速度"
+
+tradeoffs:
+  - dimension: "Cc vs PM vs 带宽"
+    description: "Cc是PM主调旋钮，Cc↑→PM↑但UGBW↓→瞬态变慢"
+    bounds: "Cc ∈ [10pF, 20pF]，12pF时PM达标"
+  - dimension: "pass管W vs dropout vs 面积"
+    description: "W↑→dropout↓但栅极电容↑→PM变化"
+    bounds: "W/finger ∈ [10µm, 40µm]"
+  - dimension: "第二级W vs 增益 vs PM"
+    description: "第二级W↑→增益↑但第二级输出极点变化→PM↓"
+    bounds: "第二级W ∈ [5µm, 30µm]"
+  - dimension: "Cout vs 稳定性 vs 面积"
+    description: "Cout↑→次极点上移→更稳定但面积↑"
+    bounds: "Cout ∈ [50pF, 200pF]"
+
+optimization_dims:
+  - param: Cc
+    bounds: [10pF, 20pF]
+    affects: [phase_margin, ugbw]
+    notes: "PM极度敏感，12pF时达标"
+  - param: Mpass_W
+    bounds: [10, 40]
+    unit: µm
+    affects: [dropout, phase_margin]
+    notes: "W↑降dropout但增栅极电容"
+  - param: Mc_W
+    bounds: [5, 30]
+    unit: µm
+    affects: [dc_gain, phase_margin, gain_margin]
+    notes: "第二级输出管W，增益和PM的tradeoff"
+  - param: Cout_internal
+    bounds: [50pF, 200pF]
+    affects: [phase_margin, stability]
+    notes: "片内Cout决定次极点位置"
+
+when_to_use:
+  - "需要大电流驱动（>20mA）"
+  - "需要高增益（>80dB）和高PSRR"
+  - "capless需求，无片外大电容"
+  - "VDD低（1.05-1.3V），VOUT=0.9V"
+  - "对面积有一定容忍度"
+
+when_not_to_use:
+  - "Iq严格约束（<30µA）→ 选五管OTA (001/003/004)"
+  - "需要外部大电容兜底稳定性 → 选 001/003/004"
+  - "capless但电流小（<10mA）→ 001可能足够，更简单"
+  - "需要软启动 → 选 003"
+
+pitfalls:
+  - id: pitfall-ldo-006
+    description: "Cc对PM极度敏感，1pF变化即可使PM变化10-15°"
+    root_cause: "两级OTA的Miller补偿，Cc直接决定主极点，容差小"
+    fix: "Cc取12pF，留5-10%余量"
+  - id: pitfall-ldo-007
+    description: "高负载时pass管进入线性区，输出极点外移→PM↓"
+    root_cause: "Iload↑→pass管VDS↓→进入线性区→输出阻抗↓→输出极点上移"
+    fix: "增大Cc或减小第二级W来降UGBW"
+  - id: pitfall-ldo-008
+    description: "RHP零点（右半平面零点）恶化PM"
+    root_cause: "两级OTA的Cc跨接产生RHP零点，若不加Rz消除会拉低PM"
+    fix: "加Rz>1/gm_stage2消除RHP零点，或增大Cc使零点频率足够高"
+  - id: pitfall-ldo-009
+    description: "片内Cout缺失或过小导致capless不稳定"
+    root_cause: "capless LDO的次极点由Cout决定，Cout<50pF时p2太靠近UGBW"
+    fix: "Cout≥100pF"
+  - id: pitfall-ldo-010
+    description: "VDD=1.05V时dropout余量极紧"
+    root_cause: "VDD-VOUT=150mV，pass管VDSAT需<150mV，L=100nm勉强满足"
+    fix: "增大pass管m或降低Iload_max"

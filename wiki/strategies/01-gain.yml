@@ -1,0 +1,28 @@
+id: strat-ldo-005
+type: strategy
+name: "LDO 环路增益设计方程 (§1 gain)"
+tags: [ldo, gain, loop-gain, ota, pass, open-loop]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    LDO 环路增益的估算方程。单级五管 OTA 增益
+    A_OL = gm_diff × (ro_diff || ro_mirror || ro_tail)；两级 OTA 为两级增益之积；
+    折叠共源共栅 OTA 用 cascode 输出电阻。环路增益
+    T(s) = A_OL(s) × β × (gmp / (gmp + 1/Rout_pass))，DC 环路增益
+    T_0 = A_OL × β × (gmp × Rout_pass)，其中 β = R2/(R1+R2)。
+  how:
+    - "单级 5T(PMOS 输入): A_OL = gm_diff × (ro_diff || ro_mirror || ro_tail)，典型 60-80dB (gpdk045, L=1µm)。"
+    - "两级 OTA: A_OL = A_stage1 × A_stage2；A_stage1=gm_diff×(ro_diff||ro_cascode)，A_stage2=gm_out×(ro_out||ro_pass)，典型 80-100dB。"
+    - "折叠共源共栅 OTA: A_OL = gm_diff × (ro_cascode_N × ro_cascode_P × ro_fold)，其中 ro_casN=gm_casN×ro_N，ro_casP=gm_casP×ro_P；典型 70-90dB。"
+    - "pass 管跨导 gmp = 2×Id_pass/Veff_pass（强反型）或 gmp = gm/Id × Id_pass；Id_pass=Iload_max。"
+  when_to_use: "在所有 LDO/OTA 拓扑选型与增益预算估算时作为通用方程做手算，先估 A_OL 与环路增益再进入 sizing。"
+  notes:
+    - "单级 OTA 的 ro 并联还会再减 ~6dB，3.3V 5T 已接近 35dB 上限。"
+    - "Veff=VGS-Vth=VSG-|Vthp|=VSD-VDSAT。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

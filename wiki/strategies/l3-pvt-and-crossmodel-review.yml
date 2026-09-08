@@ -1,0 +1,57 @@
+id: strat-shared-005
+type: strategy
+name: "OTA 验证双轨落地: L3 PVT 全角仿真(真实温度) + 跨模型review 互补判案"
+tags: [ota, spectre, pvt, corners, cross-model, review, simulation, telescopic, verification]
+process_nodes: [65nm]
+topology: [telescopic_cascode, ota]
+
+content:
+  description: >
+    在 analog-agents 里把一个 OTA 从"review-mode 手算估计"推进到"simulation-verified (L3 PVT)"，
+    并用跨模型 review 作为独立质量门 —— 由 ota-telescopic-33v 案例沉淀的落地方案。
+    review 抓静态结构风险（可能对 DC 偏置误判），仿真验证 DC/性能事实（看不见结构风险）——
+    两者互补，都必须跑，结论以仿真为准、评审风险全部接受记录。
+
+  # 1) 仿真: L3 PVT 全角 + 真实温度
+  simulation:
+    l1_l2_runtime:
+      - "远程 spectre 调用/testbench 惯例/PSF real-imag 解析: 见 strat-ota-003 (未赘述)."
+      - "netlist 封装: subckt ota_x(...) + subckt bias_x(...) 两段式, 模型 include 由 testbench 提供 (LDO 惯例)."
+      - "MOS 语法 w=总gate宽度, 不加 multi (nch_33/pch_33 bsim4 不接受 -> SFE-30 warn)."
+    l3_pvt_walk:
+      - "TT/SS/FF process corner: testbench 复制 3 份, include section=tt_lib/ss_lib/ff_lib."
+      - "真实温度 PVT: 在 corner TB 尾部追加 `simulatorOptions options temp=125` (ss_125c) / `temp=-40` (ff_m40c)."
+      - "跑法: ssh 远端 `spectre tb_x.scs +escchars +log tb_x.log -format psfascii -raw tb_x.raw`."
+      - "判定矩阵: corner / Av(dB) / GBW(MHz) / PM(deg) / spec / PASS-FAIL."
+    psf_exec:
+      - 'AC psf: "vout" (<re> <im>) 复数; |v|=sqrt(re^2+im^2), phase=atan2(im,re).'
+      - "GBW = 0dB 穿越, 前/后两采样对 log-f 线性插值."
+      - "PM = 180 + unwrap(phase(vout)) 在穿越处."
+    measured_significance:
+      - "op: save 各管 gm/gds/ids/region/vds/vgs/vdsat/gmoverid — 一次 op 即定案 gm/Id 工作区与全部饱和."
+      - "实测 gm/Id 常远偏离手算: hand-calc 强反型 5 vs op 实测 13.7 (中反型) — 手算 gm/Id 是弱约束, 须仿真定案."
+
+  # 2) 跨模型 review: 独立质量门
+  cross_model_review:
+    run:
+      - "tools/review_opencode.ps1 (Anthropic messages channel, minimax-m3; 通道细节见 strat-shared-004)."
+      - "prompt 只含原始文件: netlist + rationale + spec + 相关 anti-patterns (ota-pitfalls.md), 不含设计者自评 (独立性)."
+      - "输出: verifier-reports/cross-model-review.md — 5 维度 Consensus + Verdict Details + OVERALL."
+    structured_output (CRITICAL):
+      - "review_opencode.ps1 依赖 DIMENSION:/VERDICT:/REASONING: 标记解析, 否则回自由文本被工具丢弃, 报告 consensus 全 N/A (仅 Reviewer Status ok)."
+      - "prompt 必须显式要求: 'REQUIRED OUTPUT FORMAT: EXACTLY five sections, each DIMENSION:/VERDICT:/REASONING:, VERDICT line exactly PASS/WARN/FAIL, end with OVERALL: PASS'."
+      - "若先入 N/A, 说明尚未重试为结构化 → 立即重发结构化 prompt, 不要接受空白报告."
+    judgment:
+      - "review 静态可能对 DC 偏置 FAIL (isource 灌栅极'无路径'), 被 dcop 仿真证伪 (diode-connected Mbias 提供泄放). 以仿真为准."
+      - "review 有效点必须接受并进 known_limits: 无 CMFB->vout DC 漂移, VB2 headroom 自洽性, 输入共模裕量, 跨 corner 饱和."
+
+  benefits:
+    - "给出完整可复现的 L3 PVT + review 双轨判定流程, 后续项目照此推进, 不必重踩."
+    - "把 review 的误判与有效发现分离, 避免'评审说 FAIL 就慌了'或'评审 PASS 就轻信'."
+  when_to_use: "任何 analog block 在 review-mode 收敛后, 切换到 full-EDA 做 L3 PVT 定案并补独立 review 时."
+
+derived_from: [proj-ota-telescopic-33v]
+confidence: verified
+source: "scenario 2026-08-24 ota-telescopic-33v: silent-bug isource + L3 5-corner (ss_125c/ff_m40c) + minimax review 双轨"
+created: 2026-08-24
+updated: 2026-08-24

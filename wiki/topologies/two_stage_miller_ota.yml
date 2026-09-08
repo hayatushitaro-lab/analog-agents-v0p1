@@ -1,0 +1,86 @@
+id: topo-ota-006
+name: "Two-stage Miller OTA (NMOS diff pair + PMOS mirror load, PMOS CS 2nd stage)"
+level: 4
+topology: two_stage
+
+supply:
+  vdd: 3.3
+  vcm: 1.8
+  process: "TSMC-65nm 3.3V"
+  devices: [nch_33, pch_33]
+
+specs:
+  Av:     { unit: dB,   default: 70 }
+  GBW:    { unit: MHz,  default: 50 }
+  PM:     { unit: deg,  default: 60 }
+  CL:     { unit: pF,   default: 2 }
+  Itail:  { unit: uA,   default: 200 }   # 总功耗预算(含 IREF + 两级电流)
+  SR:     { unit: V/us, default: 50 }
+  Vin_cm: { unit: V,    default: 1.8 }   # NMOS 输入 → Vcm 高(近 VDD)
+  Vout_swing: { unit: V, default: 2.0 }
+
+nodes:
+  vin_p: vp
+  vin_n: vn
+  vout: vout
+  vbias: nbias              # 尾源 + 第二级负载共享偏置
+  vdd: VDD
+  vss: VSS
+  internal: [net_tail, net_a, net_diode]   # net_a=第一级输出(单端), net_diode=M3 diode 节点
+
+devices:
+  - { id: M1, role: input_p,      type: nch_33 }   # 第一级 NMOS 输入对
+  - { id: M2, role: input_n,      type: nch_33 }
+  - { id: M3, role: load_mirror1, type: pch_33 }   # PMOS 电流镜(M3 diode)
+  - { id: M4, role: load_mirror2, type: pch_33 }
+  - { id: M5, role: tail,         type: nch_33 }   # 第一级尾源
+  - { id: M6, role: cs_stage2,    type: pch_33 }   # 第二级 PMOS 共源放大
+  - { id: M7, role: load_stage2,  type: nch_33 }   # 第二级 NMOS 电流源负载
+  - { id: Mbias, role: bias_ref,  type: nch_33 }   # 偏置 diode 参考管
+
+equations:
+  # 两级 Miller 核心:GBW 由 Miller 电容决定(不是 CL!)
+  CC: "CL / 2 .. CL"                     # Miller 补偿电容,起手 CC=0.6*CL
+  gm1: "2 * pi * GBW * CC"               # 第一级跨导(GBW = gm1/(2π·CC))
+  gm6: "2.2 * 2 * pi * GBW * CL"         # 第二级跨导:第二极点 p2=gm6/(2π·CL) ≥ 2.2*GBW 保 PM≥60°
+  Id1: "Itail1 / 2"                      # 第一级每边电流
+  A1: "gm1 * (ro1 || ro3)"               # 第一级增益 ≈ gm1/(gds1+gds3)
+  A2: "gm6 * (ro6 || ro7)"               # 第二级增益
+  Av: "A1 * A2"                          # 两级相乘(目标 70dB 需每级 ~35dB)
+  z1: "1 / (CC * (1/gm6 - RZ))"          # 补偿零点;RZ≈1/gm6 可消 RHP 零点
+  SR: "min(Itail1/CC, I6/CL)"            # 摆率受两级中较小者限制
+
+calibration:
+  muCox_n: { value: 187e-6, unit: "A/V^2", backout: "实测(device_params.md)" }
+  muCox_p: { value: 62e-6,  unit: "A/V^2", backout: "实测(device_params.md)" }
+  lambda_n: { value: 0.1, unit: "1/V", backout: "从 Av 实测反推 ro" }
+  lambda_p: { value: 0.1, unit: "1/V", backout: "..." }
+  gm_gds_L1u: { value: 60, unit: "nch L=1u 估算", backout: "从 A1 实测反推" }
+
+sensitivities:
+  - { param: CC,      up: [PM], down: [GBW, SR], note: "补偿电容↑ → 主极点下移,PM↑ 但 GBW↓" }
+  - { param: "gm1/W1", up: [GBW], down: [PM], note: "第一级 gm↑ → GBW↑" }
+  - { param: "gm6/I6", up: [PM], down: [], note: "第二级 gm↑ → 第二极点 p2↑,PM↑(功耗换相位裕度)" }
+  - { param: L1/L3/L6/L7, up: [Av], down: [GBW, PM], note: "L↑ → ro↑增益↑,但寄生↑带宽↓(W 也要跟着放大)" }
+  - { param: RZ, up: [PM], down: [], note: "调零电阻≈1/gm6 消 RHP 零点" }
+  - { param: Itail1, up: [SR, GBW], down: [Av, power], note: "第一级电流↑ → gm1↑" }
+
+sizing_rules:
+  - "finger width 默认 1u,镜像比只通过 nf/multi 调"
+  - "输入对 gm/Id 8~12(两级带宽不靠 CL 直接推,给中反型留空间)"
+  - "第二级 M6 gm/Id 12~15(PM 需要 gm6 大);M5/M7/Mbias gm/Id ~10"
+  - "混合 L:第一级 L1=L3=1u 起;第二级 L6=L7=2u 起(提 ro 撑增益),不够再拉长"
+  - "Wmin=400n, Lmin=380n(3.3V 档)"
+  - "Itail 预算分配(总):第一级 ~40%,第二级 ~50%,IREF ~5%"
+
+pitfalls:
+  - "两级 Miller 的 GBW = gm1/(2π·CC),不是 gm1/(2π·CL)——用 CL 直接推 gm1 会把带宽算错"
+  - "第二极点 p2 = gm6/(2π·CL) 必须 ≥ 2.2×GBW 才有 PM≥60°(gm6 是第二级跨导,别和 gm1 混)"
+  - "RHP 零点 z = gm6/CC 会减 PM;加调零电阻 RZ≈1/gm6 可消除(不加时需 gm6/CC ≥ 10×GBW)"
+  - "简单两级(非 cascode 第一级)增益 ~60dB 封顶(L=1u/2u 时),70dB 需拉长 L 或第一级 cascode 化——先按简单结构起手,实测反推 gm/gds 后决定"
+  - "LUT(nch_33/pch_33)是 L=380n 表征,查表定 W 后必须按 L/380n 缩放,否则 W 偏小(输入对电流不足)"
+  - "输出静态点不在 VDD/2(由 M6 的 Vgs 决定),开环 DC 验证看摆幅上限/下限即可,不必强求中点"
+  - "NMOS 输入 → Vcm 高(近 VDD),反了第一级不进饱和"
+
+checklist: checklists/two_stage_miller_ota.yml
+template: templates/two_stage_miller_ota.scs

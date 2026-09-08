@@ -1,0 +1,24 @@
+id: strat-ldo-009
+type: strategy
+name: "LDO 稳定性方程 (§5 stability)"
+tags: [ldo, stability, phase-margin, gain-margin]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    相位裕度 PM=180°+∠T(j×UGBW)，稳定条件 PM>45°(最低)/>60°(推荐)。
+    增益裕度 GM=|T(j×ω_180)|，GM>30dB(最低)/>40dB(推荐)。PM 与 Cc、负载的关系是关键。
+  how:
+    - "PM 估算: 两主极点近似 PM≈90°-arctan(UGBW/p2)-arctan(UGBW/p3)+...。"
+    - "PM-Cc: PM(Cc)≈90°-arctan(UGBW(Cc)/p2(Cc))；UGBW=gm_diff/(2π×Cc)，p2=1/(2π×Rout_s2×(Cc+Cpar))。Cc↑→UGBW↓→PM↑但带宽压缩。"
+    - "典型值: Cc=1pF→PM≈90-95°(HP_LDO)；Cc=12pF→PM≈65-70°(LDO_0p9)。"
+    - "PM-负载: 大 CL 轻载 gmp↓→UGBW↓→p1↓→PM↓(轻载问题)；Capless 中载附近常是最差点。PM 最低点通常在轻载或中载，非空载也非满载。"
+  when_to_use: "评估 PM/GM、选择 Cc、判断最差负载工况时。"
+  notes:
+    - "PM 与负载的结论：重载通常更安全（大 CL），但 capless 满载 pass 管进线性区 Rout_pass↓ 反而 PM↓。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

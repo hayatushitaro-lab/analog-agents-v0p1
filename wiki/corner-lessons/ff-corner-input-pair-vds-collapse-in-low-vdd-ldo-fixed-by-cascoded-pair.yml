@@ -1,0 +1,38 @@
+id: corner-001
+type: corner-lesson
+name: FF-corner input-pair Vds collapse in low-VDD LDO fixed by cascoded pair
+tags:
+- ldo
+- corner
+- ff
+- input-pair
+- offset
+- cascode
+- 65nm
+- low-vdd
+content:
+  description: >
+    In a low-VDD (1.2V) LDO whose EA input pair sits in subthreshold, the
+    high-impedance-side device M2 needs Vds >= ~100mV (subthreshold Vdsat) to
+    balance the mirror load. M2 Vds = n_out - n_tail where n_out = Vgs_M5
+    (second-stage CS) and n_tail = Vcm - Vgs_M1. Both Vgs drop at the ff
+    corner, so n_out falls while n_tail rises -> M2 Vds collapses (measured
+    42mV @ff_27c vs 143mV tt) -> input offset ~34mV -> Vout 0.951V vs 0.918V
+    ceiling. R2/feedback-ratio trim cannot fix it (ff needs -3.5% which drags
+    ss below the floor).
+  failure_mechanism: >
+    tt-converged sizing has no ff headroom; M3/M4 mirror CLM imbalance
+    (higher |Vds| on the output side, +15% arm current) multiplies the crush.
+    Shrinking M5 (to raise n_out) trades against gm5 floor; shrinking the pair
+    (to lower n_tail) is corner-marginal.
+  mitigation: >
+    Cascade the input pair (MC1/MC2) with an n_tail-referenced bias that pins
+    M2 Vds ~0.10V at all corners (e.g. XM7b 5.5uA -> Rcasc 18k -> XMCbias
+    diode from n_tail), and give the stack headroom by moving M5 from lvt to
+    regular nmos_rf (higher Vth raises n_out). Result: ff_27c Vout 0.951V ->
+    0.908V, input offset <3mV, all corners in window.
+derived_from: ["proj-003"]
+confidence: verified
+source: "ldo_0v9_10m project iterations 5-8 (Spectre L3)"
+created: '2026-08-30'
+updated: '2026-08-30'

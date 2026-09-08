@@ -1,0 +1,22 @@
+id: strat-ldo-017
+type: strategy
+name: "LDO 方程符号表 (附录 symbols)"
+tags: [ldo, notation, reference, symbols]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    LDO sizing 方程手册使用的符号约定速查表。转换中保持单位一致：
+    gm/gmp 为 S，Veff/VDSAT 为 V，UGBW 为 Hz，PM 为 °，GM 为 dB，ESR/Cc 为 Ω/F。
+  how:
+    - "gm=transconductance(S)；gmp=pass 管 gm(S)；gds=drain-source conductance(S)；ro=output resistance(Ω)。"
+    - "Veff=overdrive voltage(V)；VDSAT=saturation voltage(V)；V_A=Early voltage(V/µm)；λ=channel length modulation(V⁻¹)。"
+    - "UGBW=unity gain bandwidth(Hz)；PM=phase margin(°)；GM=gain margin(dB)；β=feedback factor。"
+    - "CL=load capacitance(F)；Cc=Miller compensation cap(F)；Cox=gate oxide capacitance(F/m²)；μ=mobility(cm²/Vs)；ESR=equivalent series resistance(Ω)；gm/Id=transconductance efficiency(S/A)。"
+  when_to_use: "阅读或编写任何 LDO sizing 方程时统一符号与单位，避免歧义。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

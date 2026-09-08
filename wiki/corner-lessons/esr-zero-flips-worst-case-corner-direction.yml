@@ -1,0 +1,27 @@
+id: corner-ldo-005
+type: corner-lesson
+name: "With ESR zero in-band, full/mid-load becomes worst-case PM (direction flip vs capless/light-load-worst)"
+tags: [ldo, corner, esr, phase-margin, worst-case, 65nm]
+process_nodes: [65nm]
+
+content:
+  description: >
+    The behavioral model without TB ESR/C1 gave PM_min=80.4deg at ss_125c/0.1mA
+    (light-load worst, matching corner-ldo-003). With the real TB elements
+    (ESR zero 67.7kHz, n_out parasitic 0.5-1.5pF) the simulated worst case
+    FLIPS to full/mid load: PM_min=72.1deg @ ff_m40/100mA, and the nominal-
+    parameter analysis predicts the collapse direction at 10/100mA, not light
+    load. corner-ldo-003 remains valid when no ESR zero enters the band.
+  failure_mechanism: >
+    ESR zero lifts the gain plateau to MHz; the 0dB crossing lands beyond the
+    n_out parasitic pole (Rz-decoupled from Cc) at heavy load -> PM drops with
+    load, opposite to the no-ESR case where light load (tiny gmpass) was worst.
+  mitigation: >
+    Sweep STB at 0.1/1/10/100mA x all corners with the real TB ESR; do not
+    assume light-load-worst for LDOs with uF-level Cout and low-ESR ceramic.
+
+derived_from: ["proj-002"]
+confidence: unverified
+source: "ldo_1v1 cross-model review D1 + L3 STB matrix (proj-002)"
+created: 2026-08-31
+updated: 2026-08-31

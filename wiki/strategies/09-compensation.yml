@@ -1,0 +1,22 @@
+id: strat-ldo-013
+type: strategy
+name: "LDO 补偿方程 (§9 compensation)"
+tags: [ldo, compensation, miller, nulling-resistor, feedforward, soft-start]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    补偿网络的尺寸方程：Miller 补偿电容、调零电阻、前馈电容、软启动。
+    补偿选择需同时满足极点分离与带宽目标。
+  how:
+    - "Miller: Cc_min=4×gm2×Rout_s2×Cout（极点分离），Cc_opt=gm2/(2π×UGBW_target)（带宽）；典型单级 0.5-2pF、两级 5-20pF。"
+    - "调零电阻: Rz=1/gm2（消除 RHP 零点）；Rz=(1/gm2)×(1+Cc/Cff)（前馈辅助）；Rz_opt=(1/gm2)×sqrt(p2/UGBW)（零点在 UGBW 与 p2 之间）。"
+    - "前馈电容: Cff=gm_ff/z_ff_target，PM 提升≈arctan(ω×Cff/gm_main)。"
+    - "软启动: t_start=Rss×Css×ln(VDD/Vthreshold)，I_inrush=VDD/(Rss+Rpass_on)，I_clamp=(VDD-Vclamp)/Rss；约束 I_inrush<spec、t_start<spec。"
+  when_to_use: "选择 Cc、Rz、Cff 值或设计软启动以收敛 PM/带宽/浪涌约束时。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

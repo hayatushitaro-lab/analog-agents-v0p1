@@ -1,0 +1,24 @@
+id: anti-ota-001
+type: anti-pattern
+name: "GBW/CL/Itail 三参数矛盾 → 输入管弱反型 W 暴涨"
+tags: [ota, gbw, gm-id, weak-inversion, sizing, 5t]
+process_nodes: [65nm]
+
+content:
+  description: >
+    同时要求高 GBW、大 CL、小 Itail 时,gm1 = 2π·GBW·CL 被抬高,
+    而 Id = Itail/2 不变 → gm/Id 冲进弱反型区(>20),W 按 Vov=2/(gm/Id)
+    反推会暴涨到上百 um,finger 数失控,版图/寄生恶化。
+  failure_mechanism: >
+    GBW=100MHz、CL=2pF → gm1=1.26mS;Itail=100uA → Id=50uA →
+    gm/Id=25.13(弱反型),Vov1≈80mV,W1=2·Id·L/(μpCox·Vov²)≈200um。
+    这不是算错,是三指标物理矛盾。
+  fix: >
+    三者取二:降 GBW 或 CL(降 gm1),或升 Itail(降 gm/Id 回 10~15)。
+    在预计算阶段就应把 gm/Id 打印出来,>20 即预警,不要直接生成网表去仿真。
+
+derived_from: ["ota-design 预计算实测"]
+confidence: verified
+source: "ota-design skill, 5t_ota 预计算"
+created: 2026-08-17
+updated: 2026-08-17

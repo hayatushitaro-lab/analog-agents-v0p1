@@ -1,0 +1,33 @@
+id: strat-ota-001
+type: strategy
+name: "OTA gm/Id-Bandwidth Sizing: GBW drives gm1, budget drives gm/Id"
+tags: [ota, sizing, gm-id, gbw, 5t, amplifier]
+process_nodes: [65nm]
+
+content:
+  description: >
+    单级 OTA 的尺寸起点不是 W,而是 gm1。GBW 直接钉死 gm1 = 2π·GBW·CL,
+    尾电流预算钉死每边 Id = Itail/2,于是 gm/Id = gm1/Id 被唯一确定。
+    W 由 gm/Id 查表反推。顺序必须是 GBW→gm1→Id→gm/Id→W,不能先拍 W。
+  key_tradeoffs:
+    - "GBW↑ 或 CL↑ → gm1↑ → 同 Itail 下 gm/Id↑ → 推向弱反型区,Vov↓,W 暴涨"
+    - "Itail↑ → gm/Id↓ → 回强反型,但功耗↑"
+    - "gm/Id 目标 10~15(中反型,均衡);<8 强反型(线性好但 gm 效率低);>15 弱反型(W 大、噪声好但线性差)"
+  benefits:
+    - "避免在 GBW/CL/Itail 三参数矛盾时盲目调 W"
+    - "gm/Id 是工艺无关的偏置点,跨工艺可复用经验"
+  when_to_use: "任何单级 OTA 起手;多级结构先算每级 GBW 分配再套用"
+  gm_over_Id_model: >
+    Vov 与 W 反推必须分段:强反型(gm/Id<8)用平方律 Vov=2/(gm/Id);
+    中反型(8~15)平方律↔亚阈插值;弱反型(>15)亚阈 Vov≈n·Vt·ln(·),
+    W 指数放大。单一强反型近似在弱反型区会严重低估 W、漏报弱反型。
+    引擎(vov_from_gmid/W_from_gmid)已内置三段模型并自动预警。
+  example:
+    - "GBW=100MHz, CL=2pF → gm1=1.26mS;Itail=100uA → Id=50uA → gm/Id=25(弱反型,W≈784u 过大)——引擎自动预警,应降 GBW 或升 Itail"
+    - "GBW=20MHz, CL=2pF, Itail=50uA → gm/Id=10.05(中反型,W1≈44u,合理)"
+
+derived_from: ["ota-design/scripts/gen_netlist.py precompute"]
+confidence: verified
+source: "ota-design skill, 5t_ota 配方"
+created: 2026-08-17
+updated: 2026-08-17

@@ -1,0 +1,28 @@
+id: topo-ldo-012
+type: topology
+name: "PMOS-Pass Two-Stage OTA LDO (big output cap)"
+tags: [ldo, pmos-pass, two-stage-ota, big-cout, miller, 65nm]
+process_nodes: [65nm]
+
+content:
+  description: >
+    PMOS pass device (source=VIN) + 2-stage error amplifier: PMOS diff input +
+    NMOS mirror load (stage-1) driving NMOS CS + PMOS current-source pull-up
+    (stage-2) driving the pass gate. Resistor divider sets Vout = Vref/beta.
+    Internal Miller Cc-Rz across stage-2 for stability.
+  key_tradeoffs:
+    - "Pass-device W vs dropout/gain: 100mA needs ~3mm in 65nm 3.3V I/O"
+    - "PMOS input pair (for low Vref common-mode) forces mirror-side output to get inverting high-gain node"
+    - "Iq budget split: tail 26u + stage-2 15u + divider 20u + ref 10u ~= 71u"
+  typical_specs:
+    dc_gain_full_load: "80+ dB"
+    pm_full_load_big_cout: ">= 50 (user-gated)"
+  sizing_anchors:
+    input_pair: "PMOS 3.3V I/O, W=2u L=0.5u, Vcm=Vref=0.6V"
+    pass: "pch_rf_33, W=3000u, L=0.5u"
+
+derived_from: ["proj-001", "proj-002"]
+confidence: verified
+source: "manual + LDO_1V2_100mA project; 65nm/47uF instance ldo_1v1 (proj-002)"
+created: 2026-08-25
+updated: 2026-08-31

@@ -1,0 +1,108 @@
+id: topo-ldo-007
+type: topology
+name: "Folded Cascode OTA LDO with External CL"
+tags: [ldo, pmos-pass, folded-cascode, nmos-input, external-cl, miller, sky130]
+process_nodes: [130nm]
+
+topology:
+  pass_device: pmos
+  output_cap: external_large
+  variant: traditional_analog
+  compensation: miller
+  ea_stages: 1
+
+content:
+  description: >
+    折叠共源共栅OTA LDO：NMOS差分输入对 + PMOS折叠电流源 + NMOS/PMOS cascode输出 +
+    PMOS传递管。折叠cascode结构提供高增益(50-70dB)、宽VCM范围、高PSRR。
+    单级结构但增益高于五管OTA。来自 AnalogGym/ldo_folded_cascode，SKY130 130nm。
+
+  key_tradeoffs:
+    - "折叠cascode增益高但CMFB/偏置复杂"
+    - "NMOS输入适合低VREF"
+    - "PMOS传递管驱动需要足够gm"
+
+  typical_specs:
+    dropout: "150-300mV"
+    psrr_dc: "60-80 dB"
+    phase_margin: "60-80°"
+    iq: "中-高"
+
+  sizing_anchors:
+    diff_pair: "NMOS, 参数化"
+    fold_current: "PMOS, 参数化"
+    cascode_n: "NMOS, 参数化"
+    cascode_p: "PMOS, 参数化"
+    pass_device: "PMOS, 参数化"
+
+derived_from: ["proj-AnalogGym_ldo_folded_cascode"]
+confidence: verified
+source: "AnalogGym/ldo_folded_cascode netlist"
+created: 2026-08-17
+updated: 2026-08-17
+
+key_params:
+  dropout:
+    formula: "|Vds_sat| = sqrt(2*Imax / (μp*Cox*W/L))"
+    typical_range: "150-300mV"
+    unit: mV
+  psrr_low_freq:
+    formula: "A_OL_folded × (gmp/gds_pass)"
+    typical_range: "60-80 dB"
+    unit: dB
+
+sizing_equations:
+  pass_transistor:
+    goal: "满足dropout spec"
+    formula: "W/L = 2*Imax / (μp*Cox*dropout²)"
+  stability:
+    goal: "全负载PM>45°"
+    pole_conditions:
+      p1: "1/(2π*Rout*CL)  （主极点，输出端）"
+      p2: "1/(2π*Rout_EA*Cpar)  （次极点，OTA输出）"
+      ugbw: "gmp/(2π*CL)"
+      stability_rule: "p2 > 4 × UGBW"
+  psrr:
+    formula: "PSRR_DC ≈ A_OL_folded"
+
+tradeoffs:
+  - dimension: "fold电流 vs 增益 vs Iq"
+    description: "fold电流↑→OTA带宽↑但Iq↑"
+    bounds: "fold电流 ∈ [10µA, 100µA]"
+  - dimension: "pass管W vs dropout"
+    description: "W↑→dropout↓"
+    bounds: "W ∈ [10µm, 200µm]"
+
+optimization_dims:
+  - param: W_diff
+    bounds: [1, 20]
+    unit: µm
+    affects: [dc_gain, bandwidth]
+  - param: W_pass
+    bounds: [10, 200]
+    unit: µm
+    affects: [dropout]
+  - param: Cc
+    bounds: [0.5pF, 5pF]
+    affects: [phase_margin, ugbw]
+
+when_to_use:
+  - "需要高增益和宽VCM"
+  - "VREF较低，NMOS输入满足"
+  - "130nm工艺"
+  - "对稳定性有要求"
+
+when_not_to_use:
+  - "低复杂度需求 → 选001/004"
+  - "低Iq需求 → 选001/004"
+  - "45nm → 选用户验证拓扑"
+
+pitfalls:
+  - id: pitfall-ldo-022
+    description: "折叠电流源偏置不当导致CMFB失效"
+    root_cause: "折叠cascode需要精确偏置电压，否则差分对工作点偏移"
+    fix: "确保Vb1/Vb2偏置电压正确"
+  - id: pitfall-ldo-023
+    description: "pass管栅极驱动不足"
+    root_cause: "折叠cascode输出阻抗高，驱动大pass管栅极电容困难"
+    fix: "增大OTA gm或减小pass管W"

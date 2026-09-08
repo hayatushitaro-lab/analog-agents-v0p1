@@ -1,0 +1,22 @@
+id: strat-ldo-011
+type: strategy
+name: "Pass 管 sizing 方程 (§7 pass-sizing)"
+tags: [ldo, pass-transistor, dropout, gm-id, rdson]
+process_nodes: [gpdk045]
+
+content:
+  description: >
+    pass 管尺寸由 dropout 或 gm/Id 推导，并校验 Rds_on 与栅极驱动。
+    从 dropout: W/L = 2×Iload/(μ×Cox×dropout²)；从 gm/Id: W = Iload/(Id/W)。
+  how:
+    - "从 dropout(强反型): dropout=|VDSAT|=sqrt(2×Iload/(μ×Cox×W/L)) → W/L=2×Iload/(μ×Cox×dropout²)；W=(W/L)×L。μCox: pm≈100µA/V², nm≈200-300µA/V² (gpdk045)。"
+    - "从 gm/Id: Id/W=f(gm/Id,VDS) 查表，W=Iload/(Id/W)，L=2-4×Lmin，m=W/W_finger。"
+    - "Rds_on=1/(μ×Cox×(W/L)×(VGS-Vth))；约束 W/L ≥ 1/(μ×Cox×Rds_on×(VGS-Vth))，Rds_on≤dropout_spec/Iload_max。"
+    - "栅极驱动: PMOS pass Veff_pass=(VDD-Vout_PGATE)-|Vthp|；NMOS pass(charge pump) Veff_pass=VGS-Vthn；需 VGS≥Vth+Veff_target。"
+  when_to_use: "确定 pass 管 W/L、校验 dropout/Rds_on/栅极驱动 headroom 时。"
+
+derived_from: []
+confidence: unverified
+source: "通用 LDO sizing 方程手册 (gpdk045)"
+created: 2026-08-18
+updated: 2026-08-18

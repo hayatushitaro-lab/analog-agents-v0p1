@@ -1,0 +1,26 @@
+id: strat-bandgap-001
+type: strategy
+name: "Bandgap Verification: Temp-Swept DC + Startup Transient"
+tags: [bandgap, verification, temperature-sweep, startup, dcop, spectre]
+process_nodes: [0.13um]
+
+content:
+  description: >
+    For a bandgap reference, do not verify with a single DC point. Run a
+    temperature-swept DC operating point (`dcOp dc param=temp start=-40 stop=125
+    step=1`) to extract Vref TC directly, and run a VDD-ramp startup transient
+    to prove the circuit leaves the zero-current degenerate state. Then repeat
+    the temp sweep on SS/FF model sections.
+  key_points:
+    - "Spectre 18.1 accepts `dcOp dc param=temp start=-40 stop=125 step=1`; the result lands in dcOp.dc with a sweep vector."
+    - "TC (ppm/C) = (Vmax - Vmin) / Vmean / (Tmax - Tmin) * 1e6; also report the total span in ppm."
+    - "Startup test: pulse VDD 0 -> 3.3 V with enable active, and pulse enable high -> low with VDD already up. Expect settling to the DC value (fm377: ~50 us)."
+    - "Corner temp sweeps (TT/SS/FF) cost ~10-15 s each for a small bandgap and are worth it before sign-off."
+    - "Power is best read as `save Vvdd:p` and multiplying by VDD; report both 27 C and max-over-temperature."
+  when_to_use: "Always for bandgap/reference blocks with TC and power specs"
+
+derived_from: ["proj-fm377-bandgap"]
+confidence: verified
+source: "fm377 bandgap verification 2026-08-23"
+created: 2026-08-23
+updated: 2026-08-23

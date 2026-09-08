@@ -1,0 +1,24 @@
+id: strat-bandgap-004
+type: strategy
+name: "Active-CTAT OTA2 diff-pair sizing: 20u/1u fixes weak-inversion null gain"
+tags: [bandgap, active-ctat, ota2, null, gain, weak-inversion]
+process_nodes: [65nm]
+
+content:
+  description: >
+    In the active-CTAT loop (OTA2 forces vx = vb = VBE, Ictat = VBE/R2), the
+    residual |vx-vb| is set by the pass-gate swing divided by the OTA2
+    open-loop gain. At ~0.5 uA/side, a 10u/1u PMOS pair sits in weak inversion
+    (gm/Id ~22-24) and the 5-T only reaches ~30-40 dB. Upsizing the diff pair
+    to 20u/1u (nf=20, 1u/finger, same L) roughly doubles gm, cuts Vth mismatch
+    by sqrt(2), and raises A_ota to ~43-48 dB (measured 49.7 dB op-est).
+  key_points:
+    - "Anchor: Mct_p/Mct_n 20u/1u nf=20, tail ~1uA, L1 gate |vx-vb| <= 5 mV."
+    - "Measured L3: |vx-vb| sweep max 0.865 mV (TT) / 1.021 mV (SS) / 0.851 mV (FF)."
+    - "Do not hand-tune a 2-stage into OTA2 unless needed; sizing alone closed the margin."
+
+derived_from: ["proj-001"]
+confidence: unverified
+source: "WORK_bandgap_1v2_tc30 iteration 2 (designer) + verifier L3 (2026-08-29)"
+created: 2026-08-31
+updated: 2026-08-31
