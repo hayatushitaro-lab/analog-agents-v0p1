@@ -33,8 +33,10 @@ Designer returns: `<block>.scs` + `rationale.md`
 | `<block>.scs` path (designer's circuit) | yes |
 | `testbench_<block>.scs` path (architect's testbench) | yes |
 | Sub-block `spec.yml` path | yes |
+| `architecture.md` path or relevant architectural constraints | yes |
 | `verification-plan.md` path | yes |
 | Verification level (L1 / L2 / L3) | yes |
+| Current iteration number | yes |
 | Server name from `servers.yml` | yes |
 
 Verifier first reviews both files. Rejection routes to designer (circuit) or architect (testbench). If approved, runs simulation and returns `verifier-report.md`.

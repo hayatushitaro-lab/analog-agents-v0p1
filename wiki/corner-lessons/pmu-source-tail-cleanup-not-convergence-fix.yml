@@ -1,0 +1,34 @@
+id: corner-pmu-004
+type: corner-lesson
+module: pmu
+name: "Source-tail save/options cleanup does not prove PMU numerical convergence"
+tags: [pmu, wrapper, source-tail, simulator-options, save-options, numerical-convergence, transient, gmin]
+process_nodes: [90nm]
+
+content:
+  description: >
+    Removing embedded source-tail simulatorOptions, saveOptions, save=allpub,
+    and metadata from a derived PMU library can improve wrapper/log hygiene
+    without changing the circuit's numerical signature. It is not a convergence
+    repair and cannot be treated as one.
+  measured_impact: >
+    At LF6 TT/27 C, the derived cleanup exactly matched the corrected-active
+    reference for selected active outputs, numerical flags, and 4136 DC
+    iterations; warnings changed only from 46 to 44. The active DC still had
+    approximate-DC failure, gmin influence, bad pivoting, and continuation
+    failure. Power-up still stalled near 84.8253 us; the 136.759 us state save
+    was partial.
+  interpretation: >
+    Functional active reachability is conditional evidence only. A gmin-affected
+    DC point remains FAIL/CONDITIONAL, and a partial transient state save is not
+    a final waveform or transient sign-off.
+  next_test: >
+    Route the remaining issue to architect/designer for numerical root-cause and
+    transient-stiffness review. Preserve the source and active vector; require
+    clean DC and a completed transient before L2/L3 or sizing.
+
+derived_from: [proj-pmu-20260917]
+confidence: medium
+source: "WORK_PMU_PIPELINE_20260917/verifier-reports/L1-functional/derived-library-cleanup-report.md, WORK_PMU_PIPELINE_20260917/verifier-reports/derived-library-cleanup-summary.yml"
+created: '2026-09-18'
+updated: '2026-09-18'

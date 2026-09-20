@@ -1,0 +1,33 @@
+id: corner-pmu-002
+type: corner-lesson
+module: pmu
+name: "Near-zero dual rails plus a mostly-off operating point require branch diagnosis before resizing"
+tags: [pmu, bandgap, ldo, por, degenerate-branch, gmin, dcop, bring-up]
+process_nodes: [90nm]
+
+content:
+  description: >
+    When a PMU DC point has vref1p2 far below its nominal band, both LDO rails
+    near zero, and most MOS devices off, the first question is reachability of
+    the intended branch. Device sizing or performance analysis is premature.
+  measured_impact: >
+    At TT/27 C the FM524 PMU measured vref1p2=0.312955 V, LDO15=18.20 uV,
+    LDO30=0.175 uV, with 678 of 841 MOS records off, 148 linear, 9 saturated,
+    and 6 subthreshold. All 19 fresh solves completed but carried gmin/bad-pivot
+    warnings. No tested nominal vector produced both regulated rails.
+  hypotheses: >
+    The evidence is consistent with an unfulfilled startup or POR precondition,
+    wrong control polarity, an externally required bias not yet identified, or
+    a physically reachable zero-current branch. It does not distinguish these
+    causes by itself.
+  next_test: >
+    Add a controlled VDD/PVDD ramp and capture branch entry; isolate Bandgap,
+    vdd_por, and dvdd_por with finite loads; then repeat the polarity matrix.
+    Only after a healthy vref and pass-device region appear should L2 load and
+    transient metrics be enabled.
+
+derived_from: [proj-pmu-20260917, proj-pmu-20260918]
+confidence: verified
+source: "WORK_PMU_PIPELINE_20260917/verifier-reports/L1-functional/dcop-and-state-sweep.md; validation 2026-09-18: its next_test prescription (ramp + isolation + polarity matrix) was executed as proj-pmu-20260918's TB design and resolved the branch - root cause was two stimulus gaps (floating en_pmu_act, floating ibn_lp), exactly the class this entry predicts; see wiki/projects/fm524/pmu/"
+created: '2026-09-17'
+updated: '2026-09-18'

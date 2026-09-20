@@ -1,0 +1,47 @@
+id: strat-001
+type: strategy
+name: Bracket-to-empty joint-window proof
+tags: [bandgap, bracket, joint-window, infeasibility, root-cause, escalation, fixed-topology, fm544]
+content:
+  description: >
+    When two specs pull a single knob in opposite directions, do NOT search
+    the gap open-endedly: bracket the feasible region with TWO candidates at
+    the suspected extremes, pair them with ONE root-cause diagnostic at the
+    failing corner, then state the window empty WITH NUMBERS. FM544: power
+    needs K >= ~3.3 (K=3.2 passed P27 by only 0.27 uW with a ~2 uW low-K model
+    bias), clean cold TC needs K <= ~3.0 (lock-in -34 C at K=3.2, extrapolated
+    clean only at K ~ 3.0 where P27 ~ 102.6 uW > 100) — the intersection is
+    empty and the empty-set statement is the deliverable.
+  method: >
+    (1) Derive the two opposing constraints as explicit functions of the knob
+    (here P27(K) = floor + P_core1/K vs the measured lock-in-temperature(K)
+    trend) and identify which side each candidate must prove. (2) Simulate the
+    two bracket candidates (K32/K34) on the SAME dense sweep with a 4-gate
+    order: cold end clean -> VREF window -> TC -> power. (3) In parallel, run
+    ONE staged root-cause op dump at the known-failing point (K=3.6, -40 C,
+    full save list) so a both-fail outcome yields a mechanism, not just a
+    verdict. (4) On both-fail, STOP: per the pre-declared decision tree, do
+    not guess a third candidate — record which gate failed at which K,
+    distinguish "threshold between the brackets" from "power-marginal at the
+    low bracket", and escalate with the numbers. (5) A bracket that PASSES
+    promotes directly (prefer the higher clean K for power margin, unless it
+    shows early-cliff signature — then take the K farther from the threshold).
+  why_it_works: >
+    Two probes on a monotone threshold (-21/-28/-34 C at K=3.6/3.4/3.2) bound
+    the crossing; the dump converts "still failing" into "here is the device
+    and the physics" (anti-004), which is what the escalation decision actually
+    needs. Total cost in FM544: 3 simulations, 8.8 s batch wall, one round —
+    versus an unbounded K laddering toward a threshold that the opposing spec
+    forbids anyway.
+  measured_impact: >
+    FM544 2026-09-09 iteration 3: K32 and K34 both failed TC only (3411.4 /
+    3609.9 ppm/C cold band, everything else PASS); with the cliff dump the
+    session closed as "window PROVEN EMPTY under frozen topology" and escalated
+    with named root cause and two documented escapes; canonical restored to the
+    best joint point (K=2.9, 2/3 specs pass).
+
+derived_from: [proj-018]
+confidence: unverified
+source: "WORK_FM544_BANDGAP_TUNE_20260909 circuit/rationale.md it3 sec (a)/(e) decision tree + verifier-reports/L2-performance/2026-09-09-it3-k-bracket.md + L3-signoff.md (2026-09-09)"
+created: '2026-09-09'
+updated: '2026-09-09'

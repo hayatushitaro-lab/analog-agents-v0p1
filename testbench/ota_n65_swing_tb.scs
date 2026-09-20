@@ -1,0 +1,20 @@
+simulator lang=spectre
+
+include "/home/IC/Tech/TSMC-65nm_OA/models/spectre/toplevel.scs" section=tt_lib
+include "../circuit/ota_2stage_miller_n65.scs"
+
+parameters vddv=1.62 vcm=0.9 cload=1p
+VDD (vdd 0) vsource dc=vddv
+VINP (vinp 0) vsource type=pulse val0=vcm val1=vcm+0.08 delay=20n rise=1n fall=1n width=80n period=180n
+VINN (vinn 0) vsource dc=vcm
+XOTA (vinp vinn vdd 0 out) ota_2stage_miller
+CL (out 0) capacitor c=cload
+
+save vdd vinp vinn out XOTA.x XOTA.n1 XOTA.n2 XOTA.tail
+save XOTA.M1:gm XOTA.M1:ids XOTA.M1:vdsat XOTA.M1:region
+save XOTA.M2:gm XOTA.M2:ids XOTA.M2:vdsat XOTA.M2:region
+save XOTA.M7:gm XOTA.M7:ids XOTA.M7:vdsat XOTA.M7:region
+save XOTA.M8:gm XOTA.M8:ids XOTA.M8:vdsat XOTA.M8:region
+
+dcOp dc
+tran tran stop=220n maxstep=100p

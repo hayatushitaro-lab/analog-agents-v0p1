@@ -1,7 +1,7 @@
 id: strat-bandgap-004
 type: strategy
 name: "Active-CTAT OTA2 diff-pair sizing: 20u/1u fixes weak-inversion null gain"
-tags: [bandgap, active-ctat, ota2, null, gain, weak-inversion]
+tags: [bandgap, active-ctat, ota2, sizing, gain, weak-inversion]
 process_nodes: [65nm]
 
 content:

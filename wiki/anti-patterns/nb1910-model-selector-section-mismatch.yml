@@ -6,11 +6,11 @@ process_nodes: [40nm]
 
 content:
   description: >
-    Selecting a Spectre model section from a similar device name instead of
-    the device's actual model definition can make a valid bandgap netlist fail
-    before any circuit result is produced. In nb1910, the resistor model
-    `rppolywo_m` is defined in the `disres` library, not in the initially
-    selected `res` library.
+    Selecting a Spectre model section from a similar device name (or from a
+    secondhand note) instead of the device's actual model definition can make
+    a valid bandgap netlist fail before any circuit result is produced. In
+    nb1910, the resistor model `rppolywo_m` is defined in the `disres`
+    library, not in the initially selected `res` library.
   failure_mechanism: >
     The selected section does not define the instantiated primitive. Spectre
     therefore reports an undefined model (`SFE-23`) during elaboration. The
@@ -20,13 +20,28 @@ content:
     The initial model selection failed at read-in with undefined `rppolywo_m`.
     Switching to the matching `tt_disres`, `ss_disres`, and `ff_disres`
     sections enabled 9/9 baseline PVT DC runs to read in successfully.
+  recurrence_2026_09_09: >
+    Recurred in WORK_NB1910_BANDGAP_TUNE even though this entry was documented
+    and consulted: the spec.yml model_sections_note (bip + res + mos_cap_25)
+    covered NONE of the DUT's five device types — the disres fix had never
+    been generalized to the other classes (nch/pch_25od33_mac live only in
+    total_25od33; pnp2/nmoscap_25 need corner-param + setup_* sections).
+    Caught pre-sim, independently, by the cross-model review's local audit
+    (static device->section table) and the verifier's elaboration analysis.
+    Same defect class hit fm393 the same night (section-coverage rejection
+    fixed by adding stat_noise). See corner-bandgap-010 for the static
+    model-coverage-probe practice that actually prevents recurrence.
   fix: >
     Resolve the exact model definition and its library-section dependencies
-    from the primitive declaration before simulation. Select the matching
-    process section for each corner and record the mapping in the testbench.
+    from the primitive declaration before simulation — for EVERY device type
+    in the DUT, not just the one that failed last time, and including the
+    corner-parameter/setup sections each model references. Select the
+    matching process section for each corner, record the mapping in the
+    testbench, and gate the first dispatch on a static model-coverage probe
+    with a negative control (corner-bandgap-010).
 
-derived_from: ["proj-kb-bandgap"]
-confidence: unverified
-source: "WORK_NB1910_BANDGAP/verifier-reports/baseline_retry4/margin-report.md"
+derived_from: ["proj-kb-bandgap", "proj-014"]
+confidence: verified
+source: "WORK_NB1910_BANDGAP/verifier-reports/baseline_retry4/margin-report.md; recurrence: WORK_NB1910_BANDGAP_TUNE/review/review-report.md sec 3.3 + model-coverage-probe.log"
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-09-09

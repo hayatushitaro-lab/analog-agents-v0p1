@@ -1,0 +1,40 @@
+id: anti-pmu-002
+type: anti-pattern
+module: pmu
+name: "Acceptance checks that encode an unverified behavioral model fail healthy circuits (POR pulse read as level)"
+tags: [pmu, fm524, POR, spec-check, bring-up, dvdd_por, acceptance-model]
+
+content:
+  description: >
+    Writing an acceptance check from the architect's predicted behavior
+    instead of from the measured behavior class. In fm524 the L1 spec item
+    demanded "dvdd_por outputs hold intended levels"; the block actually
+    produces a ~24 us release one-shot (corner-pmu-007). The check failed a
+    healthy circuit, and the failure looked like a DUT bug until
+    dispositioned. The trap generalizes: every spec/check line is a
+    hypothesis about circuit behavior; on a first bring-up of an
+    undocumented block, several of those hypotheses are wrong, and the
+    wrong ones are indistinguishable from real failures inside the report.
+  failure_mechanism: >
+    The wrong clause propagates: the verifier reports FAIL, the iteration
+    log records a defect against the DUT, downstream consumers of the
+    report inherit the "circuit fault" framing, and someone eventually
+    "fixes" a healthy pulse generator into a level holder (or burns
+    iterations hunting a nonexistent bug).
+  fix: >
+    Split first-bring-up checks into two tiers: MODEL-FREE checks (values
+    measured, windows from first principles: convergence, rails in
+    regulation, currents nonzero, flags assert) and MODEL-BASED checks
+    (shape/sequence assumptions: pulse widths, hold behavior, mode
+    semantics). Model-based items are marked "disposition required" in the
+    report - a FAIL triggers a behavioral-model review, not a DUT-bug
+    claim, until the model itself is confirmed by the transient evidence.
+    Cross-reference: corner-pmu-007 (the pulse/level model error),
+    anti-pmu-001 (the double-root error - same pattern: assumption not
+    verified against the source).
+
+derived_from: [proj-pmu-20260918]
+confidence: unverified
+source: "wiki/projects/fm524/pmu/spec.yml por_sequence clause + pmu-ver-002 disposition in iteration-log.yml"
+created: '2026-09-18'
+updated: '2026-09-18'

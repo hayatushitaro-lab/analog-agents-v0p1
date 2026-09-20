@@ -1,0 +1,38 @@
+id: corner-pmu-003
+type: corner-lesson
+module: pmu
+name: "External en_pmu_act must be driven explicitly; a 1 MOhm load is not an enable stimulus"
+tags: [pmu, enable, root-anchor, reachability, bandgap, ldo, testbench, dcop]
+process_nodes: [90nm]
+
+content:
+  description: >
+    Source connectivity proves en_pmu_act is an external PMU-active input on
+    root net19 / PMU port 13. A 1 MOhm observation load does not define an
+    enable state; it weakly defaults the input near 0 V and can make the active
+    branch appear to be a sizing or startup failure.
+  measured_impact: >
+    At LF6 TT/27 C, explicit en_pmu_act=0 V gives vref1p2=0.312955 V,
+    LDO15=18.197 uV, and LDO30=0.1753 uV. Explicit en_pmu_act=5 V gives
+    vref1p2=1.218328 V, LDO15=1.516302 V, and LDO30=3.059113 V; en_v rises
+    to 4.993560 V and enb_p falls to approximately 0 V.
+  interpretation: >
+    The two-point axis is strong conditional reachability evidence and explains
+    the earlier collapsed branch. It does not clear numerical L1: both cases
+    retain gmin influence, bad pivoting, failed continuation, and failed
+    approximate-DC startup.
+  next_test: >
+    Repeat the explicit 0/5 V axis after numerical cleanup, then run one
+    source-preserved VDD/PVDD ramp with the active vector before sizing or L2.
+
+derived_from: [proj-pmu-20260917, proj-pmu-20260918]
+confidence: verified
+confidence_note: >
+  Escalated 2026-09-18: second independent session (proj-pmu-20260918)
+  drove en_pmu_act=5 V from t=0 with a real vsource and reached a clean
+  powered-up op point first try (vref1p2=1.19754 V, both rails regulated,
+  Iq=70.21 uA) on the same DUT that had shown the dead-rail branch - no
+  numerical caveat remained. Directionality claim unchanged.
+source: "WORK_PMU_PIPELINE_20260917/architect/architecture-reassessment.md, WORK_PMU_PIPELINE_20260917/verifier-reports/L1-functional/en_pmu_act-axis-report.md; validation: wiki/projects/fm524/pmu/verifier-reports/L1-functional/dc-op-point-2026-09-18.md"
+created: '2026-09-18'
+updated: '2026-09-18'

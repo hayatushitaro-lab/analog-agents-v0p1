@@ -121,3 +121,91 @@ behavioral_ac_model_matches_tb:
     transient model already includes them but the AC model does not, that mismatch
     is itself a red flag. Re-derive the table with TB elements included, then
     gate on STB measurements (4 loads x 5 corners) rather than on the model.
+
+# ============================================================
+# PROPOSED by /analog-evolve 2026-09-09 (WORK_NB1910_BANDGAP_TUNE, proj-014).
+# Pending maintainer approval — see WORK_NB1910_BANDGAP_TUNE/evolve-report.md.
+# Placed in common.yml (not bandgap.yml) because the defect is generic to any
+# netlist + multi-section model file. Remove this banner to promote.
+# ============================================================
+
+model_section_coverage:
+  description: "Included model sections must define every device type instantiated in the DUT (per corner, including setup/corner-param dependencies) before the first remote simulation"
+  method: structural
+  severity: error
+  effort: lite
+  auto_checkable: true
+  references: [anti-bandgap-005, corner-bandgap-010]
+  how: >
+    A device list is not a section list. Extract the set of primitive
+    model/subckt names the DUT instantiates (all MOS wrappers, BJTs, resistors,
+    caps — with instance counts), then statically resolve each name against the
+    sections actually selected by the testbench includes for EVERY corner,
+    including the corner-parameter and setup_* sections each model references
+    (missing params fail at read-in even when the model itself resolves). A
+    device defined only in a section nothing includes (e.g. inline `_mac`
+    wrappers in `total_25od33`) is a silent FAIL. Run the probe with a negative
+    control (the known-bad section set must FAIL) and record the log as an
+    artifact next to the decks; gate L1 dispatch on an ALL-DECKS-PASS verdict.
+    Cost is seconds, local; a failed remote read-in costs a full dispatch
+    round-trip. This defect recurred (anti-bandgap-005) across two nb1910
+    sessions and again on fm393 even though it was documented — the probe,
+    not the documentation, is what prevents it.
+
+# ============================================================
+# PROPOSED by /analog-evolve 2026-09-09 (WORK_NB1601_BANDGAP_TUNE_20260909).
+# Pending maintainer approval — see WORK_NB1601_BANDGAP_TUNE_20260909/evolve/report.md.
+# Placed in common.yml (not bandgap.yml) because a verification plan + testbench
+# save list exists for every block type. Remove this banner to promote.
+# ============================================================
+
+tb_save_list_covers_l1_checks:
+  description: "Testbench save list must cover every signal required by the L1 checks in verification-plan.md before the first simulation batch"
+  method: structural
+  severity: warn
+  effort: lite
+  auto_checkable: true
+  references: []
+  how: >
+    For each L1 check the verification plan promises (loop-balance node pairs,
+    monitor pins, supply current, output node), extract the signal names the
+    check needs and confirm each appears in the testbench save statements
+    (save / saveOptions), including hierarchical paths (e.g. XBG.net055).
+    A planned check whose signals are not saved silently degrades to
+    "indirect evidence" and the batch that selects the operating point runs
+    without it: in WORK_NB1601_BANDGAP_TUNE_20260909 the amp-balance gate
+    |V(net055)-V(net090)| <= 1 mV was planned as the SS loop-health check,
+    but the iteration-1 template saved only vref/Vvdd:p, so all 33 batch
+    jobs carried no balance measurement; the number first appeared at L3
+    after the architect updated the template. Cross-check before the FIRST
+    batch dispatch, not after extraction.
+
+# ============================================================
+# PROPOSED by /analog-evolve 2026-09-09 (WORK_FM436_BANDGAP_TUNE_20260909).
+# Pending maintainer approval — see WORK_FM436_BANDGAP_TUNE_20260909/evolve/report.md.
+# Placed in common.yml (not bandgap.yml) because the defect is generic to any
+# block verified against a multi-section PDK model include. Remove this banner
+# to promote.
+# ============================================================
+
+corner_passives_actually_move:
+  description: "Diff what the top-level corner sections actually select across tt/ss/ff: identical passive/BJT corner factors means corners act only through MOSFETs, and tt/ss/ff runs do NOT cover production R/C/BJT spread"
+  method: structural
+  severity: warn
+  effort: lite
+  auto_checkable: true
+  references: [corner-bandgap-014, corner-bandgap-002]
+  how: >
+    While building the corner decks (the L0 model-coverage probe already
+    resolves the include chain per corner), diff the corner-parameter
+    selections across tt/ss/ff: passive/BJT corner multipliers (e.g. *_mfc
+    factors, rtyp/ctyp/btyp sections). If they are identical, state in the
+    margin table that the measured corner spread reflects MOSFET variation
+    only, and plan separate coverage (trim/mismatch/production corners) for
+    passives instead of claiming it from tt/ss/ff. Measured evidence
+    (WORK_FM436_BANDGAP_TUNE_20260909, FM436 bandgap on Samsung LF6): rgdps
+    and sp11 stayed typical at every corner, per-candidate vref27 corner
+    spread was <=1 mV, and the measured worst POWER corner (ff_m40c) was NOT
+    the hand-predicted ss_125c - corner ordering followed MOS+temp physics,
+    not R spread. Assuming passives move would have mis-read both the corner
+    risk and the power worst case.

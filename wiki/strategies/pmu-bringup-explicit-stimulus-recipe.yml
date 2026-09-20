@@ -1,0 +1,50 @@
+id: strat-pmu-002
+type: strategy
+module: pmu
+name: "PMU bring-up recipe: trace-and-classify every port, drive enables from t=0, source current inputs, use the ramp end-point as the op point"
+tags: [pmu, fm524, bring-up, testbench, recipe, enable-chain, por, reverse-engineering]
+process_nodes: [90nm]
+
+content:
+  description: >
+    Six-step recipe that converted a stalled PMU reverse-engineering effort
+    into first-pass convergence, with zero DUT changes: (1) Extract the
+    enable equations FROM the gate instantiations (NAND/NOR/INV wiring), not
+    from pin names - for fm524: en_pmu = rstn_vdd_por AND en_pmu_act;
+    enb_pmu = NOT en_pmu gates the bandgap; enb1_pmu = NOR(en_pmu, sleep)
+    gates LDO30; mode_ldo30 = AND(sleep, enb_pmu) is only reachable after
+    the bandgap is off. (2) Trace every top-level port to its landing node
+    and classify: power / level input / current input / output (see
+    corner-pmu-005 for the current-input signature). (3) Drive every level
+    input explicitly from t=0 with a real vsource (corner-pmu-003) - the
+    enable pin must track the POR, not gate it. (4) Source every current
+    input with an isource sized from the internal mirror unit. (5) Never
+    drive an output pin; leave mirror-output pins dangling (they settle at
+    ~VDD with zero current). (6) Treat the ramped-transient end point
+    (nodes static between two late samples) as the operating point of
+    record; plain DC on a POR/bias-latch circuit chases conditional
+    gmin-affected solutions (prior session: 4136 iterations, bad pivots).
+  measured_impact: >
+    Same DUT (fm524 PMU, 841 MOS + passives, LF6 tt/27C, VDD=PVDD=5 V).
+    Session proj-pmu-20260917 without the recipe: 10 iterations, dead-rail
+    DC branch (vref1p2=0.313 V), conditional active branch at best,
+    power-up tran blocked, convergence false. Session proj-pmu-20260918
+    with the recipe: DC plan A converged first try and equaled the nodeset
+    variant to >=12 digits; 2 ms startup tran endpoint matched DC to 5
+    digits; L1 6/7 with the one failure being a mis-specified check (see
+    corner-pmu-007). Remaining iteration cost was pure TB syntax
+    (c -> capacitor, nodeset bare names), caught by a verifier-owned probe
+    before re-dispatch.
+  fix: >
+    Apply the recipe in order at TB-construction time; the port trace (step
+    2) and the gate-derived enable equations (step 1) go into a written
+    stimulus table that the reviewer reviews BEFORE any simulation. Budget
+    one verifier round for deck-syntax canary + probe on a new
+    tool/Spectre-build combination; reuse the probe results across
+    re-dispatches.
+
+derived_from: [proj-pmu-20260918, proj-pmu-20260917]
+confidence: unverified
+source: "wiki/projects/fm524/pmu/architect/stimulus-table.md (recipe steps 1-4 instantiated); pmu-ver-001/-002 verifier reports (impact numbers); iteration-log.yml"
+created: '2026-09-18'
+updated: '2026-09-18'

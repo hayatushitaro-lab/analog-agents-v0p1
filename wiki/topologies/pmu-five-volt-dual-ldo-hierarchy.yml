@@ -1,0 +1,31 @@
+id: topo-pmu-001
+type: topology
+module: pmu
+name: "5 V PMU with bandgap, POR/isolation, dual LDO, and power-down monitor"
+tags: [pmu, 5V, bandgap, por, ldo15, ldo30, power-down, level-shift]
+process_nodes: [90nm]
+
+content:
+  topology: >
+    The recovered top-level PMU combines Bandgap, vdd_por, dvdd_por, LDO15,
+    LDO30, and pd. Small cells provide NAND/NOR inversion, Schmitt behavior,
+    level shifting, delay, and monitor decode. Bandgap supplies vref1p2 and
+    bias/test outputs; vdd_por qualifies the core VDD domain; dvdd_por creates
+    isolation and DVDD-related enables; the two LDO loops generate the 1.5 V
+    and 3 V domains; pd exposes pdown and pdb_vdd status.
+  dependency_map: >
+    VDD/PVDD -> POR and isolation -> PMU enable/control -> Bandgap bias and
+    reference -> LDO15/LDO30 regulation -> power-down and monitor status.
+    This is a functional hypothesis from transistor-level connectivity and
+    must be checked with ramp and isolated-subblock experiments.
+  design_note: >
+    The top source has 24 subckt definitions and a 38-port PMU declaration,
+    while the supplied file also contains an active I2 root instance. Use the
+    hierarchy as a reverse-engineering map and preserve the source while
+    learning its sequence.
+
+derived_from: [proj-pmu-20260917]
+confidence: medium
+source: "WORK_PMU_PIPELINE_20260917/architect/architecture.md, circuit/rationale.md"
+created: '2026-09-17'
+updated: '2026-09-17'

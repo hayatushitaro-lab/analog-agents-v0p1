@@ -1,0 +1,30 @@
+id: corner-pmu-001
+type: corner-lesson
+module: pmu
+name: "LF6 recursive model staging avoids Windows flat-include command-length failure"
+tags: [pmu, LF6, spectre-181, staging, Windows, WinError206, infrastructure]
+process_nodes: [90nm]
+
+content:
+  description: >
+    The LF6 model tree can contain enough root files that passing every file as
+    a flat remote include argument exceeds the Windows command-line limit.
+    The failure occurs before Spectre reads the deck and must not be diagnosed
+    as a circuit read-in or convergence failure.
+  measured_impact: >
+    The FM524 PMU first staging attempt failed with Windows WinError 206 while
+    handling 145 root model files. Recursively staging the same tree beside the
+    derived deck allowed all 19 TT/27 C runs to read the model and exit with
+    zero Spectre errors. The staged tree was recorded with a per-file SHA256
+    manifest.
+  fix: >
+    Stage the model directory recursively once per run, keep relative include
+    relationships intact, place the PMU source and derived deck beside the
+    staged LF6_Spectre.lib, and record STAGING_MANIFEST.tsv. Reuse the staged
+    tree for re-dispatches and distinguish transport failure from DUT failure.
+
+derived_from: [proj-pmu-20260917]
+confidence: high
+source: "WORK_PMU_PIPELINE_20260917/verifier-reports/L1-functional/dcop-and-state-sweep.md, verifier-runs/model_stage/lf6_root_20260917/STAGING_MANIFEST.tsv"
+created: '2026-09-17'
+updated: '2026-09-17'

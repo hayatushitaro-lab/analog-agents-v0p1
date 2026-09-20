@@ -1,0 +1,43 @@
+id: corner-pmu-007
+type: corner-lesson
+module: pmu
+name: "POR release outputs may be one-shot pulses, not levels; only a ramped transient can tell, and the DC end point lies by omission"
+tags: [pmu, fm524, POR, dvdd_por, one-shot, sequencing, bring-up, dcop-vs-tran]
+process_nodes: [90nm]
+
+content:
+  description: >
+    A PMU can contain TWO different POR outputs with different shapes: a
+    level-domain power-good (here vdd_por -> rstn_vdd_por, holds high after
+    VDD crosses threshold) and a pulse-domain sequencer (here dvdd_por:
+    net019/net018/dvdd_iso_5v go high for ~24 us after release, then collapse
+    low, with complementary strobes en_v (low->high) and enb_p
+    (high->low)). A DC solve lands on the post-pulse state, so a DC-only
+    bring-up reads every dvdd_por output as "low = not released" or "high =
+    released level" and is wrong either way about the pulse.
+  measured_impact: >
+    fm524 PMU top, TT/27C ramp (pmu-ver-002): rstn_vdd_por snaps high at
+    VDD ~= 2.5 V and HOLDS; en_pmu/rails follow; dvdd_iso_5v/net019/net018
+    rise ~100 us and fall at 123.7 us (~24 us pulse); bg_flag rises at
+    123.3 us; the same pulse-vs-level split reproduces in the DC decks
+    (dvdd_por outputs at their post-pulse values). This run's only failed L1
+    check (por_sequence) failed because the acceptance clause demanded
+    "dvdd_por outputs hold intended levels" - the check encoded the wrong
+    behavioral model, not a circuit fault (disposition in
+    wiki/projects/fm524/iteration-log.yml, pmu-ver-002 entry).
+  fix: >
+    Characterize every POR/sequencer output as pulse-vs-level in the ramped
+    transient BEFORE writing acceptance checks: report rise time, pulse
+    width, and final value as three separate numbers. Write spec checks
+    against the measured shape (e.g. "one-shot width 10-100 us" or "level
+    holds to end of sim"), not against an assumed shape. When a consumer
+    exists outside the simulated netlist, the pulse/level question must be
+    answered before wiring - a level-assumed consumer on a one-shot output
+    (or vice versa) is a system integration bug the block-level sim cannot
+    flag.
+
+derived_from: [proj-pmu-20260918]
+confidence: unverified
+source: "wiki/projects/fm524/pmu/verifier-reports/L1-functional/dc-op-point-2026-09-18.md (POR timeline + exploration decks); iteration-log pmu-ver-002 disposition"
+created: '2026-09-18'
+updated: '2026-09-18'

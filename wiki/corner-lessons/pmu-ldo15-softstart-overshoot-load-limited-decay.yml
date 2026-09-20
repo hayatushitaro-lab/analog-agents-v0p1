@@ -1,0 +1,38 @@
+id: corner-pmu-006
+type: corner-lesson
+module: pmu
+name: "LDO15 soft-start overshoots to 1.9x regulation and decays at the load-limited slew; bring-up must scope the rail waveform, not only the end point"
+tags: [pmu, fm524, LDO, soft-start, overshoot, startup, transient, bring-up]
+process_nodes: [90nm]
+
+content:
+  description: >
+    A PMU LDO that is enabled while its reference is still settling can pass
+    the rail far above regulation before the error amp recovers, and the
+    recovery tail is set by the TB load, not the circuit: once the pass
+    device finally shuts off, only the load current discharges the output
+    cap (dv/dt = I_load/C_load). A DC end-point check is blind to both the
+    peak and the tail.
+  measured_impact: >
+    fm524 PMU top, TT/27C, 200 us VDD ramp to 5 V, 1 mA/1 uF load on the
+    1.5 V rail (pmu-ver-002): LDO15 regulation entry 114.6 us is followed by
+    a PEAK of 2.838 V at 118.8 us (1.90x the 1.489 V regulated value, ~57% of
+    VDD), and the rail only re-enters regulation at ~1.43 ms. The ~1.3 ms
+    tail matches the load-limited slew 1 mA / 1 uF = 1 V/ms decaying from
+    2.84 V to 1.49 V - i.e. the tail length is a TB-load artifact, while the
+    2.84 V peak is a real circuit event (pass gate net059 still low while the
+    amp/reference chain was unbalanced). Downstream consumers see the peak;
+    the 1.3 ms tail number is meaningless outside this TB.
+  fix: >
+    For PMU/LDO bring-up, always run one ramped-supply transient and report
+    peak-vs-regulation ratio and re-regulation time alongside the DC end
+    point. When quoting the over-voltage tail, state the load used; compare
+    peak events against consumer abs-max ratings, not only against the
+    regulated window. To shorten the tail in a diagnostic TB, raise the load
+    current (tail = C*dV/I), never the supply ramp rate.
+
+derived_from: [proj-pmu-20260918]
+confidence: unverified
+source: "wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/ (plan C startup tran, POR timeline); L1 report dc-op-point-2026-09-18.md"
+created: '2026-09-18'
+updated: '2026-09-18'

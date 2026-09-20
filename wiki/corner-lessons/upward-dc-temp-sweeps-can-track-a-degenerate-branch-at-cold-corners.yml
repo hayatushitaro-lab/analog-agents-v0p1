@@ -1,0 +1,40 @@
+id: corner-004
+type: corner-lesson
+name: Upward DC temp sweeps can track a degenerate branch at cold corners
+tags: [bandgap, fm393, dc-sweep, continuation, bistability, degenerate-branch, cold-start, spectre, 180nm]
+process_nodes: [180nm]
+
+content:
+  description: >
+    A DC temp sweep is a continuation: the solver starts from its initial guess
+    (cold = degenerate zero-current solution) and walks temperature upward. In
+    a bandgap that is DC-bistable at cold corners the upward sweep can stay ON
+    the degenerate branch for part or all of the cold range, producing
+    spectacularly wrong TC and vbg_min numbers (FM393: full-span "TC" of
+    2569/2567 ppm and vbg_min 0.71/0.73 V vs the true regulated-branch 21/86
+    ppm and 1.19 V; FF/-40C read 0.674 V degenerate vs the real 1.2019 V).
+    Fold temperatures measured this way: -14 C (W3, TT), -22 C (W4, TT),
+    27-28 C (W1/W2, FF). Branch-safe extraction = downward sweep
+    (start=125 stop=-40, warm regulated start) + cold VDD-ramp startup
+    transient. Downward sweeps were regulated full-span at ALL corners, and
+    VDD-ramp startups reached the regulated state from zero everywhere — the
+    FF upward fold at 27 C is a solver continuation artifact, and FF cold is
+    genuinely DC-bistable but startup-safe.
+  key_points:
+    - "Sign-off TC/vbg_min must come from the regulated branch, proven by sweep-direction agreement or a startup transient that lands on the same solution — never from a single upward sweep alone."
+    - "Artifact signature: a one-step jump of hundreds of mV mid-sweep (fold), vbg sitting in the 0.6-0.8 V chain-only band at cold, gmin->source/dptran homotopy fallbacks clustered in the cold region."
+    - "Fold position is corner-dependent and moves with trim: TT folds only near the s2~1.10 collapse boundary; FF folded at 27-28 C at the shipped trim points — the same netlist can be clean upward at TT and folded at FF."
+    - "A fold does NOT prove failure to start: the VDD-ramp transient follows a different homotopy path than the temp continuation and selected the regulated branch at FF/-40C in every run (settle 18-21 us). Bistability is only actionable if the power ramp can land on the degenerate branch — check, don't infer from the sweep."
+    - "Unresolved case kept open: at TT the W3/W4 cold collapse (-14/-22 C) could not be separated into artifact vs real bistability within L2 — the safe answer was 'downward sweep + cold startup TB' next iteration, which L3 then executed."
+  measured_impact: >
+    FM393 iteration-2 early-corner numbers (FF@-40C = 0.674 V degenerate) were
+    superseded by L3 branch-safe extraction: downward sweeps regulated
+    full-span at TT/SS/FF for both candidates; FF spec-corner vbg 1.201935 V
+    (W1) / 1.202714 V (W2); W1 signed off with hysteresis bracket documented
+    (upward folds 27-28 C at FF, downward clean => bistable-but-startup-safe).
+
+derived_from: [proj-013]
+confidence: unverified
+source: "WORK_FM393_BG verifier-reports/L2-performance/2026-09-09_iter2_trim-matrix.md sec 2/6/9 + L3-signoff/2026-09-09_l3_signoff.md sec 2/3 + iteration-log.yml hysteresis_resolution (2026-09-09)"
+created: '2026-09-09'
+updated: '2026-09-09'

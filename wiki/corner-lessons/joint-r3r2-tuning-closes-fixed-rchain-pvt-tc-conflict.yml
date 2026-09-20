@@ -1,0 +1,41 @@
+id: corner-bandgap-012
+type: corner-lesson
+name: "Joint R3/R2 tuning closes the fixed-R-chain PVT TC conflict (TC knob + centering knob)"
+tags: [bandgap, TC, corner, R-chain, joint-tuning, recentering, rho, nb1601]
+process_nodes: [180nm]
+
+content:
+  description: >
+    In a fixed-topology VBE + PTAT R-chain bandgap (Vref = VBE(Q1) +
+    VT*ln(N)*(R2 + R4_on)/R3), the two resistor segment-length DOFs split
+    cleanly: R3 (the dVBE-developing resistor, sets the PTAT current) is the
+    dominant TC lever, and R2 (output-side series segment) is a near-TC-neutral
+    Vref recentering lever. Tuning them JOINTLY - R3 to null the per-corner
+    TC(rho) parabola, R2 to recenter vref27 inside the window - closes the
+    TT/SS/FF TC conflict without any topology change. This refines
+    corner-bandgap-001: a single FIXED trim code cannot close all corners,
+    but a two-knob geometry retune can.
+  measured_impact: >
+    Reproduced and quantified in two independent sessions on the same frozen
+    macro. Session 1 (WORK_NB1601_BANDGAP_TC50, TC<50 target): R3 4.35u->4.20u
+    + R2 3.85u->3.50u moved worst-corner box TC 66.6 -> 29.8 ppm/C, L3
+    converged. Session 2 (WORK_NB1601_BANDGAP_TUNE_20260909, TC<100 +
+    centering target): 11-point measured grid (3 corners x 166-pt sweeps)
+    quantified the split - dVref/dR3_SEG = -141 mV/um vs dVref/dR2_SEG =
+    +16.2 mV/um (~8.7x, R3 dominant for both Vref and rho); TC parabola
+    vertices rho 8.904 (ff) / 9.016 (tt) / 9.096 (ss). Final point
+    (R2_SEG=3.60u, R3_SEG=4.30u) passed L3 sign-off: TC 47.9/58.7/33.9 ppm/C
+    (tt/ss/ff), vref27 1.2097/1.2114/1.2099 V centered, power 11.6/9.4/15.1 uW.
+    Cross-session anchor reproduction <=0.045 mV / <=0.1 ppm.
+  fix: >
+    Treat the two DOFs as (TC knob, centering knob): place R3 from the
+    TC(rho) zone first, then use R2 only to recenter vref27 - never chase TC
+    with the recentering knob. Evaluate all corners jointly; SS binds the
+    low-rho TC flank for this macro family (corner-bandgap-007). For the
+    zone-based selection procedure see strat-bandgap-009.
+
+derived_from: [proj-kb-bandgap]
+confidence: verified
+source: "WORK_NB1601_BANDGAP_TC50 iteration-log (lesson first stated 2026-09-06, evolve proposals never written) + WORK_NB1601_BANDGAP_TUNE_20260909 iteration-log / rationale.md sec 3 / L2 variant-batch + L3 sign-off reports (second independent session reproduced and quantified it; escalation per analog-evolve confidence rule)"
+created: 2026-09-09
+updated: 2026-09-09

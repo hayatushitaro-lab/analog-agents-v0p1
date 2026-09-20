@@ -1,0 +1,45 @@
+id: corner-pmu-005
+type: corner-lesson
+module: pmu
+name: "PMU current-input bias pins must be driven by explicit isources; a floating source-tied pin starves the whole bias chain"
+tags: [pmu, fm524, LF6, bring-up, tb-stimulus, bias-port, ibn_lp, degenerate-branch]
+process_nodes: [90nm]
+
+content:
+  description: >
+    A PMU top-level port classified as "bias current" may be a CURRENT INPUT,
+    not an output. The signature in the netlist is a PMOS whose SOURCE is the
+    port pin and whose DRAIN lands on an internal diode-biased node (e.g.
+    fm524 LDO30 `MP10 (vbn enb1 ibn_lp VDD)`, drain=vbn, source=ibn_lp pin,
+    with vbn's only enabled-state DC path being diode MN8 to VSS). If the TB
+    leaves such a pin open, the internal diode node has no defined current,
+    the mirror chain fed by it (vbn -> vbp2 -> amp tails) collapses, and the
+    block degenerates - often indistinguishable from "circuit is broken".
+  measured_impact: >
+    fm524 PMU bring-up, two sessions on the same DUT. Session 1
+    (proj-pmu-20260917, 10 iterations) measured vref1p2=0.313 V with both LDO
+    rails near 0 V and 678/841 MOS devices off; its report listed "an
+    externally required bias not yet identified" among the live hypotheses.
+    Session 2 (proj-pmu-20260918) traced ibn_lp to the MP10->vbn structure,
+    injected `IIBNLP (0 ibn_lp) isource dc=0.8u` (pin must be SOURCED INTO;
+    sinking starves vbn to 0 V), and the same DUT converged first-try:
+    vref1p2=1.19754 V, LDO15=1.48921 V, LDO30=2.99769 V, Iq=70.21 uA, with
+    the ibn_lp pin settling at 1.424 V (MN8 diode VGS, not the 0.4-0.7 V a
+    voltage-scale intuition predicts).
+  fix: >
+    During TB construction, land every PMU port in one of four classes by
+    tracing where it connects INSIDE the netlist: power, level input,
+    output, current input. The current-input signature is source-terminal-
+    on-pin feeding a diode-connected node. Drive each current input with an
+    isource sized from the internal mirror unit (here the 100 nA unit tree:
+    0.6 uA nominal; 0.8 uA worked). If the DC point still fails, retry
+    0.5x/1x/2x the nominal before suspecting the DUT. Record the direction
+    convention in the deck header: positive isource current flows first
+    terminal -> source -> second terminal, so `(0 ibn_lp)` injects into the
+    pin.
+
+derived_from: [proj-pmu-20260918, proj-pmu-20260917]
+confidence: unverified
+source: "wiki/projects/fm524/pmu/ (pmu-des-001 deck headers + pmu-ver-002 L1 report); prior-session hypothesis in WORK_PMU_PIPELINE_20260917/verifier-reports/L1-functional/dcop-and-state-sweep.md"
+created: '2026-09-18'
+updated: '2026-09-18'

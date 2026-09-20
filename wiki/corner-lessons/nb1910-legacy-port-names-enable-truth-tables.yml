@@ -1,0 +1,30 @@
+id: corner-bandgap-011
+type: corner-lesson
+name: "Legacy port names encode the original design value; enable-pin truth tables can gate the output stage entirely"
+tags: [bandgap, nb1910, reuse, enable-pins, hp-mode, retargeting, port-naming]
+process_nodes: [40nm]
+
+content:
+  description: >
+    Two traps when tuning/reusing an inherited DUT. (1) Legacy port names
+    encode the ORIGINAL design point: nb1910's `vref0p9` is arithmetically
+    exact for the legacy operating point — (VBE2 + 10*dVbe) * R_lad/R_b =
+    0.945 V with the old ladder lr. Retargeting vref to 1.2 V meant
+    re-deriving the ladder ratio from the loop equation
+    (Vref = (VBE2 + M*dVbe) * R_lad/R_b), not from anything the name
+    suggests. (2) Enable pins are part of the operating point: the task
+    brief assumed bg_hpmode_en=0 "for power", but at device level hp=0
+    opens switch M53 and leaves the master-mirror gate rail net0146
+    FLOATING (only gates + MOS caps on it) — the output stage is not
+    biased at all.
+  key_points:
+    - "Empirically confirmed (L1.3 diagnostic, nb1910): hp=0 -> vref0p9 = 53 uV, I(VBAT) = 0.7 nA, bg_ok_flag = 0. The part is off, not 'low power'."
+    - "hp=1 (net0146 = net0113) is the only fully specified precision operating point; all spec evaluation must happen there. Record the amended assumption in spec.yml, not just in architecture notes."
+    - "Before choosing TB stimulus for a reused block, trace every enable pin's truth table to device level (which rails float, which loops die)."
+    - "Treat port names as documentation of the OLD design: re-derive ladder/ratio knobs from the loop equation when retargeting; sanity-check the name arithmetic (0.945 V here) to confirm you understand the legacy point first."
+
+derived_from: ["proj-014"]
+confidence: verified
+source: "WORK_NB1910_BANDGAP_TUNE architect/architecture.md sec 2.4 + verifier L1-functional report (hp=0 diagnostic, vref 52.7 uV)"
+created: 2026-09-09
+updated: 2026-09-09

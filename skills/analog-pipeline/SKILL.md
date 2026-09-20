@@ -44,7 +44,7 @@ the **verifier** agent, including simulation of existing netlists.
 Before invoking any agent, confirm these exist:
 
 1. **`spec.yml`** in the working directory (see spec format below) — OR use functional defaults
-2. `servers.yml` configured (copy from `config/servers.example.yml` and fill in)
+2. `servers.yml` or `config/servers.yml` configured (copy from `config/servers.example.yml` and fill in)
 
 ### No spec.yml? Use functional defaults
 
@@ -86,7 +86,7 @@ corners:                        # required for L3 PVT only
 
 ## Server Configuration
 
-Read `servers.yml`. Use `role_mapping` if present. If absent, use `default` for all roles.
+Read `servers.yml` or `config/servers.yml`. Use `role_mapping` if present. If absent, use `default` for all roles.
 Each agent prompt specifies which role it is — resolve the server from role_mapping at dispatch time.
 
 ## Effort
@@ -107,7 +107,7 @@ Print the active effort level and parameters at startup:
 
 Read `shared-references/eda-modes.md` for mode detection.
 
-If `servers.yml` is not found and `eda_mode` is not explicitly set to `full`:
+If neither `servers.yml` nor `config/servers.yml` is found and `eda_mode` is not explicitly set to `full`:
 - Print: `[mode: review] No EDA detected — running in review mode`
 - Skip `/analog-behavioral` regardless of effort
 - Skip `/analog-integrate`
@@ -116,7 +116,7 @@ If `servers.yml` is not found and `eda_mode` is not explicitly set to `full`:
 - Final deliverable is a review-verified design package, not a simulation-verified one
 - Skip Virtuoso migration and L3 sign-off
 
-If `servers.yml` exists:
+If either `servers.yml` or `config/servers.yml` exists:
 - Print: `[mode: full] EDA detected — full simulation loop enabled`
 - All skills operate normally
 

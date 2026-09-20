@@ -1,0 +1,35 @@
+id: corner-ota-005
+type: corner-lesson
+name: "Uncharacterized PDK: first dcop is a measurement pass; Cgg6 belongs in the p2 budget"
+tags: [ota, two-stage, miller, uncharacterized-pdk, ge011lp, mucox, cgg6, phase-margin, dcop, paramterized-sizing]
+process_nodes: [110nm]
+
+content:
+  description: >
+    On an uncharacterized PDK (GF-011lp ge011lp, 3.3V nch3/pch3), hand-calc sizing
+    failed L2/L3 at the first attempt even though the textbook Miller recipe
+    predicted PM ~77 deg: measured PM was 52.1/54.7/50.3 deg and GBW missed at
+    tt/ss. Two physical surprises, both invisible before the first simulated op:
+    muCox backed out 20-30% below the assumed 65nm-class values (n 117.1, p ~31
+    uA/V2), and stage-2 input capacitance Cgg6 = 1.18 pF was the same order as
+    Cc = 1.2 pF, collapsing the effective second pole onto GBW (p2_fit/GBW
+    1.29/1.41/1.20 vs the >=2.2 gate). A hidden mirror pole p3 ~ 13-16 MHz on the
+    n1 node ate additional PM/GBW crest.
+  measured_impact:
+    - "muCox backout (gm-based, iter-1 op): n 117.1 uA/V2, p ~31 uA/V2; gm1 -12%, gm6 -22% vs hand-calc; gm1_ss 69.4 uS < 85 uS floor"
+    - "Cgg6/Cc = 0.98 at iter-1 -> p2_fit/GBW 1.29; after L6 2u->1u: Cgg6 = 0.896 pF = 0.64x Cc -> p2_fit/GBW 2.85-3.10, PM 70.7-72.1 deg"
+    - "1/gm6 measured 1727/2039/1455 ohm vs frozen Rz 1400 -> Rz must re-freeze to 1/gm6_tt (anti-ota-006) after constants are measured"
+  design_lesson: >
+    In an uncharacterized PDK, treat the first dcop as a measurement pass and keep
+    every W .param-terized (mirror-ratio and matching-equation expressions intact)
+    so all sizes re-derive from measured constants in a single step — this session
+    went from 3-corner FAIL to 3-corner L3 PASS with exactly one iteration.
+    Stage-2 Cgg6 must be included in the p2 budget (p2 ~ gm6/(2pi*(CL+Cc+Cgg6+...)));
+    leaving it out lets PM collapse onto GBW, and no current-only fix recovers it
+    cheaply. Check the mirror pole p3 = gm3/(2pi*Cn1) when Cn1 is non-negligible.
+
+derived_from: ["proj-015"]
+confidence: verified
+source: "ota_2stage_miller_r2 measured iteration-1 FAIL -> iteration-2 L3 PASS (L1+L2+L3, spectre), 2026-09-09"
+created: 2026-09-09
+updated: 2026-09-09

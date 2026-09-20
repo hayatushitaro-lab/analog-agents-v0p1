@@ -80,3 +80,55 @@
 {"from": "anti-ota-005", "to": "proj-009", "rel": "discovered_in", "note": "Unsupported ac magnitude=1 vsource syntax caused SFE-874 before AC simulation"}
 {"from": "corner-ota-004", "to": "proj-009", "rel": "discovered_in", "note": "SS/125C limited core current and GBW in the final three-corner verification"}
 {"from": "anti-ota-006", "to": "proj-009", "rel": "discovered_in", "note": "Cross-model review caught Cc mismatch between spec and implementation"}
+{"from": "proj-014", "to": "strat-bandgap-003", "rel": "validated", "note": "Consulted at design start; tempco-aware re-derivation of the null anchor landed all specs in one sizing iteration"}
+{"from": "proj-014", "to": "strat-bandgap-008", "rel": "validated", "note": "M*=10.29 (multi=5) + K1 re-center: TC 26.5/35.3/33.4 ppm/C tt/ss/ff, 1 iteration, fixed code 0000"}
+{"from": "strat-bandgap-008", "to": "strat-bandgap-003", "rel": "extends", "note": "Adds bias-current tempco terms (res tc1 -> alpha_R, bf tempco -> alpha_beta) to the measured-slope null anchor"}
+{"from": "strat-bandgap-008", "to": "anti-bandgap-008", "rel": "prevents", "note": "TC knob (K2) chosen from re-derived M* with mandatory ladder re-center avoids ladder-only/past-null tuning"}
+{"from": "corner-bandgap-010", "to": "proj-014", "rel": "discovered_in", "note": "Shipped decks covered 0/5 DUT device types; caught pre-sim by review B1 + verifier elaboration analysis"}
+{"from": "corner-bandgap-011", "to": "proj-014", "rel": "discovered_in", "note": "vref0p9 legacy-name arithmetic + hp=0 floating gate rail (vref 53 uV diagnostic)"}
+{"from": "strat-bandgap-008", "to": "proj-014", "rel": "discovered_in", "note": "Designer vs architect M* divergence resolved in designer's favor, L2 dense sweep as arbiter"}
+{"from": "anti-bandgap-005", "to": "proj-014", "rel": "discovered_in", "note": "Recurrence 2026-09-09: spec.yml model_sections_note covered none of 5 device types; fix had not been generalized"}
+{"from": "corner-bandgap-010", "to": "anti-bandgap-005", "rel": "prevents", "note": "Static probe with negative control catches uncovered device types before any remote dispatch"}
+{"from": "corner-bandgap-012", "to": "corner-bandgap-001", "rel": "extends", "note": "Two-knob geometry retune (R3 TC knob + R2 centering knob) closes what a single fixed trim code cannot; no topology change"}
+{"from": "proj-kb-bandgap", "to": "corner-bandgap-012", "rel": "validated", "note": "Reproduced + quantified across two independent sessions: WORK_NB1601_BANDGAP_TC50 (2026-09-06, worst TC 66.6->29.8 ppm/C, L3) and WORK_NB1601_BANDGAP_TUNE_20260909 (worst TC 58.7 ppm/C, L3 sign-off PASS)"}
+{"from": "corner-bandgap-012", "to": "proj-kb-bandgap", "rel": "discovered_in", "note": "nb1601 frozen-macro retune sessions; measured split dVref/dR3=-141 vs dVref/dR2=+16.2 mV/um (~8.7x)"}
+{"from": "strat-bandgap-009", "to": "strat-bandgap-003", "rel": "extends", "note": "Zone-based joint-corner generalization: per-corner TC(rho) parabolas + vref-window intersection replace a single null-ratio derivation"}
+{"from": "strat-bandgap-009", "to": "anti-bandgap-008", "rel": "prevents", "note": "The TC guardband zone is an explicit search constraint, so Vref/power-passing but TC-failing points are excluded by construction"}
+{"from": "strat-bandgap-009", "to": "strat-bandgap-010", "rel": "requires", "note": "Measured-zone selection is only as good as rig consistency; the anchor gate runs before selection/interpolation"}
+{"from": "strat-bandgap-009", "to": "proj-kb-bandgap", "rel": "discovered_in", "note": "WORK_NB1601_BANDGAP_TUNE_20260909: 2 iterations, 0 verification redos, 0 optimizer invocations, 33 batch jobs"}
+{"from": "strat-bandgap-010", "to": "anti-bandgap-005", "rel": "prevents", "note": "Anchor non-reproduction exposes wrong model-section wiring / silent include errors before any grid data is trusted"}
+{"from": "strat-bandgap-010", "to": "proj-kb-bandgap", "rel": "discovered_in", "note": "WORK_NB1601_BANDGAP_TUNE_20260909 L2 batch anchor gate: CONSISTENT at <=0.045 mV / <=0.1 ppm (40x inside +-2 mV / +-5 ppm)"}
+{"from": "corner-bandgap-013", "to": "corner-bandgap-007", "rel": "extends", "note": "SS is the binding corner and specifically binds the low-rho TC guardband edge for this fixed-R-chain family"}
+{"from": "corner-bandgap-013", "to": "proj-kb-bandgap", "rel": "discovered_in", "note": "Caught by cross-model review D2 (2026-09-09); effective SS edge rho ~8.72-8.73 vs fit 8.684; escape condition fired on measured ss TC 58.69"}
+{"from": "corner-gl018-001", "to": "proj-017", "rel": "discovered_in", "note": "gl018 wrapper-scoping trap + silent nf/multi drop, found via verifier probes"}
+{"from": "strat-ldo-020", "to": "proj-017", "rel": "discovered_in", "note": "Amendment 2 tau-budget derivation after 3x-FAIL escalation"}
+{"from": "corner-ldo-006", "to": "proj-017", "rel": "discovered_in", "note": "RBLED 36k bleeder, rationale Iter3.1"}
+{"from": "corner-tooling-001", "to": "proj-017", "rel": "discovered_in", "note": "cross-model review collator notes"}
+{"from": "proj-017", "to": "strat-ldo-001", "rel": "validated", "note": "big-Cout + Cc-Rz hybrid re-proven at L3 (gl018), after 65nm ldo_1v1"}
+{"from": "proj-017", "to": "topo-ldo-012", "rel": "extends", "note": "as-built stage-1 input pair flipped to NMOS-input/PMOS-mirror (architecture.md Amendment 1)"}
+{"from": "corner-006", "to": "proj-018", "rel": "discovered_in", "note": "FM544 grouped K-scaling: resistor-set branches scaled exactly 1/K but M96 bleeder + startup chains formed a ~6.6 uW fixed floor; P27(K)=floor+P_core1/K predicted to 0.4-2.6%"}
+{"from": "corner-007", "to": "proj-018", "rel": "discovered_in", "note": "FM544 cold-end lock-in (3411-3806 ppm/C at -40..-39C) root-caused to M58/M59 drain asymmetry; lock-in -6.5C per -0.2K; window proven empty"}
+{"from": "anti-004", "to": "proj-018", "rel": "discovered_in", "note": "M58 drain on vbp (2.434V) vs M59 on vbn (1.787V); Vgs error +1.28->+9.96 mV 27C->-40C, I_R12 21.7% high at -40C"}
+{"from": "strat-001", "to": "proj-018", "rel": "discovered_in", "note": "it3: 2 dense sweeps (K32/K34) + 1 cliff dump = 3 sims proved the joint TC/power window empty and named the mechanism"}
+{"from": "proj-018", "to": "strat-bandgap-010", "rel": "validated", "note": "Anchor re-measure reproduced the 0908 baseline with ZERO delta (1.279505V/214.912ppm/281.039uW); all cross-session comparisons rig-safe"}
+{"from": "proj-018", "to": "corner-005", "rel": "validated", "note": "Second independent project: LEVELS held (VREF +4mV, power +0.4-2.6%) while chord-derived SENSITIVITIES failed ~5x (dVREF/dR_PTAT -42.5 vs -8.9 mV/u; dTC/dR_PTAT ~+120 (ppm/C)/u vs K=1 chord +680 ppm/C per rho)"}
+{"from": "proj-018", "to": "anti-003", "rel": "validated", "note": "Fresh non-continuation DC ops at -40/-30C reproduced sweep values exactly, ruling out continuation artifacts before trusting the cold divergence"}
+{"from": "corner-006", "to": "corner-003", "rel": "extends", "note": "Second hidden axis of uniform current scaling: FM393 exposed the stability axis, FM544 the non-scaling fixed-VGS power floor (with hot inflation)"}
+{"from": "corner-007", "to": "corner-004", "rel": "extends", "note": "FM544 cold divergence proven genuine via fresh non-continuation DC ops (corner-004 method); signature is a lock-in kink (max adjacent step 4.6 mV), not a fold"}
+{"from": "corner-007", "to": "anti-004", "rel": "extends", "note": "The cold lock-in is the corner manifestation of the drain-asymmetry design flaw; fix (drain symmetry/cascode) is topology-level"}
+{"from": "strat-001", "to": "strat-bandgap-009", "rel": "extends", "note": "Empty-set complement: when the zone intersection is empty, two bracket candidates + one root-cause dump prove it with numbers instead of open-ended search"}
+{"from": "corner-bandgap-014", "to": "corner-bandgap-001", "rel": "extends", "note": "Passive-typical corners on LF6 make the fixed-R-chain TT/SS/FF TC conflict (passive-corner driven) structurally N/A on this PDK family; measured corner spread <=1 mV"}
+{"from": "corner-bandgap-015", "to": "anti-ota-005", "rel": "extends", "note": "Second distinct SFE-874 trigger (standalone NS1 nodeset / nodeset=[...] on Spectre 18.1; first was vsource ac magnitude=) - same remedy class: deck syntax, not circuit"}
+{"from": "corner-bandgap-015", "to": "corner-bandgap-010", "rel": "requires", "note": "The mandatory L0 model-coverage probe doubled as the include-resolution canary for the one-time staged model tree"}
+{"from": "corner-pmu-003", "to": "proj-pmu-20260917", "rel": "derived_from", "note": "Explicit en_pmu_act truth-table axis recovered vref1p2 and both LDO rails; numerical warning caveat retained"}
+{"from": "corner-pmu-004", "to": "proj-pmu-20260917", "rel": "discovered_in", "note": "Derived-library cleanup removed source-tail save/options but preserved the active-DC numerical signature; gmin-affected DC and partial transient state remain non-signoff evidence"}
+{"from": "corner-pmu-005", "to": "proj-pmu-20260918", "rel": "derived_from", "note": "ibn_lp traced to MP10->vbn source-tie and sourced 0.8uA; prior session's 'unidentified external bias' hypothesis resolved"}
+{"from": "corner-pmu-006", "to": "proj-pmu-20260918", "rel": "discovered_in", "note": "2.838 V peak at 118.8us on LDO15, ~1.3 ms load-limited tail (1mA/1uF), re-regulates ~1.43 ms"}
+{"from": "corner-pmu-007", "to": "proj-pmu-20260918", "rel": "discovered_in", "note": "dvdd_por released outputs hold ~24us then collapse; DC decks show only the post-pulse state"}
+{"from": "anti-pmu-002", "to": "corner-pmu-007", "rel": "refines", "note": "The por_sequence FAIL-as-written was the acceptance clause encoding a level model onto a one-shot output"}
+{"from": "strat-pmu-002", "to": "proj-pmu-20260918", "rel": "derived_from", "note": "Recipe instantiated in pmu/architect/stimulus-table.md; converted 10 stalled iterations into first-pass convergence"}
+{"from": "proj-pmu-20260918", "to": "corner-pmu-003", "rel": "validates", "note": "Explicit en_pmu_act=5V vsource drive from t=0; clean op point first try, medium->verified"}
+{"from": "proj-pmu-20260918", "to": "corner-pmu-002", "rel": "validates", "note": "next_test prescription executed as TB design; branch resolved (root cause = two stimulus gaps), medium->verified"}
+{"from": "proj-pmu-20260918", "to": "proj-pmu-20260917", "rel": "derived_from", "note": "Continuation: prior run's two live hypotheses (external enable, unidentified bias) became this run's stimulus items; prior branch-diagnosis discipline kept DUT untouched across both"}
+{"from": "proj-pmu-20260918", "to": "topo-pmu-001", "rel": "validated", "note": "5V dual-LDO hierarchy functionally confirmed with measured rail values and enable-chain equations"}
+{"from": "anti-shared-004", "to": "proj-pmu-20260918", "rel": "derived_from", "note": "180nm->90nm LF6 metadata incident: propagated from unrelated projects' entries into 4 new entries + architecture.md; PDK evidence (BSIM4 toxref=1.56nm, l=0.1u) corrected it"}

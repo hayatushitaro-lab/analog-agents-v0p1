@@ -217,23 +217,6 @@ The first call runs `hooks/post_sim_check.py` (PSF -> spec check -> sim-log.yml)
 and the block's `post-sim-hook.py` if present. The second records the netlist
 edit to `iteration-log.yml` and attempts a local `spectre -check` when available.
 
-## Codex-native agent dispatch preflight and role naming
-
-Before starting any pipeline task, the orchestrator MUST inspect the complete
-runtime tool catalog, including deferred tools / `ALL_TOOLS`, and verify that
-`multi_agent_v1__spawn_agent`, `multi_agent_v1__wait_agent`,
-`multi_agent_v1__send_input`, `multi_agent_v1__close_agent`, and
-`multi_agent_v1__resume_agent` are available. If the required tools are absent
-or cannot be inspected, stop and report the limitation; do not replace real
-sub-agents with logical roles or run the delegated work directly.
-
-When spawning agents, the first line of every agent prompt MUST contain a
-stable functional label such as `[ARCHITECT]`, `[DESIGNER]`, `[REVIEWER]`, or
-`[VERIFIER]`. The orchestrator MUST maintain the mapping between each label and
-its `agent_id` and use that mapping in handoffs, `iteration-log.yml`, and final
-reports. If the platform supplies a different display nickname, the functional
-label remains the canonical role name.
-
 ## Codex-native handoff and timeout/retry protocol
 
 > This section is an addition to this file only. It does not change the existing
@@ -241,6 +224,9 @@ label remains the canonical role name.
 
 Rules for orchestrator -> sub-agent handoffs, timeouts and re-dispatch when
 agents are run through Codex-native task/wait tooling:
+
+If a required tool appears unavailable, the root/orchestrator agent should first
+inspect `ALL_TOOLS` for an equivalent before declaring it unavailable.
 
 1. **A timeout means `UNKNOWN`, not failure.** A wait/sub-agent timeout marks
    the result only as `UNKNOWN`. It is never by itself treated as a failure,

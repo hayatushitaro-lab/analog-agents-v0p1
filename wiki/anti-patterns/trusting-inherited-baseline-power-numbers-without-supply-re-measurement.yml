@@ -1,0 +1,45 @@
+id: anti-002
+type: anti-pattern
+name: Trusting inherited baseline power numbers without supply re-measurement
+tags: [bandgap, fm393, baseline, anchor, power-budget, supply]
+process_nodes: [180nm]
+
+content:
+  description: >
+    Using a prior session's measured power/current as the baseline anchor and
+    budget starting point for a retune, without re-measuring it at the CURRENT
+    spec's supply. The anchor's measurement context (VDD, testbench, metric
+    definition) is usually not preserved in the archive, and a supply mismatch
+    corrupts the entire reduction budget: FM393 inherited "904.409 uW / 502 uA
+    at 1.8 V" from a run actually measured at ~3.3 V (vbg fingerprint to
+    0.4 uV), planning a 9.0x reduction when the true 1.8 V baseline needed
+    only 5.0x — and the branch-share hypothesis (~250 uA MPB chain) built on
+    it was off by 17x (measured 14.3 uA).
+  failure_mechanism: >
+    The anchor value propagates from wiki/project archives into handoff gates
+    (baseline_gate criteria) and budget decompositions. Nothing in the value
+    itself records its supply; a derived back-calculation (P/VDD quoted as a
+    current) even looks like an independent measurement. Every downstream
+    decision — required K range, lever priority, gate pass/fail — inherits the
+    error, and a gate built on the stale anchor FAILS a healthy baseline
+    (costing a stopped matrix + an orchestrator re-baseline round).
+  fix: >
+    Before planning any power-reduction budget, re-measure the unmodified
+    baseline netlist at the current spec supply (one DC op run, seconds) and
+    make THAT the anchor. Sanity-check any inherited anchor: (a) is
+    P_anchor = I(Vvdd)*V(Vvdd) reproducible at the spec supply; (b) if vbg
+    matches to absurd precision only at a different VDD, the anchor came from
+    that supply; (c) treat any budget current equal to P_anchor/VDD as derived,
+    not measured. Record the re-measured anchor in the handoff with its supply
+    and testbench identity.
+  signs:
+    - "Baseline gate fails on the power axis by tens of percent while vbg/TC reproduce the anchor well."
+    - "Inherited anchor power not reconstructible as I*V at any plausible supply (between two supplies' values)."
+    - "Budget documents contain a current that is exactly anchor_power/VDD."
+    - "Branch-current estimates derived from the anchor are unreachable in OP data by an order of magnitude."
+
+derived_from: [proj-013]
+confidence: unverified
+source: "WORK_FM393_BG verifier-reports/L2-performance/2026-09-09_iter1_variant-matrix.md sec 4.1 (fingerprint evidence) + iteration-log.yml iter1 baseline_gate/anchor_investigation, 2026-09-09"
+created: '2026-09-09'
+updated: '2026-09-09'

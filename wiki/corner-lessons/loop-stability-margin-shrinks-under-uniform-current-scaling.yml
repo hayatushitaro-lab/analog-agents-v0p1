@@ -1,0 +1,35 @@
+id: corner-003
+type: corner-lesson
+name: Loop stability margin shrinks under uniform current scaling
+tags: [bandgap, fm393, stability, limit-cycle, startup, low-power, scaling, 180nm]
+process_nodes: [180nm]
+
+content:
+  description: >
+    Uniformly scaling a proven bandgap's resistor tree by K (all R x K =>
+    loop currents ~1/K, compensation caps frozen) preserves every DC spec but
+    eats loop stability margin progressively: a low-level sustained limit cycle
+    appears first at the most aggressive scaling on the nominal corner, then at
+    lower K on faster/colder corners. FM393 (TSMC 0.18um, C1/C2 frozen by red
+    line): K=10 limit-cycles at TT/27C (net1 ~2.3 MHz, 84 uVpp); K=8 is clean
+    at TT/SS but cycles at FF/-40C after trim (I_inj 1.94 uA; net1 2.7 MHz,
+    132.6 uVpp, vbg 15.8 uVpp); K=6 (I_inj 2.61 uA) is clean everywhere
+    (<=0.002 uVpp). The K=8 candidate was REJECTED at L3 by the "no sustained
+    limit cycle" gate despite 17 uW better power — the sign-off went to K=6.
+  key_points:
+    - "Stability is a hidden axis of current scaling: DC metrics (vref/TC/power) all passed at K=8; only the corner startup transient with an internal-node ripple watch exposed the cycle. Low-power re-scales of a proven topology need startup + perturbation at L3, not just DC sweeps."
+    - "Watch internal loop nodes, not just the output: the K=8/FF cycle was 132.6 uVpp on net1 (amp output) but only 15.8 uVpp (~14 ppm) on vbg — an output-ripple-only criterion would have passed it."
+    - "Confirm-real method for small limit cycles: re-run with errpreset=conservative, reltol=1e-4, vabstol=1e-7, maxstep=50n. The FM393 cycle persisted and GREW slightly (151.4 uVpp) — a well-resolved real oscillation, not truncation ringing."
+    - "Physical read: loop gm falls ~1/K with frozen C1/C2, and FF/cold maximizes gm — the marginal-stability boundary moves inward as K rises (cycle threshold: K=10@TT < K=8@FF-cold < K=6 clean)."
+    - "Practical K ceiling: for this class of R-scaled bandgap the power/stability tradeoff bounded K at 6; report the trade explicitly (17 uW for one stability tier) so a future compensation change can reclaim it."
+  measured_impact: >
+    FM393 L3 sign-off: W2 (K=8, s2=1.090, s4=1.1105; 54.0 uW TT) rejected on
+    FF/-40C sustained 2.7 MHz net1 limit cycle; W1 (K=6, s2=1.085, s4=1.0995;
+    71.8 uW TT) signed off with zero cycle at all corners. V4 (K=10) had
+    already flagged the trend at TT in iteration 1.
+
+derived_from: [proj-013]
+confidence: unverified
+source: "WORK_FM393_BG verifier-reports/L3-signoff/2026-09-09_l3_signoff.md sec 2/4 + iter1 redo report sec 6 (V4 cycle) + iteration-log.yml physical_read (2026-09-09)"
+created: '2026-09-09'
+updated: '2026-09-09'

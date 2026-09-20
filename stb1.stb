@@ -1,0 +1,17 @@
+{
+  "sweep_var": "freq",
+  "n": 401,
+  "sig": [
+    "loopGain"
+  ],
+  "metrics": {
+    "n_points": 401,
+    "ugf_hz": 7760.5938,
+    "pm_deg": -109.1655,
+    "gm_db": null,
+    "f180_hz": null,
+    "mag_first": 83.1494,
+    "phase_at_1k": 41.9909,
+    "T0_db_lowf": 83.1494
+  }
+}

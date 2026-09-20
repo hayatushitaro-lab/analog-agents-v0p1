@@ -1,0 +1,44 @@
+id: corner-bandgap-015
+type: corner-lesson
+module: bandgap
+name: "Spectre 18.1 remote deck setup: standalone nodeset is SFE-874; includes resolve relative to the including file - stage the model tree once per session"
+tags: [bandgap, spectre, workflow, tooling, nodeset, SFE-874, include-path, remote-sim, model-staging, fm436]
+process_nodes: []
+
+content:
+  description: >
+    Workflow lesson (not PVT) - three Spectre-18.1-era remote-run facts that
+    shape every deck. (1) Server Spectre 18.1 rejects BOTH the standalone
+    `NS1 nodeset ...` statement AND the analysis-parameter form
+    `nodeset=[...]` with SFE-874. Remedy: comment the nodeset out per the TB
+    header prescription and keep the degenerate-branch guard via per-point
+    signature gates + L3 sweep-direction agreement (anti-003 / corner-004) -
+    the guard survives without nodeset. (2) `include` paths resolve relative
+    to the INCLUDING file (L0-verified with a minimal server-side probe), so
+    a model tree staged ONCE per session with structure preserved works with
+    relative `../models/...` deck includes even though the bridge runs each
+    job in a per-run subdir. (3) Stage the model tree once (record file count
+    + sha256 of the top-level .lib in the report) and reuse it across all
+    iterations AND across a re-dispatched agent - do not re-upload per job.
+    Also on 18.1: no `+preset` args (native mode; fm449v2 lesson
+    re-confirmed).
+  measured_impact: >
+    25/25 jobs in iteration 1 (L0 probe x3 + L1 anchor + L2 21-job grid) and
+    14/14 sign-off jobs at L3 ran on Spectre 18.1.0 with zero read-in errors
+    and zero convergence failures; NS1 commented out in every deck while the
+    signature gates stayed clean at all 34 sweep points x every sweep; model
+    staging (145 files, sha256(LF6_Spectre.lib)=af075048012a1af7...) reused
+    unchanged by the re-dispatched L3 agent, which needed no new remote
+    dispatch at all (completed sims + staging reused per handoff rule 5).
+  fix: >
+    Same SFE-874 error number as anti-ota-005 (vsource `ac magnitude=`) but a
+    different trigger - classify it as deck syntax, not a circuit failure,
+    and fix the deck. Before the first real dispatch, let the mandatory L0
+    model-coverage probe (corner-bandgap-010) also canary the staged include
+    chain and the include-resolution direction.
+
+derived_from: [proj-kb-bandgap]
+confidence: unverified
+source: "WORK_FM436_BANDGAP_TUNE_20260909: iteration-log verifier_iter1 setup_lessons, L1 report deck deviations, L3 report provenance (2026-09-09)"
+created: 2026-09-09
+updated: 2026-09-09

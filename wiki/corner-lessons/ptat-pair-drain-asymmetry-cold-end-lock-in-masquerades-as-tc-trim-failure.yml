@@ -1,0 +1,42 @@
+id: corner-007
+type: corner-lesson
+name: PTAT-pair drain asymmetry cold-end lock-in masquerades as TC-trim failure
+tags: [bandgap, ptat, cold-corner, lock-in, tc, weak-inversion, drain-asymmetry, fm544, 180nm]
+process_nodes: [180nm]
+
+content:
+  description: >
+    A PTAT self-bias pair with unequal drain voltages (FM544 M58 drain on vbp
+    2.434 V vs M59 drain on vbn 1.787 V — frozen topology) is exact at 27 C but
+    its Vgs mismatch grows in weak inversion at cold: +1.28 mV (27 C) ->
+    +9.96 mV (-40 C), current ratio 0.991 -> 0.837, I_R12 landing 21.7% above
+    ideal PTAT. The x5 mirror bank plus HRPOLY cold +6.6% convert this into a
+    VREF cold excess that closes EXACTLY (+80.6 mV = dVBE +108.6 mV + PTAT-term
+    -28.0 mV). Symptom: VREF bends up below a lock-in temperature with dense
+    local TC of thousands of ppm/C in the -40..-39 C band (3411-3806 ppm/C
+    measured) WITHOUT any branch collapsing and WITHOUT servo imbalance — a
+    pure core-level error that no resistor trim can reach. The lock-in
+    temperature shifts ~-6.5 C per -0.2 K of core current scaling: -21 C
+    (K=3.6), -28 C (K=3.4), -34 C (K=3.2); TC-clean needs K <= ~3.0, which the
+    100 uW power cap excludes (P27 ~ 102.6 uW) — the joint window is empty
+    (see anti-004 for the design flaw and strat-001 for the proof method).
+  key_points:
+    - "A cold TC failure with an R_PTAT-INDEPENDENT signature (three trim variants bend up at the same VREF(-40)) is not a trim problem — the error is generated upstream of the trim knob. Check the PTAT pair before spending any sweep on R_PTAT/R_VREF moves."
+    - "Servo balanced does NOT mean the reference is correct: the OTA regulated to -0.151 mV while faithfully copying a core voltage ~80 mV too high onto VREF. Diagnose the core (VBE, PTAT leg, mirror bank), not the loop."
+    - "No branch collapses: the full -40 C dump showed every branch conductive; the only region change (M96 bleeder linear->sat, +0.85 uA) is a vbp SYMPTOM, not a cause. 'Cold regulation loss' does not imply a collapsed branch."
+    - "Fresh non-continuation DC ops at the failing corner are required evidence: fresh (non-continuation) ops at -40/-30 C reproduced the sweep values exactly (1.2902/1.2455 V), ruling out solver-continuation artifacts per corner-004/anti-003 before the mechanism was trusted."
+    - "The 'cliff' is a smooth lock-in KINK, not a step: max adjacent 1 C step was 4.6 mV at the worst point — a >10 mV-step detector finds nothing. Gate cold corners on 1 C dense local TC, not on step detectors."
+    - "Cold resistor TC is the amplifier: ~+990 ppm/C average on the core chain (+6.6% 27->-40 C) turns the K-scaled I*R nodes into cold-end thermometers that multiply the PTAT error into mV on VREF; bigger R_core (higher K) converts the SAME current error into MORE VREF error, which is why the failure scales with K."
+    - "The lock-in threshold is a measurable, monotonic function of K: bracketing two K values + one root-cause dump localized it (-21/-28/-34 C at K=3.6/3.4/3.2) and proved the window empty in a single round (strat-001)."
+  measured_impact: >
+    FM544 2026-09-09: TC gate failed at 3411.4 (K=3.2) / 3609.9 (K=3.4) /
+    3805.8 (K=3.6) ppm/C vs <= 90 gate, all in the -40..-39 C band; outside the
+    diverged band TC was excellent (max 47.2-50.9 ppm/C, hot end ~-33 ppm/C);
+    session escalated with canonical restored to K=2.9 (the only clean-cold
+    point, P27 103.5 uW, 3.5% over target).
+
+derived_from: [proj-018]
+confidence: unverified
+source: "WORK_FM544_BANDGAP_TUNE_20260909 verifier-reports/L1-functional/2026-09-09-it3-cliff40c-dump.md + L2-performance/2026-09-09-it2-tt-grid.md cold-end pathology + 2026-09-09-it3-k-bracket.md threshold trend + L3-signoff.md (2026-09-09)"
+created: '2026-09-09'
+updated: '2026-09-09'

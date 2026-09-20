@@ -1,0 +1,66 @@
+id: strat-ldo-020
+type: strategy
+name: "Derive LDO load-step recovery specs from the per-corner tau budget, not defaults"
+tags: [ldo, recovery, settling, tau-budget, doublet, rz-cc, spec-derivation, transient, escalation, spec-revision]
+process_nodes: [180nm]
+
+content:
+  description: >
+    In a big-Cout LDO with internal Miller Cc-Rz compensation, the Rz-Cc
+    doublet that provides light-load phase margin IS the settling tail: the
+    same tau_d = Rz*Cc (and tau_L = 1/(2*pi*UGF_light)) that buys PM >= 45deg
+    governs the post-edge residue decay. Recovery lines must therefore be
+    DERIVED from the per-corner tau budget. Arbitrarily tight defaults (50us
+    here — an orchestrator functional-default comment inherited as a hard
+    spec) can be structurally unreachable within PM >= 45deg + Iq budget,
+    even with the doublet reduced to zero.
+  derivation: |
+    1. Residue at tail start = the overshoot/droop, NOT the full step
+       (overshoot-clamped): N = ln(initial_residue / band), band = +/-0.1%
+       of Vout here. The naive ln(1000) = 6.9 bound applies only to the
+       hypothetical no-overshoot case and is NOT the operative mechanism.
+    2. Doublet-rate bound: t_tail ~ N * tau_d with tau_d = Rz*Cc
+       (49.5us here, corner-flat for ideal R/C primitives; poly R moves it).
+    3. Zero-doublet best-case floor: N * tau_loop,light + gate slew
+       (dV_gate * Cc / I_sink) + dwell. Here: 53.6us tt / ~80us ss —
+       already above the 50us line BEFORE any doublet.
+    4. tau_loop,light = 1/(2*pi*UGF_L), UGF_L ~ sqrt(gm_in * gm_pass,light)
+       -> ss/tt ~ 0.70-0.75 (sqrt(mu)); scale every line per corner.
+    5. Set the line at the central ss projection x ~1.2 margin
+       (400us here vs ss 20->0 projection 330-395us; tt measured 226.8us
+       = 1.76x inside — not comically loose).
+  pm_recovery_coupling: >
+    Why the doublet cannot just be killed: PM_light >= 45deg requires the Rz
+    zero at/below the light crossover (lead atan(UGF_L/fz)), i.e.
+    fz <= UGF_L <=> tau_d >= tau_loop,light. Raising UGF_L instead is
+    bleeder/Iq-limited (+37% bleeder current bought only ~+10% UGF_L).
+    Settle tail and light-load PM are the SAME network — never write an
+    independent recovery line and hope parameter tuning reconciles them.
+  evidence: >
+    WORK_LDO_2STAGE_20260908: 3 designer iterations exhausted against the 50us
+    line (it2: 43ms rail-latch; it3: 108.4 / ~263us with everything else
+    passing) -> 3x-FAIL escalation -> architect Amendment 2 infeasibility
+    proof -> spec revised to <=400us both edges, all corners, NO iteration 4.
+    L3 sign-off measured 83.8-357.1us across corners vs the derived line
+    (binding ss 20->0 = 357.1us, +10.7% margin), landing inside the
+    Amendment's floor-to-projection band on every edge/corner.
+  when_to_apply:
+  - Any compensated LDO whose recovery/settle spec predates the compensation
+    choice (check spec provenance first — user-mandated vs orchestrator default).
+  - Before ordering designer iteration N+1 on a recovery-only FAIL, run the
+    tau budget first; if the line is below the PM/Iq-feasible floor, revise
+    the spec (architect adjudication) instead of burning the iteration.
+  - At spec-authoring time for big-Cout + Cc-Rz topologies (companion to
+    strat-ldo-001 and the droop-in-band convention strat-ldo-018).
+  pitfalls:
+  - Using the full step as initial residue (overestimates N ~3x).
+  - Forgetting gate slew and dwell terms at tight (sub-100us) lines.
+  - Assuming tau_d corner-flat — true only for ideal R primitives; poly
+    resistor TC moves tau_d, fz and the ss recovery margin together.
+  - Judging recovery from slew claims instead of the tran waveform.
+
+derived_from: [proj-017]
+confidence: unverified
+source: "WORK_LDO_2STAGE_20260908 architect/architecture.md Amendment 2 + L3 sign-off pvt-20260909.md (2026-09-09)"
+created: 2026-09-09
+updated: 2026-09-09

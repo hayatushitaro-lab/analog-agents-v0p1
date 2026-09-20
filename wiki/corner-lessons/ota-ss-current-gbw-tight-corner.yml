@@ -18,7 +18,10 @@ content:
     GBW margin at SS/high temperature instead of sizing only at TT.
 
 derived_from: ["proj-009"]
-confidence: unverified
+validated_by: ["proj-015"]   # /analog-evolve 2026-09-09: second project re-confirmed SS/125C as
+                             # the tight corner (GBW_ss +11.2% tightest margin; iter-1 gm1_ss
+                             # 69.4 uS < 85 uS floor; measured ss/tt GBW shrink -21.4%)
+confidence: verified
 source: "OTA 2-stage Miller L3 PVT verification, 2026-09-07"
 created: 2026-09-07
-updated: 2026-09-07
+updated: 2026-09-09

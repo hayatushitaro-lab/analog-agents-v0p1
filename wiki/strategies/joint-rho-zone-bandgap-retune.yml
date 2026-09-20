@@ -1,0 +1,34 @@
+id: strat-bandgap-009
+type: strategy
+name: "Joint rho-zone sizing for fixed-topology bandgap retune (calibrated hand model + measured-zone selection)"
+tags: [bandgap, fixed-topology, retune, rho-zone, TC-guardband, window-margin, grid-design, hand-model, nb1601]
+process_nodes: [180nm]
+
+content:
+  description: >
+    For a fixed-topology bandgap retune with two resistor DOFs, collapse the
+    2-D search onto the single compensation ratio rho = (R2 + R4_on)/R3:
+    model worst-corner box TC as a per-corner parabola in rho, intersect the
+    TC <= guardband zone with the vref27-window zone, and pick the MEASURED
+    point that maximizes window margin at the binding corner. Seed the grid
+    from a hand model calibrated on prior measured data instead of running an
+    optimizer.
+  key_points:
+    - "Calibrate a hand model on ALL prior measured data of the same macro before spending simulation slots: Vref27(corner) = VBE0_c + dVBE_c*rho(corner) with per-corner fitted VBE0/dVBE (the fitted dVBE excess over VT*ln(N) absorbs mirror-ratio/beta second-order effects). Here: RMS 0.34 mV over 39 measured points (13 x 3 corners); every grid prediction landed within ~5 mV / ~5 ppm of measurement."
+    - "TC is a parabola in rho per corner (vertices 8.904/9.016/9.096 for ff/tt/ss here); the worst-corner TC zone is the intersection of the per-corner bands, and the vref window converts to a rho band via the calibrated level model. The selection zone is the intersection of both - report its width honestly (see corner-bandgap-013: fit edges are optimistic)."
+    - "Grid design: coarse rows across the predicted selection zone + one bracket row on each flank (TC-fail reach, vref-fail reach) + 2 replayed anchors. Skip points predicted >10 mV outside the hard window - they provably cannot be selected and buy no selection information."
+    - "Select on MEASURED data only, never on the fit: among measured variants passing hard specs, maximize the minimum normalized margin on the guardband objectives (e.g. TC <= 60 AND vref27 centered). Pre-register the interpolation trigger: interpolate a final trim only if the nearest measured point MISSES the joint zone by <10 ppm TC / <3 mV."
+    - "Keep measured local sensitivities for any interpolation: dVref/dR2_SEG ~ +16 mV/um (near-TC-neutral recentering), dVref/dR3_SEG ~ -141 mV/um (includes the VBE self-consistency feedback term ~ -6 mV/um); R3 is ~8.7x stronger."
+    - "Optimize margin at the BINDING corner, not the average: SS bound the low-rho TC edge here while FF bound power; the selected point maximized SS window margin (18.6 mV) among guardband-passing candidates."
+  measured_impact: >
+    nb1601 bandgap retune 2026-09-09: 11 variants x 3 corners (33 jobs) in ONE
+    batch, converged in 2 iterations with 0 verification redos, 0 optimizer
+    invocations, and the final netlist was an already-measured variant (no
+    closing sim needed). Unique measured point meeting vref-centering AND
+    TC<=60 guardband: (R2_SEG=3.60u, R3_SEG=4.30u).
+
+derived_from: [proj-kb-bandgap]
+confidence: unverified
+source: "WORK_NB1601_BANDGAP_TUNE_20260909 circuit/rationale.md sec 3-6 + iteration 2 selection + L2 variant-batch / L3 sign-off reports"
+created: 2026-09-09
+updated: 2026-09-09

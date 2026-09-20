@@ -1,0 +1,42 @@
+id: corner-bandgap-014
+type: corner-lesson
+module: bandgap
+name: "LF6 tt/ss/ff corner sections keep passives typical - process corners act only through MOSFETs"
+tags: [bandgap, corner, pdk, LF6, samsung-90nm, passives, model-sections, margin-statement, fm436, trim]
+process_nodes: [90nm]
+
+content:
+  description: >
+    In the Samsung LF6 90nm Spectre model tree (LF6_Spectre.lib S00-V0.5.8.0),
+    the top-level corner sections tt/ss/ff each include
+    passive_fixed_corner.lib.scs sections rtyp/ctyp/btyp, so rgdps resistors,
+    sp11 BJTs and mim33 caps stay TYPICAL at every corner
+    (rgdpsrs_mfc=1, sp11is_mfc=sp11bf_mfc=1). Corners move only the MOSFETs
+    (Vth/gm/leakage, amp gain/offset/headroom) - NOT the resistors, BJTs or
+    caps. Do not assume that a tt/ss/ff include also moves res/BJT corners:
+    read what the top-level section actually selects before planning corner
+    coverage or quoting PVT margin.
+  measured_impact: >
+    FM436 frozen-topology bandgap tune (7-candidate trim grid x 3 corners,
+    21 L2 jobs): per-candidate vref27 corner spread <= 1 mV across tt/ss/ff;
+    at the selected point vref27 = 1.202072..1.202308 V (0.235 mV spread) and
+    TC = 5.4/8.7/11.4 ppm/C (tt/ss/ff). Measured worst POWER corner was
+    ff_m40c (47.2 uW), not the hand-predicted ss_125c (46.2 uW) - with
+    passives corner-frozen, corner ordering is set by MOS currents + temp,
+    not R spread. All ~2x inside the 100 uW spec. mV-class corner behavior
+    here vs the +/-2.5% class of corner-bandgap-002 (GF 0.13um, where device
+    corners DO move everything).
+  consequences: >
+    (a) corner-to-corner vref shifts are mV-class on this PDK family, so the
+    corner-coverage risk migrates to production R/BJT spread + mismatch,
+    which tt/ss/ff runs do NOT cover - margin statements must say so
+    explicitly (flagged as review axis A5 note). (b) corner-bandgap-001
+    (fixed-R-chain TT/SS/FF TC conflict driven by passive corner split) is
+    structurally N/A on this PDK. (c) A resistor-corner trim lever does not
+    exist here - do not look for one.
+
+derived_from: [proj-kb-bandgap]
+confidence: unverified
+source: "WORK_FM436_BANDGAP_TUNE_20260909: architecture.md sec 2 (passive_fixed_corner.lib.scs structure, mfc factors re-read from the shipped tree), rationale.md sec 1, L2 batch report, cross-model-review axis A5 (2026-09-09)"
+created: 2026-09-09
+updated: 2026-09-09

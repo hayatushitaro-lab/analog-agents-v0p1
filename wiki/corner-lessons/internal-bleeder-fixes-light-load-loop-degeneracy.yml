@@ -1,0 +1,58 @@
+id: corner-ldo-006
+type: corner-lesson
+name: "Internal switchless bleeder structurally fixes LDO light-load loop degeneracy"
+tags: [ldo, light-load, bleeder, phase-margin, loop-degeneracy, rail-latch, recovery, iq-tradeoff, pmos-pass, 180nm]
+process_nodes: [180nm]
+
+content:
+  description: >
+    A small always-on internal bleeder (RBLED = 36k, VOUT->GND, 50uA) fixed
+    light-load loop degeneracy in the two-stage PMOS-pass LDO: light-load PM
+    15.1deg -> 70.8deg measured, and the catastrophic 20->0 recovery mode
+    (~43ms rail-latch + RC-bleed, 870x the then-spec) was killed
+    STRUCTURALLY — not by compensation retuning. Cost: Iq 31.3 -> 81.5uA of
+    the 100uA budget.
+  failure_mechanism: >
+    At near-zero external load a dropout-sized pass device (W/L ~ 2000+) carries
+    only the divider current (~12uA) and sits in deep subthreshold: gm_pass
+    collapses ~3000x vs full load (46uS vs 39.5mS). The second pole
+    p2 = gm_pass/(2*pi*(Cout+Cc)) crowds the light-load crossover
+    (UGF_L ~ 50*p2 -> PM ~ 15deg, ring-territory). On the 20->0 edge the ring
+    drives the single-ended EA output to its rail, MPASS Vsg collapses below
+    |Vth| and the pass LATCHES OFF; Vout then discharges only through the
+    on-chip 900k divider at 2.1mV/ms. No (Cc, Rz) pair fixes this at 12uA:
+    the pole p2 itself must move, so the pass must leave deep subthreshold.
+  fix_mechanism: >
+    The bleeder raises minimum pass current to 52uA (50 bleed + 2 divider)
+    -> moderate inversion (gm/Id ~ 20-25, bounded by 1/(n*UT) ~ 27),
+    gm_pass x5.5 -> p2 40 -> 227Hz, UGF_L 2.0 -> 11.9kHz (tt model), PM_light
+    >= 63deg quoted / 70.8deg measured. It also guarantees a Vout bleed path:
+    even a fully railed EAOUT bleeds at 52mV/us (was 2.1mV/us), so Vfb
+    follows within ~10us and the loop re-engages — the latch mode no longer
+    exists. Switchless (resistor, not a current source) = no startup/
+    stability dependencies of its own.
+  cost_and_tradeoffs:
+  - "Iq +50uA (31 -> 81.5uA incl. 10uA IB pin excluded); corner-flat because
+     Vout is regulated, so bleeder + divider currents are voltage-defined
+     (81.32-81.58uA across tt/ss/ff, spread 0.26uA)."
+  - "Negligible on dropout: 49uA at Vout 1.764V = 0.25% of the 20mA load."
+  - "Light-load gm is set by current, not W (subthreshold gm is W-independent),
+     so the bleeder composes cleanly with a W-scaled pass for dropout."
+  tb_side_effects: >
+    dcop at ILOAD=0 now shows MPASS moderate-inversion (gm/Id ~ 19-22, 52uA),
+    NOT subthreshold — expected, do not flag as a failed "must be active"
+    check; Spectre may still print region=subth at gm/Id ~ 20 (benign). The
+    TB-perceived load step becomes 52uA <-> 20.002mA while the external
+    Iload edges stay 0 <-> 20mA; droop/overshoot unchanged to first order.
+  when_to_apply: >
+    Two-stage (no-buffer) PMOS-pass LDOs whose pass is sized for dropout at
+    full load and must also regulate/stabilize at uA-class external load
+    within a hard Iq budget. Prefer it before adaptive-bias/class-AB pass
+    stages (those cost more Iq and complexity); check the Iq budget first —
+    the bleeder must fit WITH margin for res-corner (+15% here).
+
+derived_from: [proj-017]
+confidence: unverified
+source: "WORK_LDO_2STAGE_20260908 rationale.md Iter3.1 + verifier tt-20260909-it2/it3 + L3 pvt-20260909.md (2026-09-09)"
+created: 2026-09-09
+updated: 2026-09-09

@@ -22,7 +22,11 @@ content:
     - "One review warning was resolved before L1/L2/L3 verification."
 
 derived_from: ["proj-009"]
-confidence: unverified
+validated_by: ["proj-015"]   # /analog-evolve 2026-09-09: one-commit re-freeze (Cc 1.4p / Rz 660)
+                             # executed across spec rev 1.1 + netlist + behavioral + verification
+                             # plan; reviewer verified spec<->netlist identity, L1 confirmed
+                             # TB-side clean (gm6*Rz = 0.848-1.200 across corners, zero benign)
+confidence: verified
 source: "OTA 2-stage Miller cross-model review, 2026-09-07"
 created: 2026-09-07
-updated: 2026-09-07
+updated: 2026-09-09

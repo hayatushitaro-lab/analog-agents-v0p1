@@ -1,0 +1,47 @@
+id: corner-005
+type: corner-lesson
+name: Static level predictions hold but slope sign predictions fail
+tags: [bandgap, fm393, tc-null, measured-slopes, identification, static-analysis, 180nm]
+process_nodes: [180nm]
+
+content:
+  description: >
+    On the FM393 uniform-K resistor scaling, every static hand-analysis
+    prediction of a LEVEL (equilibrium point) measured accurate, while every
+    prediction of a SLOPE or SIGN was falsified — twice, by two independent
+    agents (architect iteration 1, designer iteration 2). Iteration 1
+    predictions vs measured: TC(K) predicted -70.3*ln(K) ppm/C, measured
+    +75.3*ln(K) (sign flipped, magnitude nearly identical); vbg predicted
+    "re-established constant" by (m12/m10)*R4tot, measured vbg(K) =
+    vbg(1) - VT*ln(K) to within 0.098 mV (falsified); power P=P0+P1/K
+    confirmed (P0=2.69 uW floor ~0). Iteration 2 (designer model now
+    CALIBRATED on iteration-1 measurements): vref predicted to +/-0.3 mV and
+    power to +/-1.5% (levels again correct) but dTC/ds2 predicted +24.1/+24.8
+    ppm per 1% s2, measured -20.2/-23.3 (sign flipped again, magnitude close).
+    The two-iteration pattern that closed the spec — identification matrix
+    (V0..V5 measuring the actual laws) then a trim matrix whose W3/W4
+    bracket-probes MEASURED the local dTC/ds2 before the final nudge — was
+    cheaper than any amount of additional static analysis would have been.
+  key_points:
+    - "Trust static algebra for where the equilibrium lands (vbg level, power split, dvbg/ds2 magnitude); do NOT trust it for derivatives-with-respect-to-a-knob (TC trends, dTC/ds2, sign of sensitivity) — those depend on second-order physics (current-density VBE shift, equilibrium re-solve under trim) that flips signs at constant magnitude."
+    - "A sign error at correct magnitude is the signature of a missing re-solve: s2 != 1 unbalances the mirror-injected nodes (I_Q2 - I_R1 = V*(1/(s2*R2) - 1/R3)); any sensitivity derived at fixed operating point inherits the error."
+    - "Bracket-probe variants designed to FAIL the spec (W3/W4, +/-1.5% s2, ~25x extraction noise) are the cheapest way to buy the true local sensitivity and its sign before the final trim nudge."
+    - "Both falsified predictions were caught by one identification matrix each because the plan pre-declared the predictions as testable hypotheses (variants.yml notes) — write predictions down falsifiably before the sweep, not after."
+    - "Extends strat-bandgap-003 (measured-slope TC null, 65nm): there the failure was textbook constants; here even topology-specific re-derived physics got slope signs wrong — the measured-slope rule applies to sign, not just value."
+    - "Second project (FM544 2026-09-09, bandgap grouped K-scaling) reproduced the split on a different axis: LEVELS held across a 1.24x operating-point move (VREF predicted 1.205 V, measured 1.2089; power model P27(K)=6.6+96.9x2.9/K within 0.4-2.6% at K=3.2-3.6) while CHORD-DERIVED SENSITIVITIES extrapolated from the K=1 operating point failed ~5x (dVREF/dR_PTAT measured -42.5 mV/u vs -8.9 predicted; dTC/dR_PTAT ~+120 (ppm/C)/u at K=3.6 vs the +680 ppm/C-per-rho K=1 chord). Chords measured at one operating point are LOCAL — re-measure sensitivities after every scale move (bracket probes, not interpolation)."
+  measured_impact: >
+    FM393: iteration-1 matrix falsified 2 of 3 static laws and produced the
+    measured-law kit (P=2.69+442.12/K uW; TC=97.21+75.26*ln(K) ppm;
+    vbg=vbg(1)-VT*ln(K)); iteration-2 measured-slope trim landed W1/W2 both
+    passing all three specs (47.1 ppm / 71.8 uW and 54.9 ppm / 54.0 uW,
+    vref 1.1997/1.1999 V) on the first trim attempt; L3 sign-off W1.
+    FM544: the 5x trim-sensitivity error was caught by pre-staged RATIO-A/B
+    bracket probes before any trim was shipped; escalated confidence to
+    verified on this second independent observation (2026-09-09).
+
+derived_from: [proj-013]
+validated_by: [proj-018]
+confidence: verified
+source: "WORK_FM393_BG architect/architecture.md sec 6-7 + circuit/rationale.md sec 2/2.3 (predictions) vs verifier-reports iter1 redo sec 5.2-5.4 + iter2 sec 5 (measurements), 2026-09-09; FM544 evidence WORK_FM544_BANDGAP_TUNE_20260909 verifier-reports/L2-performance/2026-09-09-it2-tt-grid.md designer-model cross-check"
+created: '2026-09-09'
+updated: '2026-09-09'

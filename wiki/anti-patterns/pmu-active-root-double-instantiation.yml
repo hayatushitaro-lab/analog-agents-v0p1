@@ -1,0 +1,35 @@
+id: anti-pmu-001
+type: anti-pattern
+module: pmu
+name: "Do not instantiate a second PMU when the schematic netlist already contains an active root instance"
+tags: [pmu, reverse-engineering, spectre, testbench, hierarchy, positional-ports]
+process_nodes: [90nm]
+
+content:
+  description: >
+    A schematic-exported PMU file can contain both the subckt definitions and
+    an active root instance. In that case, the testbench must anchor the
+    existing root instance's anonymous nets rather than instantiate PMU again.
+    For the FM524 PMU source, I2 is the active PMU instance and its 38
+    positional connections are the recovered top-level port map.
+  failure_mechanism: >
+    A second instance changes the circuit being tested: internal nodes become
+    floating, duplicated, or multiply driven, while the original root remains
+    in the deck. The resulting DC point can be mistaken for a polarity or
+    sizing failure.
+  fix: >
+    Parse the end of the supplied source first. If an active root exists,
+    preserve the source verbatim, write a named root-anchor subckt or direct
+    stimulus deck, and document every positional mapping. Drive only true
+    external inputs; leave generated rails, POR outputs, enables, and status
+    nodes internal except for finite observation loads.
+  signs:
+    - "The source ends with an instance line such as I2 (...) PMU."
+    - "The port count in the PMU declaration matches the anonymous root-node count."
+    - "A proposed testbench contains another PMU instance despite the active root."
+
+derived_from: [proj-pmu-20260917]
+confidence: high
+source: "WORK_PMU_PIPELINE_20260917/architect/architecture.md, testbench/pmu_root_anchor.scs, verifier-reports/L1-functional/dcop-and-state-sweep.md"
+created: '2026-09-17'
+updated: '2026-09-17'

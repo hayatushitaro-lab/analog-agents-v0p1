@@ -662,4 +662,298 @@ entries:
     path: anti-patterns/miller-compensation-parameter-drift.yml
     type: anti-pattern
     module: ota
-    summary: Keep Miller compensation values consistent across spec, netlist, and testbench
+    summary: Keep Miller compensation values consistent across spec, netlist, and
+      testbench
+  proj-012:
+    path: projects/2026-09-08-ota_2stage_miller/summary.yml
+    type: project
+    summary: ota_2stage_miller
+  proj-013:
+    path: projects/2026-09-09-fm393_bandgap/summary.yml
+    type: project
+    module: bandgap
+    summary: 'FM393 bandgap topology-locked tune, 2 runs same day (run 1 FAIL vs invalid
+      3.3V-fingerprinted 904uW anchor -> run 2 CONVERGED at L3): measured K-scaling
+      laws P=2.69+442.12/K uW but TC=97.21+75.26lnK (sign flipped vs static; power/TC
+      pass-sets disjoint) closed by measured-slope s2/s4 trim; sign-off W1 (k_r=6,
+      s2=1.085, s4=1.0995) 1.1997V/47.07ppm/71.8uW TT, SS 31.8/FF 57.4ppm, startup
+      16.7-20.8us; W2 (K=8) rejected on FF/-40C real 2.7MHz net1 limit cycle (stability
+      margin shrinks with K); FF-cold DC fold proven solver continuation artifact
+      (downward sweep + cold VDD-ramp both regulated full-span)'
+  proj-014:
+    path: projects/2026-09-09-nb1910_bandgap_tune/summary.yml
+    type: project
+    summary: nb1910_bandgap_tune
+  corner-bandgap-010:
+    path: corner-lessons/nb1910-model-coverage-probe-before-first-sim.yml
+    type: corner-lesson
+    module: bandgap
+    summary: A device list is not a section list - static model-coverage probe (device->section
+      per corner, negative control, log artifact) before first remote sim; anti-bandgap-005
+      recurred via a transcribed spec note
+  corner-bandgap-011:
+    path: corner-lessons/nb1910-legacy-port-names-enable-truth-tables.yml
+    type: corner-lesson
+    module: bandgap
+    summary: Legacy port names encode the original design value (vref0p9 = 0.945 V
+      legacy point; re-derive ladder from loop equation when retargeting); enable-pin
+      truth tables can gate the output stage (hp=0 -> net0146 floats, vref 53 uV)
+  strat-bandgap-008:
+    path: strategies/nb1910-fixed-topology-tempco-aware-tc-null.yml
+    type: strategy
+    module: bandgap
+    summary: Fixed-topology bandgap retune - derive M* with bias-current tempco terms
+      (res tc1 + bf tempco, M* 10.65->10.29) BEFORE the TC knob, re-center ladder
+      after every M move; 1-iteration convergence at L3 (TC 26.5/35.3/33.4 ppm/C)
+  corner-bandgap-012:
+    path: corner-lessons/joint-r3r2-tuning-closes-fixed-rchain-pvt-tc-conflict.yml
+    type: corner-lesson
+    module: bandgap
+    summary: Joint R3/R2 tuning (R3 = TC knob, R2 = near-TC-neutral centering knob,
+      ~8.7x sensitivity split) closes the fixed-R-chain PVT TC conflict without topology
+      change; verified across two independent nb1601 sessions (worst TC 66.6->29.8
+      and 58.7 ppm/C, both L3 PASS)
+  strat-bandgap-009:
+    path: strategies/joint-rho-zone-bandgap-retune.yml
+    type: strategy
+    module: bandgap
+    summary: Fixed-topology bandgap retune - collapse to rho=(R2+R4_on)/R3, intersect
+      the TC<=guardband zone with the vref-window zone, select the measured point
+      maximizing window margin at the binding corner; grid seeded from a hand model
+      calibrated on prior measured data (RMS 0.34 mV / 39 pts, predictions within
+      ~5 mV / ~5 ppm)
+  strat-bandgap-010:
+    path: strategies/measured-anchor-rig-consistency-gate.yml
+    type: strategy
+    module: bandgap
+    summary: Re-run 1-2 previously measured anchor points inside every sweep batch
+      and require tight reproduction (here <=0.045 mV / <=0.1 ppm) before trusting
+      grid data; catches rig drift, wrong section wiring, silent include errors; verdict
+      CONSISTENT/SUSPECT recorded in the verifier report
+  corner-bandgap-013:
+    path: corner-lessons/fit-derived-guardband-edges-optimistic.yml
+    type: corner-lesson
+    module: bandgap
+    summary: 'Fit-derived guardband zone edges are optimistic by ~0.03-0.04 rho (a
+      measured point inside the claimed band violated it: ss TC 66.6 vs ~61 fit);
+      select inside the MEASURED zone, fits only bracket the search'
+  proj-015:
+    path: projects/2026-09-09-ota_2stage_miller_r2/summary.yml
+    type: project
+    module: ota
+    summary: 'Two-stage Miller OTA (GF-011lp ge011lp F011Q7E6 3.3V nch3/pch3, CL=2p):
+      L3 SIMULATED 3 corners PASS in 2 iterations; iter-1 FAIL root cause Cgg6=1.18pF
+      ~ Cc collapsed p2 onto GBW (PM 50-55deg) + measured muCox backout (n 117.1 /
+      p ~31 uA/V2, 20-30% below hand-calc); measured-constant re-derivation (W1=14u,
+      L6=1u, I6 13.5:1, Cc=1.4p/Rz=660 frozen) -> PM 70.7-72.1deg / GBW 11.1-17.7MHz
+      / Av 97.4-101.5dB / 0.51-0.61mW, sat 8/8 all corners'
+  corner-ota-005:
+    path: corner-lessons/ge011lp-uncharacterized-pdk-dcop-measurement-pass-cgg6-p2-budget.yml
+    type: corner-lesson
+    module: ota
+    summary: 'Uncharacterized PDK (ge011lp): treat the first dcop as a measurement
+      pass and keep every W .param-terized (muCox measured 20-30% below assumption,
+      one-step re-derivation closed L3 in a single iteration); stage-2 Cgg6 must enter
+      the p2 budget - Cgg6 ~ Cc collapses PM onto GBW (p2fit/GBW 1.29); mirror pole
+      p3 ~ 13-16 MHz also hidden'
+  proj-016:
+    path: projects/2026-09-09-fm449_bandgap_tune/summary.yml
+    type: project
+    module: bandgap
+    summary: 'FM449 bandgap topology-locked tune (3 iterations, supersedes 2026-09-07
+      session): vref+power closed at I3-1 (1.2164 V / 90.9 uW max, startup+OP proven
+      at M92=3) but NOT CONVERGED on TC - 67.4 ppm/C worst vs 50 spec; cold bias-pool-mirror
+      hump onset k in (2.0,2.4) and TC-slope shear put the measured locked-space floor
+      at 49-56 ppm/C; escalated (spec relief ~60 ppm or unlock a curvature-compensation
+      element)'
+  proj-017:
+    path: projects/2026-09-09-ldo_2stage/summary.yml
+    type: project
+    summary: 'Two-stage PMOS-pass LDO 1.8V/20mA on gl018 (3 designer iterations +
+      1 escalation): gl018 wrapper-scoping pre-sim reject -> L2 4-spec FAIL (light-load
+      PM 15.1deg, 43ms rail-latch recovery) -> bleeder+sizing fix -> 50us recovery
+      line proven unreachable, revised to 400us (Amendment 2) -> L3 39/39 PASS (thin:
+      ss PSR +0.86dB, ss recovery +10.7%)'
+    module: ldo
+  corner-gl018-001:
+    path: corner-lessons/gl018-bsim3v3-models-scoped-inside-wrapper-subckts.yml
+    type: corner-lesson
+    summary: gl018 bsim3v3 models scoped inside nch3/pch3 wrapper subckts (SFE-23
+      at top level); wrappers silently ignore nf=/multi= - use count= (total W = w*count);
+      add explicit as/ad/ps/pd before L3; probe empirically, text review missed it
+  strat-ldo-020:
+    path: strategies/ldo-recovery-spec-from-tau-budget.yml
+    type: strategy
+    summary: Derive LDO load-step recovery specs from the per-corner tau budget (N=ln(residue/band)
+      overshoot-clamped, + N*tau_doublet + slew + dwell); PM_light and the settle
+      tail are the same Rz-Cc network - tight default lines are structurally unreachable
+  corner-ldo-006:
+    path: corner-lessons/internal-bleeder-fixes-light-load-loop-degeneracy.yml
+    type: corner-lesson
+    summary: 50uA internal switchless bleeder structurally fixes LDO light-load loop
+      degeneracy (PM 15.1->70.8deg, kills 43ms rail-latch recovery) at Iq 31->81uA
+      of 100
+  corner-tooling-001:
+    path: corner-lessons/review-bridge-tooling-gaps-antipatterns-arg-and-n1-report.yml
+    type: corner-lesson
+    summary: 'review_bridge.py gaps: --anti-patterns takes one path (comma list silently
+      dropped from prompt); N=1 reports omit per-dimension reasoning and Action Items
+      - workarounds + upstream fix proposals'
+  corner-002:
+    path: corner-lessons/inherited-baseline-anchors-must-be-re-measured-at-the-current-spec-supply.yml
+    type: corner-lesson
+    summary: Inherited baseline anchors must be re-measured at the current spec supply
+  corner-003:
+    path: corner-lessons/loop-stability-margin-shrinks-under-uniform-current-scaling.yml
+    type: corner-lesson
+    summary: Loop stability margin shrinks under uniform current scaling
+  corner-004:
+    path: corner-lessons/upward-dc-temp-sweeps-can-track-a-degenerate-branch-at-cold-corners.yml
+    type: corner-lesson
+    summary: Upward DC temp sweeps can track a degenerate branch at cold corners
+  corner-005:
+    path: corner-lessons/static-level-predictions-hold-but-slope-sign-predictions-fail.yml
+    type: corner-lesson
+    summary: Static level predictions hold but slope sign predictions fail
+  anti-002:
+    path: anti-patterns/trusting-inherited-baseline-power-numbers-without-supply-re-measurement.yml
+    type: anti-pattern
+    summary: Trusting inherited baseline power numbers without supply re-measurement
+  anti-003:
+    path: anti-patterns/single-direction-upward-dc-temp-sweep-as-sole-cold-corner-tc-extraction.yml
+    type: anti-pattern
+    summary: Single-direction upward DC temp sweep as sole cold-corner TC extraction
+  proj-018:
+    path: projects/2026-09-09-fm544_bandgap_tune/summary.yml
+    type: project
+    module: bandgap
+    summary: 'FM544 bandgap fixed-topology K-scaling tune (3 iterations, supersedes
+      20260908): NOT CONVERGED - joint TC/power window PROVEN EMPTY under frozen topology
+      (power K>=~3.3 vs clean cold TC K<=~3.0, M58/M59 drain-asymmetry lock-in + 6.6
+      uW fixed-VGS floor); escalated; canonical restored to K=2.9 (1.2089V/66.6ppm/103.5uW
+      TT/27, 2/3 specs pass)'
+  corner-006:
+    path: corner-lessons/non-scaling-fixed-vgs-power-floor-under-uniform-resistor-scaling.yml
+    type: corner-lesson
+    summary: Uniform resistor scaling scales resistor-set branches exactly 1/K but
+      fixed-VGS branches (deep-triode bleeder + startup chains) form a hard ~6.6 uW
+      power floor that inflates at hot; P27(K)=floor+P_core1/K predicted to 0.4-2.6%;
+      floor is topology-level, unreachable by resistor knobs
+  corner-007:
+    path: corner-lessons/ptat-pair-drain-asymmetry-cold-end-lock-in-masquerades-as-tc-trim-failure.yml
+    type: corner-lesson
+    summary: 'Cold-end lock-in: VREF bends up below a K-dependent lock-in temp (-6.5C
+      per -0.2K) with thousands of ppm/C dense local TC, no branch collapse, servo
+      balanced - pure core error (R_PTAT-independent) from PTAT-pair drain asymmetry;
+      fresh non-continuation DC ops + 1C resolution required'
+  anti-004:
+    path: anti-patterns/unequal-drain-voltages-on-the-ptat-self-bias-pair.yml
+    type: anti-pattern
+    summary: PTAT self-bias pair with drains on different rails (vbp 2.43V vs vbn
+      1.79V) is exact at 27C but its Vgs mismatch grows in weak inversion at cold
+      (+1.28->+9.96 mV), corrupting I_PTAT; unreachable by resistor trims - fix is
+      drain symmetry/cascode
+  strat-001:
+    path: strategies/bracket-to-empty-joint-window-proof.yml
+    type: strategy
+    summary: 'When two specs pull one knob in opposite directions: bracket with TWO
+      candidates + ONE root-cause dump, then state the window empty with numbers (power
+      K>=~3.3 vs clean-TC K<=~3.0); 3 sims, one round - never guess a third candidate'
+  corner-bandgap-014:
+    path: corner-lessons/lf6-corner-sections-keep-passives-typical.yml
+    type: corner-lesson
+    module: bandgap
+    summary: LF6 (Samsung 90nm) tt/ss/ff sections include passive_fixed_corner rtyp/ctyp/btyp
+      - resistors/BJTs/caps stay TYPICAL at every corner; corners act only through
+      MOSFETs (measured vref27 corner spread <=1 mV); production R/BJT spread NOT
+      covered by tt/ss/ff runs - say so in margin statements
+  corner-bandgap-015:
+    path: corner-lessons/spectre-181-standalone-nodeset-sfe874-and-relative-include-staging.yml
+    type: corner-lesson
+    module: bandgap
+    summary: 'Spectre 18.1 remote decks: standalone NS1 nodeset AND nodeset=[...]
+      both SFE-874 (comment out; keep degenerate-branch guard via signature gates
+      + direction agreement); includes resolve relative to the INCLUDING file - stage
+      the model tree once per session (sha256 recorded), reuse across iterations and
+      re-dispatches'
+  proj-019:
+    path: projects/2026-09-10-fm460_bandgap_tune/summary.yml
+    type: project
+    summary: fm460_bandgap_tune
+  anti-pmu-001:
+    path: anti-patterns/pmu-active-root-double-instantiation.yml
+    type: anti-pattern
+    module: pmu
+    summary: Do not instantiate a second PMU when the source already contains an active root instance
+  strat-pmu-001:
+    path: strategies/pmu-root-anchor-state-sweep.yml
+    type: strategy
+    module: pmu
+    summary: Root-anchor plus fresh-DC state sweep for PMU reverse engineering
+  corner-pmu-001:
+    path: corner-lessons/pmu-lf6-flat-staging-winerror206.yml
+    type: corner-lesson
+    module: pmu
+    summary: LF6 recursive model staging avoids Windows flat-include command-length failure
+  corner-pmu-002:
+    path: corner-lessons/pmu-zero-current-branch-before-polarity.yml
+    type: corner-lesson
+    module: pmu
+    summary: Near-zero dual rails plus a mostly-off operating point require branch diagnosis before resizing
+  corner-pmu-003:
+    path: corner-lessons/pmu-en-pmu-act-required-input.yml
+    type: corner-lesson
+    module: pmu
+    summary: External en_pmu_act must be driven explicitly; a 1 MOhm load is not an enable stimulus
+  corner-pmu-004:
+    path: corner-lessons/pmu-source-tail-cleanup-not-convergence-fix.yml
+    type: corner-lesson
+    module: pmu
+    summary: Removing source-tail save/options leaves the PMU numerical signature unchanged; wrapper cleanup is not convergence
+  topo-pmu-001:
+    path: topologies/pmu-five-volt-dual-ldo-hierarchy.yml
+    type: topology
+    module: pmu
+    summary: 5 V PMU with bandgap, POR/isolation, dual LDO, and power-down monitor
+  proj-pmu-20260917:
+    path: projects/2026-09-17-pmu_reverse_engineering/summary.yml
+    type: project
+    module: pmu
+    summary: PMU reverse-engineering pass; explicit en_pmu_act=5V recovers conditional active branch, clean L1 still deferred
+
+  corner-pmu-005:
+    path: corner-lessons/pmu-current-input-bias-pins-must-be-sourced.yml
+    type: corner-lesson
+    module: pmu
+    summary: Current-input bias pins (source-tied to internal diode) must be driven by explicit isources; floating starves the bias chain
+  corner-pmu-006:
+    path: corner-lessons/pmu-ldo15-softstart-overshoot-load-limited-decay.yml
+    type: corner-lesson
+    module: pmu
+    summary: LDO15 soft-start overshoot 1.9x regulation with load-limited decay tail; scope the rail, not only the end point
+  corner-pmu-007:
+    path: corner-lessons/pmu-por-release-outputs-are-one-shot-not-level.yml
+    type: corner-lesson
+    module: pmu
+    summary: POR release outputs may be ~24us one-shots, not levels; only a ramped transient tells, DC end point lies by omission
+  anti-pmu-002:
+    path: anti-patterns/pmu-acceptance-checks-encode-tester-assumptions.yml
+    type: anti-pattern
+    module: pmu
+    summary: Acceptance checks encoding an unverified behavioral model fail healthy circuits (POR pulse read as level)
+  strat-pmu-002:
+    path: strategies/pmu-bringup-explicit-stimulus-recipe.yml
+    type: strategy
+    module: pmu
+    summary: "PMU bring-up recipe: trace-and-classify ports, drive enables from t=0, source current inputs, ramp end-point as op point"
+  proj-pmu-20260918:
+    path: projects/2026-09-18-pmu_bringup_l1/summary.yml
+    type: project
+    module: pmu
+    summary: PMU bring-up L1; op point proven 6/7 with disposition; supersedes the stalled 20260917 pass
+
+  anti-shared-004:
+    path: anti-patterns/wiki-entry-metadata-must-be-sourced-not-copied.yml
+    type: anti-pattern
+    module: _shared
+    summary: "Wiki entry metadata (process_nodes etc.) must be evidenced from PDK/source, not pattern-matched from neighboring entries"

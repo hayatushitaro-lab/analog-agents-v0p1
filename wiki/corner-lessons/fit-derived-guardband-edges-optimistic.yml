@@ -1,0 +1,41 @@
+id: corner-bandgap-013
+type: corner-lesson
+name: "Guardband zone edges from fits are optimistic - select inside the MEASURED zone"
+tags: [bandgap, TC, guardband, fit-uncertainty, rho-zone, corner, selection, nb1601]
+process_nodes: [180nm]
+
+content:
+  description: >
+    Feasibility-zone edges derived from fits (e.g. worst-corner box TC as a
+    quadratic in rho on a sparse measured grid) are systematically optimistic
+    near the edges: the fit's stated systematic uncertainty (~+/-10 ppm near
+    the vertex) is a real BIAS at the zone edge, not zero-mean noise. A
+    measured calibration point lying INSIDE the claimed band violated it,
+    moving the effective edge by ~0.03-0.04 rho. Selection must sit inside
+    the MEASURED zone; fits only bracket the search.
+  measured_impact: >
+    nb1601 bandgap retune 2026-09-09: the TC(rho) fit claimed worst-corner
+    TC <= 60 ppm/C for rho >= 8.684 (SS binding low), but the calibration
+    point (3.85u, 4.35u, rho = 8.689) - inside the claimed band - measured
+    ss TC 66.6 ppm/C vs ~61 fitted. Effective SS edge: rho ~ 8.72-8.73. The
+    primary candidate (3.60u, 4.30u, rho = 8.727) sat ON the corrected edge
+    and met the guardband only by measurement (ss TC 58.69); the
+    guardband-safe fallback was (3.85u, 4.30u, rho = 8.788). Cross-model
+    review caught the optimism (WARN D2) before selection and pre-registered
+    the escape condition.
+  fix: >
+    (1) Treat fit zone edges as search brackets with stated systematic
+    uncertainty, never as selection boundaries. (2) When the preferred
+    candidate lies within a guardband-width of a fit edge, require a
+    pre-registered measured escape condition (the point itself measured
+    inside the zone) or default to the safer candidate deeper in the zone.
+    (3) Before trusting any fit edge, re-check it against every measured
+    point that lies inside the claimed band - one violator moves the edge.
+    (4) Prefer selection points measured (not interpolated) whenever the
+    grid already contains a compliant point.
+
+derived_from: [proj-kb-bandgap]
+confidence: unverified
+source: "WORK_NB1601_BANDGAP_TUNE_20260909 review/cross-model-review.md D2 + circuit/rationale.md iteration-2 'Reviewer WARN (D2) response' + L2/L3 measured ss TC values"
+created: 2026-09-09
+updated: 2026-09-09

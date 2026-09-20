@@ -1,0 +1,31 @@
+id: strat-bandgap-010
+type: strategy
+name: "Measured-anchor rig-consistency gate before trusting a sweep batch"
+tags: [bandgap, verification, anchors, repeatability, rig-consistency, batch-sim, cross-session, nb1601]
+process_nodes: [180nm]
+
+content:
+  description: >
+    Before trusting a simulation batch - or comparing any data across
+    sessions, rigs, or testbench revisions - re-run 1-2 previously measured
+    operating points as anchors inside the batch and require reproduction
+    within a tight tolerance. If the anchors reproduce, the whole batch
+    inherits their trustworthiness; if not, flag the batch SUSPECT and debug
+    the rig (testbench, model includes, extraction) before using any grid
+    data for selection or interpolation.
+  key_points:
+    - "Anchors ride as ordinary batch jobs (submit-all-then-wait): here 2 of 11 variants (~18% batch overhead) reproduced prior-session values to <=0.045 mV vref27 / <=0.1 ppm TC against a +-2 mV / +-5 ppm gate - 40x inside tolerance."
+    - "What it catches: rig drift, wrong model-section wiring, silent include errors, and extraction-formula drift (a vmean-vs-vref27 TC-denominator difference surfaced as ~0.2 ppm - immaterial, but visible and worth pinning down)."
+    - "Gate first, interpolate later: only after the anchor gate passes are calibrated-model predictions and interpolations trusted for selection."
+    - "The demonstrated repeatability also sets the tolerance for later consistency checks: the L3 sign-off re-run of the same netlist content matched the batch to 0.004 mV / 0.005 ppm, which is what makes a thin measured margin (1.31 ppm of TC guardband here) trustworthy - rig repeatability two orders below the margin."
+    - "Record the gate verdict (CONSISTENT / SUSPECT) in the verifier report so downstream selection and sign-off can cite it as evidence."
+  measured_impact: >
+    nb1601 bandgap retune 2026-09-09: anchor gate CONSISTENT on both anchors
+    ((3.50,4.20) prior-best and (3.85,4.35) historical baseline); no SUSPECT
+    flag; batch of 33 jobs used for selection with confidence.
+
+derived_from: [proj-kb-bandgap]
+confidence: unverified
+source: "WORK_NB1601_BANDGAP_TUNE_20260909 verifier-reports/L2-performance/2026-09-09_variant-batch.md (anchor gate section) + rationale.md sec 6 criterion 4 / risk R-b"
+created: 2026-09-09
+updated: 2026-09-09

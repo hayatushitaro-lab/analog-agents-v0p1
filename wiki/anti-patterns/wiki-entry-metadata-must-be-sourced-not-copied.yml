@@ -1,0 +1,40 @@
+id: anti-shared-004
+type: anti-pattern
+module: _shared
+name: "Wiki entry metadata copied from neighboring entries instead of evidenced from the source (PDK/netlist)"
+tags: [wiki-hygiene, metadata, process-nodes, provenance, pattern-matching]
+
+content:
+  description: >
+    Filling structured metadata fields of a new wiki entry (process_nodes,
+    supply, block type) by pattern-matching what similar-looking existing
+    entries say, instead of taking the value from the primary source. In the
+    fm524/LF6 PMU run (2026-09-18), 'process_nodes: [180nm]' was propagated
+    from UNRELATED projects' entries (nb1601, fm393) into the architect
+    dispatch prompt, echoed into architecture.md, and written into four new
+    entries - while the PDK itself said otherwise (mvnfet BSIM4 v4.5,
+    toxref=1.56 nm, netlist min L=0.1 um) and the prior session's entries
+    for the SAME project correctly said 90 nm. The error survived a full
+    pipeline review chain because every agent echoed the same mistaken
+    premise instead of checking the source.
+  failure_mechanism: >
+    process_nodes is a search/filter key: contaminated values make future
+    wiki consults retrieve the wrong corpus (or miss the right one), and a
+    porting/spec decision based on 'the node' inherits the error. Echo
+    chains amplify it: once one agent states the wrong node, downstream
+    agents treat it as established fact.
+  fix: >
+    Evidence rule for metadata: process_nodes from the PDK/model file itself
+    (BSIM version, toxref/tox, minimum L in the netlist, lib headers);
+    supply from spec or user statement; block type from the netlist. When a
+    value is inherited from another entry, cite that entry AND verify
+    against the source before writing. Corrections go in-place with a dated
+    correction note. Signs of contamination: the entry's process_nodes
+    matches neighboring entries but no PDK file is cited; different sessions
+    on the same project disagree on the node.
+
+derived_from: [proj-pmu-20260918]
+confidence: unverified
+source: "fm524 PMU run chat/orchestrator log 2026-09-18; evidence: wiki/projects/fm524/model/ref_lib/.../model_mvnfet.scs (toxref=1.56e-8), PMU_top.scs l=0.1u, prior-session entries already [90nm]"
+created: '2026-09-18'
+updated: '2026-09-18'

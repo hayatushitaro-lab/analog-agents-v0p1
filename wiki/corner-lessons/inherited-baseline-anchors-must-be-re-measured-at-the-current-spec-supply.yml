@@ -1,0 +1,36 @@
+id: corner-002
+type: corner-lesson
+name: Inherited baseline anchors must be re-measured at the current spec supply
+tags: [bandgap, fm393, baseline, anchor, power, supply, verification, 180nm]
+process_nodes: [180nm]
+
+content:
+  description: >
+    A baseline anchor inherited from a prior session's wiki/project archive can
+    carry the measurement context of a DIFFERENT supply than the current spec.
+    On the FM393 bandgap retune (TSMC 0.18um, spec VDD=1.8 V) the handoff gate
+    demanded V0 reproduce "vbg=1.211889 V +/-5 mV AND P=904.409 uW +/-10%",
+    inherited from the prior run. Measured V0 at the spec's 1.8 V drew 499.96 uW
+    (-44.7%) — the anchor was fingerprint-matched to a VDD~3.3 V run (vbg probe
+    at 3.3 V reproduced the anchor to 0.4 uV; the 1.8 V point was 58 uV off),
+    and the anchor power was irreconcilable with I*V at ANY supply (500.0 uW @
+    1.8 V, 953.5 uW @ 3.3 V). The derived "502 uA at 1.8 V" in the budget was
+    just 904.409/1.8, not a measurement, and the architect's ~250 uA MPB-chain
+    share was physically unreachable (measured chain current 14.3 uA).
+  key_points:
+    - "Budget distortion: planning 'reduce 904 uW -> <100 uW' (9.0x) when the true 1.8 V baseline is 500 uW (5.0x) mis-states the required reduction by 1.8x and corrupts every branch-share hypothesis built on the anchor."
+    - "Fingerprint method that proved anchor provenance: re-run the baseline at an alternate plausible supply and compare vbg to the anchor's quoted digits — 0.4 uV agreement at 3.3 V is conclusive; also test anchor power = I(Vvdd)*V(Vvdd) at the spec supply."
+    - "Derived-number tell: a budget current that equals anchor_power/VDD exactly is a back-calculated number, not a measurement."
+    - "Cost here: one full verification round (matrix stopped at V0 by the gate contract) + one orchestrator re-baseline escalation + a redo verifier run; the corrected gate (V0@1.8 V: 1.211947 V / 499.96 uW / 98.06 ppm) then passed trivially since the V0 measurement already WAS the re-baselined anchor."
+    - "Complements strat-bandgap-010 (measured-anchor rig-consistency gate): that gate catches RIG drift when re-running known points; it cannot catch an anchor whose original context (supply) differs from the current spec — provenance must be checked separately."
+  measured_impact: >
+    FM393 run-2 iteration 1: baseline gate FAIL on power axis with matrix stop
+    (escalations_to_user=1), corrected gate PASS after orchestrator re-baseline;
+    V0 re-run reproduced 499.96 uW to 0.0%. The retune then converged in 2 more
+    iterations (sign-off W1 at 71.8 uW).
+
+derived_from: [proj-013]
+confidence: unverified
+source: "WORK_FM393_BG verifier-reports/L2-performance/2026-09-09_iter1_variant-matrix.md sec 4/4.1 + iteration-log.yml iter1 baseline_gate + architect/architecture.md sec 5 (2026-09-09)"
+created: '2026-09-09'
+updated: '2026-09-09'

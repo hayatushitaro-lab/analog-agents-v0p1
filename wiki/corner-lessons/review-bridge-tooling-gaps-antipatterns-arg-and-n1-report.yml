@@ -1,0 +1,48 @@
+id: corner-tooling-001
+type: corner-lesson
+name: "review_bridge.py gaps: --anti-patterns takes one path; N=1 reports omit reasoning/Action Items (upstream fix proposals)"
+tags: [tooling, review-bridge, cross-model-review, single-reviewer, upstream-fix, report-schema, virtuoso-bridge-lite]
+process_nodes: []
+
+content:
+  description: >
+    Two cross-model-review tooling gaps found during WORK_LDO_2STAGE_20260908
+    (1-reviewer standard run, gemini-3.5-flash-lite). Both were worked around
+    in-session without touching tools/ (upstream fix proposals only —
+    review_bridge.py lives in the virtuoso-bridge-lite submodule; local edits
+    belong upstream, per AGENTS.md).
+  gap_1_anti_patterns_arg: >
+    `--anti-patterns` accepts exactly one path. A comma-separated list fails
+    the .exists() test and is SILENTLY DROPPED from the reviewer prompt — an
+    initial run went out WITHOUT the "Known Risks for This Topology" section
+    and returned different verdicts (Connection FAIL, Bias WARN) from the
+    complete-payload run. Superseding rerun delivered all three anti-pattern
+    entries via a verbatim concatenation file and replicated consistent
+    verdicts. Upstream fix: split the argument on commas (or accept
+    repeatable nargs='+') AND fail loudly on a nonexistent path instead of
+    silently omitting the section.
+  gap_2_n1_report: >
+    generate_report() emits per-dimension reviewer reasoning only inside
+    inter-reviewer divergence subsections and never emits Action Items, so a
+    single-reviewer report is structurally incomplete against
+    review-protocol.md sections 3-4 ("the divergence analysis section is the
+    core of every report" — unobservable at N=1). Workaround: rebuild and
+    re-send the byte-identical standardized prompt once (all 5 verdicts
+    replicated), then transcribe the verbatim reasoning from the raw
+    response into the report. Upstream fix: for N=1, emit each dimension's
+    reasoning verbatim plus Action Items, marking the divergence section
+    explicitly n/a.
+  process_lessons:
+  - "An incomplete-payload review run is SUPERSEDED (never merged/averaged)
+     once the payload defect is found; note the supersession in the report."
+  - "Reviewer independence held throughout: raw file contents only (netlist,
+     rationale, spec, wiki anti-patterns); no agent self-assessments."
+  - "Verdict sensitivity to prompt payload is real: missing anti-pattern
+     context flipped two verdicts. Treat the review payload as part of the
+     review result and record it (collator notes)."
+
+derived_from: [proj-017]
+confidence: unverified
+source: "WORK_LDO_2STAGE_20260908/verifier-reports/cross-model-review.md collator notes (2026-09-09)"
+created: 2026-09-09
+updated: 2026-09-09

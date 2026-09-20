@@ -1,0 +1,29 @@
+id: strat-bandgap-008
+type: strategy
+name: "Fixed-topology bandgap retune: tempco-aware dVbe-gain null first, ladder re-center second, one sizing iteration"
+tags: [bandgap, tc-null, fixed-topology, retargeting, dVbe-gain, tempco, nb1910, tuning-order]
+process_nodes: [40nm]
+
+content:
+  description: >
+    Tuning order for retargeting a fixed-topology VBE+PTAT bandgap
+    (Vref = (VBE2 + M*dVbe) * R_lad/R_b, M = R_b/R_str). Derive the dVbe
+    gain null M* = |dVBE2/dT| / (nf*k/q*ln(N)) WITH the temperature-
+    dependent bias-current terms BEFORE choosing the TC knob, then
+    re-center vref with the scale knob (ladder lr) from the updated
+    numerator. With a model-card-exact hand-calc chain, one sizing
+    iteration can suffice: nb1910 converged in 1 iteration at L3
+    (TC 26.5/35.3/33.4 ppm/C tt/ss/ff, all specs pass, fixed code 0000).
+  key_points:
+    - "Constant-current formula (alpha=0) is wrong when the bias current is temperature dependent: resistor tc1 makes I_str = dVbe/R_str super-PTAT (alpha_R = 1 - T0*tc1 = +1.016 for tc1 = -52.5 ppm/C) and bf tempco adds alpha_beta = T0*tbf1/(1+bf) = +0.397. Both corrections are one-signed and push M* DOWN: 10.65 -> 10.29 here (R5 multi 6 -> 5)."
+    - "Generalized slope: dVBE2/dT = [VBE2 - (XTI_eff)*VT - Eg/q]/T0 with XTI_eff = XTI - alpha, alpha = alpha_R + alpha_beta. Use model-card values (tc1, tbf1, nf, bf, eg, xti), not textbook constants - extends strat-bandgap-003 to bias-current tempcos."
+    - "Order matters: changing M rescales the numerator (VBE2 + M*dVbe), so EVERY TC-knob move forces a re-center of the ladder/scale knob from the updated loop equation. Skipping the re-center burns an iteration."
+    - "Keep the trim DACs at neutral code while precise scalar knobs (lr, multi) can reach the window: nb1910's I47 LSB (est 30-140 mV) was coarser than the +/-30 mV window. One fixed code 0000 then holds at all corners (L3)."
+    - "Know what your knob cannot fix: R5 multi trades TC SLOPE, not curvature. Residual after nulling was a parabolic bow (tt peak ~60C, ss ~75C); TC worst case moved to ss (35.3 ppm/C). Do not chase curvature with the slope knob."
+    - "Pre-compute the fallback: if L2 shows positive residual slope, one token (multi 5->6, dM = +0.206 ~ +29 ppm/C) plus K1 re-center is the whole fix. Divergences between architect and designer anchors should name the arbiter (dense L2 sweep) and the one-token fallback up front."
+
+derived_from: ["proj-014"]
+confidence: verified
+source: "WORK_NB1910_BANDGAP_TUNE circuit/rationale.md sec 4-5 + verifier L2/L3 reports (architect M*=10.65 vs designer M*=10.29 divergence, resolved in designer's favor, L2 arbiter)"
+created: 2026-09-09
+updated: 2026-09-09

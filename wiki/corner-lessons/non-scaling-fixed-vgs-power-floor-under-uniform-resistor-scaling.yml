@@ -1,0 +1,39 @@
+id: corner-006
+type: corner-lesson
+name: Non-scaling fixed-VGS power floor under uniform resistor scaling
+tags: [bandgap, power, scaling, fixed-vgs, floor, startup, bleeder, hot-corner, fm544, 180nm]
+process_nodes: [180nm]
+
+content:
+  description: >
+    Uniform segL scaling of a self-biased bandgap's resistor groups by K scales
+    every resistor-set branch EXACTLY 1/K (FM544 L1 breakdown: core chain 2.6758
+    vs 2.69 uA predicted, PTAT 0.5295, ladder 0.5254, OTA 24.81 = 72/2.9 — all
+    within 1%), but fixed-VGS branches do not scale at all: the deep-triode
+    bleeder M96 (2.249 uA, set by vbp, topology-frozen) plus the startup chains
+    M15/M13/M7/M16 (~0.54 uA) form a hard ~6.6 uW power floor. Power is
+    P27(K) = floor + P_core1/K with P_core1 = 96.9 uW x 2.9/K; this two-term
+    model predicted measurements to 0.4% at K=3.6 and ~2% at K=3.2/3.4. The
+    floor also INFLATES at hot (fixed-VGS physics: mirror/bleeder VGS current
+    rises with temperature), so TT@125 C measured 141.1 uW at K=2.9, 111-119 uW
+    at K=3.6, 124-131 uW at K=3.2/3.4 — over a 100 uW envelope at EVERY
+    explored K, monotonic in K (two-point hot fit P_hot ~ 6.9 + 389.3/K).
+  key_points:
+    - "Assuming the floor scales is what caused the iteration-1 miss: pure-1/K predicted 96.9 uW, measured 103.5 uW — the ~6.6 uW floor consumed the entire predicted margin plus the 3.5 uW shortfall. Model the floor as FIXED from the first scaled iteration, never as F/K."
+    - "The floor is set by vbp-referenced fixed-VGS devices (bleeder + startup chains), so the six resistor knobs cannot touch it — it is a topology-level escape (resize M96 / startup currents), not a tuning residual."
+    - "An L1 per-device current breakdown at the scaled point is the decisive artifact: it separates 'which groups scaled 1/K' (all of them, here) from 'what did not' (bleeder + startup), turning a power miss into a named device list."
+    - "Floor hot inflation dominates from K=1 onward: TT@125 C was ALREADY 141 uW at K=2.9 while TT@27 passed nothing — check the hot sweep-envelope power of the baseline BEFORE choosing K, or the all-corner power gate may be infeasible regardless of K."
+    - "The two-term model's bias is K-dependent: measured-model = +0.4 uW at K=3.6 but +2.3/+2.4 uW at K=3.4/3.2 (M96 left deep triode and its current fell less than modeled at lower K). Keep >=2 uW model-uncertainty margin when a K candidate must clear a power gate by <3 uW (K32 passed by only 0.27 uW)."
+    - "Precedent floor: FM393 measured P = 2.69 + 442.12/K uW on the same scaling move — the floor there was near-zero (0.6% of P27), so floor magnitude is topology-specific and must be measured, not assumed small (extends corner-003's 'hidden axes of uniform scaling' with a power axis)."
+  measured_impact: >
+    FM544 2026-09-09: iteration-1 K=2.9 power FAIL 103.542 vs 96.9 uW predicted;
+    floor model P27(K) = 6.6 + 96.9x2.9/K then predicted 85.07 measured at K=3.6
+    (84.7 predicted, +0.4%), 96.726/91.612 at K=3.2/3.4 (~2% bias); hot envelope
+    >100 uW at every K documented as a frozen-topology infeasibility
+    (TT@125C 141.1 / 111-119 / 124.2-131.5 uW at K=2.9/3.6/3.2-3.4).
+
+derived_from: [proj-018]
+confidence: unverified
+source: "WORK_FM544_BANDGAP_TUNE_20260909 verifier-reports/L1-functional/2026-09-09-it1-dcop-breakdown.md sec 2-3 + L2-performance/2026-09-09-it1-tt-dense-sweep.md root cause + 2026-09-09-it2-tt-grid.md designer-model cross-check + 2026-09-09-it3-k-bracket.md hot-envelope note + circuit/rationale.md it2 sec (a)/(f) (2026-09-09)"
+created: '2026-09-09'
+updated: '2026-09-09'

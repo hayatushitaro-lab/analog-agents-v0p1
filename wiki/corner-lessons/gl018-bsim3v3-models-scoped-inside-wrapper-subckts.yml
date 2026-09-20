@@ -1,0 +1,58 @@
+id: corner-gl018-001
+type: corner-lesson
+name: "gl018 bsim3v3 models are scoped inside wrapper subckts nch3/pch3 — instantiate the wrappers (anti-pattern candidate)"
+tags: [gl018, pdk, bsim3v3, wrapper-subckt, model-scoping, sfe-23, spectre, mos, probe-first, silent-parameter-drop]
+process_nodes: [180nm]
+
+content:
+  description: >
+    In the gl018 model deck (wiki/projects/nb1601/model/ref_lib/hspice/gl018.scs)
+    the bsim3v3 models `nch3_model` (line 3169) and `pch3_model` (line 4839) are
+    defined INSIDE the wrapper subckts `subckt nch3` (lines 3120-4786) and
+    `subckt pch3` (lines 4790-6464) in section `mos_3v`. Spectre scopes
+    subckt-local models to their subckt, so `nch3_model`/`pch3_model` do NOT
+    exist at netlist scope. Instantiating them fails read-in:
+    `ERROR (SFE-23): instance ... referencing an undefined model or subcircuit`
+    x7, `spectre terminated prematurely` — 3 Spectre invocations burned before
+    any electrical data existed (WORK_LDO_2STAGE_20260908 designer iteration 1).
+  trap_1_masters: >
+    The only public, instantiable masters are the wrapper subckts `nch3`/`pch3`
+    — exactly what the L3-proven WORK_NB1601_BANDGAP_TC50 DUT instantiates. The
+    top-level spec.yml device-name hint named the scoped BSIM models, and the
+    designer followed the hint: text review against the PDK deck missed the
+    scoping entirely. Name resemblance is not name identity.
+  trap_2_silent_params: >
+    The wrappers SILENTLY IGNORE unknown instance parameters. Verifier probe 2:
+    otherwise identical decks with and without `nf=10 multi=1` produced
+    bit-identical Id (4.578320312218962e-04 A). Leaving nf=/multi= in place
+    simulates the wrong device geometry with zero diagnostics. The wrapper's
+    declared multiplier is `count=`; encode total W = w * count (per-finger w,
+    finger count count), which also matches the wrapper mismatch geometry
+    factor geo_fac = 1/sqrt(count*lef*wef*1e12). See anti-ldo-004 for the 65nm
+    rf-mos `multi=` variant of the same silent-drop mechanism.
+  trap_3_junctions: >
+    Wrapper junction defaults (as=ad=1e-15, ps=pd=1e-6) are near-nil, so
+    schematic-level junction caps are optimistic. Negligible against Cc=150pF /
+    Cout=1uF LDO cores, but add explicit per-device as/ad/ps/pd BEFORE any
+    parasitic-sensitive L3 (post-layout comparison, noise, precise Iq).
+  method: >
+    The empirical probe is the method — text review alone missed all three
+    traps: (1) probe deck instantiating the suspected master bare (read-in +
+    Id at fixed Vgs/Vds) proves reachability; (2) identical deck plus the
+    disputed instance parameters; bit-identical Id proves silent ignore.
+    ~8 s server wall for both probes vs a full rejected-dispatch round-trip.
+  promote_to_anti_pattern_when: >
+    A second PDK shows the same scoped-model-inside-wrapper + silently-ignored
+    instance-parameter pattern; then promote this entry to anti-patterns/ with
+    a generic "verify PDK master visibility and instance-param schema by probe,
+    not by reading" statement and cross-link anti-ldo-004.
+  evidence:
+    - "WORK_LDO_2STAGE_20260908/verifier-reports/L1-functional/pre-sim-blocker-20260909.md (SFE-23 x7 + probes 1/2)"
+    - "tmp/spectre_test/probe1_nch3/ and tmp/spectre_test/probe2_nf/ (control probes, server default)"
+    - "Fix verified: iteration-2 netlist pre-sim ACCEPTED, later L3-signed 39/39 (pvt-20260909.md)"
+
+derived_from: [proj-017]
+confidence: unverified
+source: "WORK_LDO_2STAGE_20260908 verifier probe experiments + pre-sim blocker report (2026-09-09)"
+created: 2026-09-09
+updated: 2026-09-09

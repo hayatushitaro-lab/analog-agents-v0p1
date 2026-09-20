@@ -1,0 +1,38 @@
+id: corner-bandgap-010
+type: corner-lesson
+name: "A device list is not a section list - run a static model-coverage probe before the first remote sim"
+tags: [bandgap, spectre, model-include, section-selection, simulation-setup, pre-flight, nb1910]
+process_nodes: [40nm]
+
+content:
+  description: >
+    In multi-section HSPICE-converted model files, the sections a testbench
+    includes almost never map 1:1 to the device types the DUT instantiates.
+    In the nb1910 bandgap tune session (2026-09-09), the shipped decks
+    (section=tt + bip + res + mos_cap_25, per spec.yml model_sections_note)
+    covered NONE of the DUT's five device types: rppolywo_m lives in the
+    disres family (anti-bandgap-005 again), nch/pch_25od33_mac wrappers live
+    ONLY in total_25od33 (a section nothing includes by default), and
+    pnp2 / nmoscap_25 need corner-parameter + setup_* sections beyond their
+    bare model sections. First remote dispatch would have failed at read-in
+    (217 errors predicted by the verifier).
+  key_points:
+    - "Extract the DUT's primitive set first (with instance counts): rppolywo_m x54, pnp2 x2, nmoscap_25 x3, nch_25od33_mac x85, pch_25od33_mac x49."
+    - "Resolve device -> defining section statically, per corner, INCLUDING the corner-parameter and setup_* sections each model references (missing params fail at read-in even when the model resolves)."
+    - "Watch for definitions that exist only in sections nothing includes (inline _mac wrappers in total_25od33) and for two sections defining the same model name (total_25od33 vs mos_25od33 for nch/pch_25od33)."
+    - "Run the probe with a NEGATIVE CONTROL: the known-bad section set must FAIL, so the probe itself is validated."
+    - "Record the probe log as an artifact next to the decks; gate L1 dispatch on an ALL DECKS PASS verdict. Cost: seconds, local. A failed remote read-in costs a full dispatch round-trip."
+    - "Empirically proven 7-section composition for cln40ulp_2d5_lk_v1d6_2 (nb1910): stat + <c>g_25od33 + <c>_25od33 + total_25od33 + <c>_bip + <c>_disres + <c>_mos_cap_25, c in {tt,ss,ff}."
+  recurrence_note: >
+    This is the same defect class as anti-bandgap-005 (2026-09-03), which was
+    documented AND consulted, yet recurred because the fix was never
+    generalized from rppolywo_m to the other device classes and the spec note
+    was transcribed instead of probed. Documentation alone did not prevent
+    recurrence; the static probe did. The same class hit fm393 the same night
+    (model-section rejection fixed by adding stat_noise).
+
+derived_from: ["proj-014"]
+confidence: verified
+source: "WORK_NB1910_BANDGAP_TUNE review/review-report.md sec 3.3 + model-coverage-probe.log; recurrence of anti-bandgap-005 (WORK_NB1910_BANDGAP)"
+created: 2026-09-09
+updated: 2026-09-09

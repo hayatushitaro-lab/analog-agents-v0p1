@@ -1,0 +1,46 @@
+id: anti-003
+type: anti-pattern
+name: Single-direction upward DC temp sweep as sole cold-corner TC extraction
+tags: [bandgap, fm393, dc-sweep, continuation, cold-corner, tc-extraction]
+process_nodes: [180nm]
+
+content:
+  description: >
+    Extracting full-span TC and vbg_min from one upward DC temperature sweep
+    (-40 -> 125 C) and reporting those numbers as the circuit's, at corners
+    where the circuit is DC-bistable at cold. The sweep is a solver
+    continuation that starts on the degenerate (zero-current) solution at
+    -40 C and may stay on it well into the sweep (FM393 FF: up to 27-28 C),
+    yielding fake catastrophic numbers (TC 2500+ ppm, vbg_min 0.67-0.75 V)
+    for a circuit whose regulated branch is perfectly healthy (80-90 ppm,
+    1.19 V) and reachable from a power ramp.
+  failure_mechanism: >
+    DC continuation path-dependence: the swept DC analysis inherits each
+    step's solution as the next initial guess. Starting cold keeps the solver
+    on the degenerate branch until a fold forces a jump onto the regulated
+    branch; everything below the fold is the wrong solution. The failure
+    direction is asymmetric — it only bites cold-to-warm sweeps at corners
+    where bistability exists, so TT runs (and warm sweeps generally) look
+    fine and the trap is discovered only at FF/cold sign-off.
+  fix: >
+    Branch-safe extraction, per corner: (1) reverse the sweep (start=125
+    stop=-40) so continuation begins from the regulated warm solution — if
+    the downward sweep is regulated full-span while the upward one folds,
+    the fold is a continuation artifact and the regulated branch is the
+    physical one; (2) confirm reachability with a cold VDD-ramp startup
+    transient at the same corner — a transient landing on the regulated
+    value within the settle window supersedes any degenerate DC reading;
+    (3) report sign-off TC/vbg_min only from the regulated branch, and
+    document the bistability bracket (fold temps per direction) for the
+    integrator.
+  signs:
+    - "A hundreds-of-mV one-step jump (fold) mid-sweep in vbg(T)."
+    - "vbg pinned in the 0.6-0.8 V chain-only band at cold points while the startup transient lands at ~1.2 V."
+    - "gmin -> source/dptran homotopy fallbacks clustered in the cold region of the log."
+    - "Full-span TC orders of magnitude above the TC computed on the post-fold segment alone."
+
+derived_from: [proj-013]
+confidence: unverified
+source: "WORK_FM393_BG verifier-reports/L2-performance/2026-09-09_iter2_trim-matrix.md sec 2 note/6 + L3-signoff/2026-09-09_l3_signoff.md sec 3 hysteresis bracket + iteration-log.yml hysteresis_resolution, 2026-09-09"
+created: '2026-09-09'
+updated: '2026-09-09'

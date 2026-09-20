@@ -1,0 +1,28 @@
+{
+  "sweep_var": "freq",
+  "n": 101,
+  "sig": [
+    "Vac:p",
+    "Vmain:p",
+    "Vref:p",
+    "X1.EAOUT",
+    "X1.nrz",
+    "X1.ntail",
+    "X1.nx",
+    "ib",
+    "vcap",
+    "vdd",
+    "vddin",
+    "vfb",
+    "vout",
+    "vref"
+  ],
+  "psr": {
+    "psr_db_10hz": 82.59,
+    "psr_db_100hz": 62.61,
+    "psr_db_1k": 43.01,
+    "psr_db_10k": 32.99,
+    "psr_db_100k": 32.6,
+    "psr_db_1meg": 52.25
+  }
+}

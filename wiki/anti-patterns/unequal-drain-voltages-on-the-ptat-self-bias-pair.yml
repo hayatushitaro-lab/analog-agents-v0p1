@@ -1,0 +1,40 @@
+id: anti-004
+type: anti-pattern
+name: Unequal drain voltages on the PTAT self-bias pair
+tags: [bandgap, ptat, self-bias-pair, drain-asymmetry, mismatch, cold-corner, tc, fm544, 180nm]
+process_nodes: [180nm]
+
+content:
+  description: >
+    A PTAT (self-biasing) differential pair whose two drains sit at DIFFERENT
+    fixed potentials — FM544: M58 drain on the PMOS bias rail vbp (2.434 V),
+    M59 drain on the NMOS bias rail vbn (1.787 V), a ~0.65 V drain asymmetry
+    baked into the frozen topology.
+  failure_mechanism: >
+    At the nominal corner the pair is effectively symmetric (current ratio
+    0.991 at 27 C, Vgs error +1.28 mV) and every static check passes. The
+    mismatch is a CLM/DIBL-type Vgs offset that grows as the devices fall into
+    weak inversion at cold: +1.28 mV (27 C) -> +9.96 mV (-40 C), current ratio
+    0.837, so the PTAT current I_R12 lands 21.7% above ideal at -40 C. The
+    mirror bank (x5) and the cold-inflated core resistance convert it into a
+    +80.6 mV VREF cold excess — a temperature-dependent pair "offset" that
+    masquerades as a TC-trim problem but is unreachable by any resistor trim
+    (corner-007).
+  detection:
+    - "In the L1 DC-op breakdown, compare the two drains' node voltages AND the pair's Vgs values — at 27 C the asymmetry is nearly invisible (+1.28 mV); flag ANY structural drain asymmetry even when the nominal numbers look exact."
+    - "Signature at the system level: cold-end TC blowup (>1000 ppm/C local) that is identical across R_PTAT trim variants (R_PTAT-independent), with the OTA servo still balanced."
+    - "Confirm with a cold single-point DC op + full save list: V(R12) vs ideal dVBE (51.74 vs 41.78 mV here) and the Vgs59-Vgs58 error term localize it in one run."
+  fix: >
+    Equalize the pair's drain potentials (symmetric drains) or add cascode/
+    balancing devices so neither input device sees a rail-referenced drain.
+    This is a topology-level change — outside a resistor-only tuning envelope;
+    if topology is frozen, the joint spec window must be re-negotiated instead
+    of searched (strat-001).
+  measured_impact:
+    - "FM544 2026-09-09: joint TC/power window proven EMPTY under the frozen topology (TC-clean K <= ~3.0 vs power K >= ~3.3); session escalated to the user with two documented escapes (accept 103.5 uW at K=2.9, or unfreeze M58/M59 drain symmetry / M96-startup floor)."
+
+derived_from: [proj-018]
+confidence: unverified
+source: "WORK_FM544_BANDGAP_TUNE_20260909 verifier-reports/L1-functional/2026-09-09-it3-cliff40c-dump.md (root cause closes exactly) + wiki-lesson candidates drafted therein (2026-09-09)"
+created: '2026-09-09'
+updated: '2026-09-09'

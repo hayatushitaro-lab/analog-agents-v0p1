@@ -1,0 +1,37 @@
+id: strat-pmu-001
+type: strategy
+module: pmu
+name: "Root-anchor plus fresh-DC state sweep for PMU reverse engineering"
+tags: [pmu, state-sweep, polarity, bring-up, por, ldo, bandgap]
+process_nodes: [90nm]
+
+content:
+  description: >
+    For a source-preserved PMU with unknown control polarity, start from one
+    finite-load root anchor and run independent DC solves for each hypothesis.
+    Keep generated outputs internal and observe vref1p2, POR outputs, LDO15,
+    LDO30, monitor output, and supply currents. Sweep one control at a time,
+    then combine the states that produce an observable change.
+  procedure: >
+    Hold PVDD=VDD=5 V and both grounds at 0 V. Try both states of bg_flag,
+    enb_discg15, enb_discg30, enb_tmonitor, and sleep_ldo30lp_en; sweep
+    bg_trim<1:0> through 00/01/10/11; sweep ibn_lp over 0, 1.2, 3, and 5 V.
+    Use fresh DC jobs rather than continuation from a prior state. For each
+    job record vref1p2, both rails, POR nodes, tmonitor_out, and the MOS region
+    histogram. A control is a useful discriminator only if it changes a
+    meaningful observable while the branch remains physically plausible.
+  measured_impact: >
+    In the first 19-run FM524 PMU experiment, sleep=5 V drove LDO30 to 4.982 V,
+    enb_tmonitor=5 V collapsed tmonitor_out to 12 nV, and bg_trim moved
+    vref1p2 from 0.322727 V down to 0.312955 V. bg_flag and ibn_lp were
+    inactive in the observed collapsed branch.
+  guardrails: >
+    Do not infer final active-low semantics from pin names alone. Do not call
+    a rail regulated merely because Spectre exits zero; require a valid
+    reference, pass-device operating region, finite current, and rail window.
+
+derived_from: [proj-pmu-20260917]
+confidence: medium
+source: "WORK_PMU_PIPELINE_20260917/verifier-reports/L1-functional/dcop-and-state-sweep.md"
+created: '2026-09-17'
+updated: '2026-09-17'
