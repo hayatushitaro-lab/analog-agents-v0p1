@@ -59,6 +59,8 @@ top-level spec.yml
 
 ## Requirements
 
+- **New to the repo?** Start with the [Chinese beginner guide for analog-pipeline and analog-recovery](docs/GETTING_STARTED_ANALOG_WORKFLOWS.md), then use the [full workspace setup notes](WORKSPACE_HANDOFF_SETUP.md) for machine-specific configuration.
+
 - **Python ≥ 3.11** for the Python tooling in `tools/` and `hooks/` (see `pyproject.toml`).
 - **EDA tools are optional** — Virtuoso/Spectre are only needed where simulation or Virtuoso interaction is required.
 
