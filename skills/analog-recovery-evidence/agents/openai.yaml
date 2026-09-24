@@ -1,0 +1,4 @@
+interface:
+  display_name: "电路分析与证据生成"
+  short_description: "分析固定电路的接口、模式与功能，生成带来源和覆盖状态的指标证据包"
+  default_prompt: "使用 $analog-recovery-evidence，分析已准入的电路并按报告要求建立可校验的证据包。"

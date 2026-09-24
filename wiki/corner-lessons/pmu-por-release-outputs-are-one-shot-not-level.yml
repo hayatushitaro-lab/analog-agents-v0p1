@@ -1,43 +1,128 @@
 id: corner-pmu-007
 type: corner-lesson
 module: pmu
-name: "POR release outputs may be one-shot pulses, not levels; only a ramped transient can tell, and the DC end point lies by omission"
-tags: [pmu, fm524, POR, dvdd_por, one-shot, sequencing, bring-up, dcop-vs-tran]
-process_nodes: [90nm]
-
+name: POR release outputs may be one-shot pulses, not levels; only a ramped transient
+  can tell, and the DC end point lies by omission
+tags:
+- pmu
+- fm524
+- POR
+- dvdd_por
+- one-shot
+- sequencing
+- bring-up
+- dcop-vs-tran
+process_nodes:
+- 90nm
 content:
-  description: >
-    A PMU can contain TWO different POR outputs with different shapes: a
-    level-domain power-good (here vdd_por -> rstn_vdd_por, holds high after
-    VDD crosses threshold) and a pulse-domain sequencer (here dvdd_por:
-    net019/net018/dvdd_iso_5v go high for ~24 us after release, then collapse
-    low, with complementary strobes en_v (low->high) and enb_p
-    (high->low)). A DC solve lands on the post-pulse state, so a DC-only
-    bring-up reads every dvdd_por output as "low = not released" or "high =
-    released level" and is wrong either way about the pulse.
-  measured_impact: >
-    fm524 PMU top, TT/27C ramp (pmu-ver-002): rstn_vdd_por snaps high at
-    VDD ~= 2.5 V and HOLDS; en_pmu/rails follow; dvdd_iso_5v/net019/net018
-    rise ~100 us and fall at 123.7 us (~24 us pulse); bg_flag rises at
-    123.3 us; the same pulse-vs-level split reproduces in the DC decks
-    (dvdd_por outputs at their post-pulse values). This run's only failed L1
-    check (por_sequence) failed because the acceptance clause demanded
-    "dvdd_por outputs hold intended levels" - the check encoded the wrong
-    behavioral model, not a circuit fault (disposition in
-    wiki/projects/fm524/iteration-log.yml, pmu-ver-002 entry).
-  fix: >
-    Characterize every POR/sequencer output as pulse-vs-level in the ramped
-    transient BEFORE writing acceptance checks: report rise time, pulse
-    width, and final value as three separate numbers. Write spec checks
-    against the measured shape (e.g. "one-shot width 10-100 us" or "level
-    holds to end of sim"), not against an assumed shape. When a consumer
-    exists outside the simulated netlist, the pulse/level question must be
-    answered before wiring - a level-assumed consumer on a one-shot output
-    (or vice versa) is a system integration bug the block-level sim cannot
-    flag.
+  description: Separate the upstream VDD POR level rstn_vdd_por from the downstream
+    dvdd_por sequencer. The historical active-startup ramp reported about 24 us transients
+    on selected internal/isolation nodes; that does not make all POR outputs universal
+    fixed-width one-shots. Under the selected LP-entry history, rstn_vdd_por remains
+    high while dvdd_iso_5v/enb_p assert high and en_v becomes low. en_v is the inverter
+    of isolation; enb_p is its level-shifted counterpart. Output shape must be stated
+    per signal, mode, supply and observation window.
+  measured_impact: 'fm524 PMU top, TT/27C ramp (pmu-ver-002): rstn_vdd_por snaps high
+    at VDD ~= 2.5 V and HOLDS; en_pmu/rails follow; dvdd_iso_5v/net019/net018 rise
+    ~100 us and fall at 123.7 us (~24 us pulse); bg_flag rises at 123.3 us; the same
+    pulse-vs-level split reproduces in the DC decks (dvdd_por outputs at their post-pulse
+    values). This run''s only failed L1 check (por_sequence) failed because the acceptance
+    clause demanded "dvdd_por outputs hold intended levels" - the check encoded the
+    wrong behavioral model, not a circuit fault (disposition in wiki/projects/fm524/iteration-log.yml,
+    pmu-ver-002 entry).
 
-derived_from: [proj-pmu-20260918]
+    '
+  fix: Use the current mode table and actual source connections before interpreting
+    pulse versus level. Retain historical timing and L1 disposition as historical
+    records, not new acceptance specifications. Do not derive a product pulse-width
+    requirement from a measured example. The current question needs no new simulation;
+    internal LP behavior and independent validation remain open.
+derived_from:
+- proj-pmu-20260918
 confidence: unverified
-source: "wiki/projects/fm524/pmu/verifier-reports/L1-functional/dc-op-point-2026-09-18.md (POR timeline + exploration decks); iteration-log pmu-ver-002 disposition"
+source: 'WORK_PMU_MODE_CONTROL_20260922/conclusions.md and source-manifest.json; PMU_top.scs
+  sha256 420bd3a0ef56778a83c7cdfed8e1283d479984c4812289ab0711f5615fc093eb. Original
+  requested directory unavailable. Single-agent static inference, no simulation or
+  independent review. Historical active-startup observation: dc-op-point-2026-09-18.md;
+  no new timing extraction.'
 created: '2026-09-18'
-updated: '2026-09-18'
+updated: '2026-09-22'
+confidence_note: Unverified mode-qualified historical timing and local source interpretation;
+  no universal one-shot or timing guarantee.
+revisions:
+- date: '2026-09-22'
+  update_id: pmu-mode-control-20260922-r1
+  reason: The active-startup pulse observation is conditional; disabled/LP states
+    must not inherit a universal one-shot interpretation.
+  previous_content:
+    description: 'A PMU can contain TWO different POR outputs with different shapes:
+      a level-domain power-good (here vdd_por -> rstn_vdd_por, holds high after VDD
+      crosses threshold) and a pulse-domain sequencer (here dvdd_por: net019/net018/dvdd_iso_5v
+      go high for ~24 us after release, then collapse low, with complementary strobes
+      en_v (low->high) and enb_p (high->low)). A DC solve lands on the post-pulse
+      state, so a DC-only bring-up reads every dvdd_por output as "low = not released"
+      or "high = released level" and is wrong either way about the pulse.
+
+      '
+    measured_impact: 'fm524 PMU top, TT/27C ramp (pmu-ver-002): rstn_vdd_por snaps
+      high at VDD ~= 2.5 V and HOLDS; en_pmu/rails follow; dvdd_iso_5v/net019/net018
+      rise ~100 us and fall at 123.7 us (~24 us pulse); bg_flag rises at 123.3 us;
+      the same pulse-vs-level split reproduces in the DC decks (dvdd_por outputs at
+      their post-pulse values). This run''s only failed L1 check (por_sequence) failed
+      because the acceptance clause demanded "dvdd_por outputs hold intended levels"
+      - the check encoded the wrong behavioral model, not a circuit fault (disposition
+      in wiki/projects/fm524/iteration-log.yml, pmu-ver-002 entry).
+
+      '
+    fix: 'Characterize every POR/sequencer output as pulse-vs-level in the ramped
+      transient BEFORE writing acceptance checks: report rise time, pulse width, and
+      final value as three separate numbers. Write spec checks against the measured
+      shape (e.g. "one-shot width 10-100 us" or "level holds to end of sim"), not
+      against an assumed shape. When a consumer exists outside the simulated netlist,
+      the pulse/level question must be answered before wiring - a level-assumed consumer
+      on a one-shot output (or vice versa) is a system integration bug the block-level
+      sim cannot flag.
+
+      '
+  previous_confidence: unverified
+  evidence_refs:
+  - path: WORK_PMU_MODE_CONTROL_20260922/conclusions.md
+    sha256: 7ff4ee2c13de3839ef13a42b7aba47fdfce58ab8bb1b89917ce67f677ba24939
+    locator: mode equations, per-block source spans, historical observation and causal
+      retraction
+  - path: WORK_PMU_MODE_CONTROL_20260922/source-manifest.json
+    sha256: 59148e881485f2a0eed9440ed98b90b996bbd90e82d7aaa862c6114b08caadbf
+    locator: /sources and /scope_packets
+  - path: wiki/projects/fm524/pmu/circuit/PMU_top.scs
+    sha256: 420bd3a0ef56778a83c7cdfed8e1283d479984c4812289ab0711f5615fc093eb
+    locator: L12-19,68-81,87,259,403-433,506-526,575-588,932-976,1098-1106,1326-1343,1693-1695,1837-1838,1977-1996,2081-2186,2289-2415,2644-2672
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/06_exp_lp_mode/exp_lp_mode.scs
+    sha256: 399dfe3c7b3a89f1667502f5090fae537f6eb2f38157a032cc6e03914be19168
+    locator: L44-120; historical fixture
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/06_exp_lp_mode/measurements.json
+    sha256: 15569af2a6c153bdd238dbb33623c6de98ce94161c600a9ad2ba26e3b2cc2c29
+    locator: /t1m,/t2m,/t2p5m; historical derived values, not new measurement
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/06_exp_lp_mode/spectre.out
+    sha256: 6ee1795cd5f3b04f26ebfc26e6c813543d7a518436ae229dc9fc5de387a3ff72
+    locator: L323-326 gmin notice; runtime bytes unauthenticated
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/tb_pmu_dc.scs
+    sha256: 617719f57b420e489cf8e31b9f2bc13c1ef7c9ffe8ea0e6f97ec5e51a7468d92
+    locator: L30-98; historical fixture
+  - path: wiki/projects/fm524/pmu/verifier-reports/L1-functional/dc-op-point-2026-09-18.md
+    sha256: 667b52fa57abb4cc741ad2f542788161b463a3829ea5731dc1e2555f68c8534e
+    locator: 'L255-273: observation versus causal interpretation'
+  - path: WORK_PMU_MODE_CONTROL_20260922/inheritance.json
+    sha256: 08ed2d1f0a5967074cef4f1131812e2cc885fb9f59674e73781c26a9d93a4808
+    locator: whole document
+  project_ref: proj-pmu-20260918
+  previous_metadata:
+    source: wiki/projects/fm524/pmu/verifier-reports/L1-functional/dc-op-point-2026-09-18.md
+      (POR timeline + exploration decks); iteration-log pmu-ver-002 disposition
+  previous_metadata_absent:
+  - confidence_note
+  previous_index_entry:
+    path: corner-lessons/pmu-por-release-outputs-are-one-shot-not-level.yml
+    type: corner-lesson
+    module: pmu
+    summary: POR release outputs may be ~24us one-shots, not levels; only a ramped
+      transient tells, DC end point lies by omission

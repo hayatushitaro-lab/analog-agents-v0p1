@@ -1,0 +1,25 @@
+{
+  "origin": "analog-evidence-static 0.2.0",
+  "files": {
+    "schemas\\design_evidence.schema.json": "301eabb8cd9b8eed7ccbd6257a887390c164d91ce9966ec1f02363c5b593c095",
+    "src\\analog_evidence\\acceptance.py": "b5481d04ac4269bf7a27a73dce06af80bf1239f4421ca924ec90ed7126f0d22b",
+    "src\\analog_evidence\\admission.py": "3f149cf19c6d8b79fffe59a967d3dc8a61f4889705e8877a846e38dfc6326f7d",
+    "src\\analog_evidence\\cli.py": "1ae599e80a969b90823c0fdf748b80181bd5a6f082edc47463b09a66f87c2cdc",
+    "src\\analog_evidence\\evidence.py": "0deb5470dd0fe22be38a19fc458b9d3e987abd0924a23c1c85889919585483f3",
+    "src\\analog_evidence\\graph.py": "93f2539d2da49a6ebafea36038b6f586efdb80d952c286fe5a888f595a593018",
+    "src\\analog_evidence\\metadata.py": "2e297d56ba1e0a5a17acf00e65579cea955f8db4cb6ac242d6658f90af0155ef",
+    "src\\analog_evidence\\numeric.py": "80e38ee596eace8bccb89c5f2dc6d7e6c6003acb3197ec3207ce85f264d9f284",
+    "src\\analog_evidence\\parser.py": "016400fdef92e9f3ae6fab1823b56fcd9a1c2350c5eb3439deda22e4cfb076f1",
+    "src\\analog_evidence\\__init__.py": "19523f78286240ec9e1dd26b0a5117a45c28de7cc468d04af517ab87a4a7d310",
+    "src\\analog_evidence\\__main__.py": "79ee6f134c5c5193377cf9b189cbdcc3e2095e49ba9cec310114441c15a917c4"
+  },
+  "workspace_revision": {
+    "date": "2026-09-23",
+    "change": "Spectre unquoted inline comments; lossless raw source and independent source checks retained",
+    "source": "src/analog_evidence",
+    "changed_files": [
+      "parser.py",
+      "evidence.py"
+    ]
+  }
+}

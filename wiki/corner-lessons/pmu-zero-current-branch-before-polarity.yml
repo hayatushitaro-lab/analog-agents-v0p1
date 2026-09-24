@@ -1,33 +1,140 @@
 id: corner-pmu-002
 type: corner-lesson
 module: pmu
-name: "Near-zero dual rails plus a mostly-off operating point require branch diagnosis before resizing"
-tags: [pmu, bandgap, ldo, por, degenerate-branch, gmin, dcop, bring-up]
-process_nodes: [90nm]
-
+name: Near-zero dual rails plus a mostly-off operating point require branch diagnosis
+  before resizing
+tags:
+- pmu
+- bandgap
+- ldo
+- por
+- degenerate-branch
+- gmin
+- dcop
+- bring-up
+process_nodes:
+- 90nm
 content:
-  description: >
-    When a PMU DC point has vref1p2 far below its nominal band, both LDO rails
-    near zero, and most MOS devices off, the first question is reachability of
-    the intended branch. Device sizing or performance analysis is premature.
-  measured_impact: >
-    At TT/27 C the FM524 PMU measured vref1p2=0.312955 V, LDO15=18.20 uV,
-    LDO30=0.175 uV, with 678 of 841 MOS records off, 148 linear, 9 saturated,
-    and 6 subthreshold. All 19 fresh solves completed but carried gmin/bad-pivot
-    warnings. No tested nominal vector produced both regulated rails.
-  hypotheses: >
-    The evidence is consistent with an unfulfilled startup or POR precondition,
-    wrong control polarity, an externally required bias not yet identified, or
-    a physically reachable zero-current branch. It does not distinguish these
-    causes by itself.
-  next_test: >
-    Add a controlled VDD/PVDD ramp and capture branch entry; isolate Bandgap,
-    vdd_por, and dvdd_por with finite loads; then repeat the polarity matrix.
-    Only after a healthy vref and pass-device region appear should L2 load and
-    transient metrics be enabled.
+  description: 'When a PMU DC point has vref1p2 far below its nominal band, both LDO
+    rails near zero, and most MOS devices off, the first question is reachability
+    of the intended branch. Device sizing or performance analysis is premature.
 
-derived_from: [proj-pmu-20260917, proj-pmu-20260918]
-confidence: verified
-source: "WORK_PMU_PIPELINE_20260917/verifier-reports/L1-functional/dcop-and-state-sweep.md; validation 2026-09-18: its next_test prescription (ramp + isolation + polarity matrix) was executed as proj-pmu-20260918's TB design and resolved the branch - root cause was two stimulus gaps (floating en_pmu_act, floating ibn_lp), exactly the class this entry predicts; see wiki/projects/fm524/pmu/"
+    '
+  measured_impact: 'At TT/27 C the FM524 PMU measured vref1p2=0.312955 V, LDO15=18.20
+    uV, LDO30=0.175 uV, with 678 of 841 MOS records off, 148 linear, 9 saturated,
+    and 6 subthreshold. All 19 fresh solves completed but carried gmin/bad-pivot warnings.
+    No tested nominal vector produced both regulated rails.
+
+    '
+  hypotheses: 'The evidence is consistent with an unfulfilled startup or POR precondition,
+    wrong control polarity, an externally required bias not yet identified, or a physically
+    reachable zero-current branch. It does not distinguish these causes by itself.
+
+    '
+  next_test: 'Add a controlled VDD/PVDD ramp and capture branch entry; isolate Bandgap,
+    vdd_por, and dvdd_por with finite loads; then repeat the polarity matrix. Only
+    after a healthy vref and pass-device region appear should L2 load and transient
+    metrics be enabled.
+
+    '
+derived_from:
+- proj-pmu-20260917
+- proj-pmu-20260918
+confidence: unverified
+source: 'Historical diagnostic source: WORK_PMU_PIPELINE_20260917/verifier-reports/L1-functional/dcop-and-state-sweep.md.
+  2026-09-22 scope correction: the selected cleanup active_dc drives en_pmu_act and
+  ibn_lp with 5 V sources; later 02_tb_pmu_dc uses 0.8 uA at ibn_lp and changes other
+  conditions. The earlier two-floating-input root-cause attribution is not established
+  for this run or all earlier runs. See revisions/evidence_refs and proj-pmu-20260918
+  recovery iteration 2.'
 created: '2026-09-17'
-updated: '2026-09-18'
+updated: '2026-09-22'
+confidence_note: Branch-diagnosis method retained; original measurements are historical,
+  not recomputed. Causal attribution unverified; existing next_test is historical
+  advice, not authorization for new work.
+revisions:
+- date: '2026-09-22'
+  update_id: ibn-lp-history-20260922-r2
+  reason: The source field overgeneralized a two-floating-input cause to histories
+    that include a driven cleanup fixture.
+  previous_content:
+    description: 'When a PMU DC point has vref1p2 far below its nominal band, both
+      LDO rails near zero, and most MOS devices off, the first question is reachability
+      of the intended branch. Device sizing or performance analysis is premature.
+
+      '
+    measured_impact: 'At TT/27 C the FM524 PMU measured vref1p2=0.312955 V, LDO15=18.20
+      uV, LDO30=0.175 uV, with 678 of 841 MOS records off, 148 linear, 9 saturated,
+      and 6 subthreshold. All 19 fresh solves completed but carried gmin/bad-pivot
+      warnings. No tested nominal vector produced both regulated rails.
+
+      '
+    hypotheses: 'The evidence is consistent with an unfulfilled startup or POR precondition,
+      wrong control polarity, an externally required bias not yet identified, or a
+      physically reachable zero-current branch. It does not distinguish these causes
+      by itself.
+
+      '
+    next_test: 'Add a controlled VDD/PVDD ramp and capture branch entry; isolate Bandgap,
+      vdd_por, and dvdd_por with finite loads; then repeat the polarity matrix. Only
+      after a healthy vref and pass-device region appear should L2 load and transient
+      metrics be enabled.
+
+      '
+  previous_confidence: verified
+  evidence_refs:
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/active_dc.scs
+    sha256: 7fd188e7a5fb407e2ac0679e736f246377bc00ab91b48c261d23ff647174be06
+    locator: lines 3-7
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/pmu_root_anchor_active_corrected.scs
+    sha256: 36d9bbc5c79963fc3b2fcebd85850a1800caa1f7b08453e3c768b48cf5fe2e1f
+    locator: lines 34-70; V_IBNLP at 50; V_ENPMUACT at 51
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/PMU_derived_library.scs
+    sha256: f14ba7bf56468c8fbfbfa3225feb92f89f0eb8236b64b48d40b5268e63322c73
+    locator: lines 2644-2650,2665-2666,2677-2681; 2164-2166,2407-2415
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/spectre.out
+    sha256: 7a96666d15083d58ec92c8f0013a8eaca1398da89816995e89a2e038873a924b
+    locator: lines 34,175-176,305-308
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/tb_pmu_dc.scs
+    sha256: 617719f57b420e489cf8e31b9f2bc13c1ef7c9ffe8ea0e6f97ec5e51a7468d92
+    locator: lines 30,37-68,86-98
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/spectre.out
+    sha256: 19c022023d2714ebc0d498f944a5b1a6383a910a7e9fd27a84ffa933b03db2ad
+    locator: lines 39,180,320-329
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/summary.json
+    sha256: 969760d514315907fcc52155e154077d287058a9b224b4733e7458965cd631ca
+    locator: lines 2-6
+  - path: wiki/projects/fm524/pmu/circuit/PMU_top.scs
+    sha256: 420bd3a0ef56778a83c7cdfed8e1283d479984c4812289ab0711f5615fc093eb
+    locator: lines 2644-2650,2665-2666,2164-2166,2407-2415; extant local copy, not
+      runtime hash authentication
+  - path: WORK_Q_IBN_LP_AUDIT_20260922/review.md
+    sha256: 9dbc583f351f08ff8b0cdc1af87d81990f217b907b539543621efd5a6568f013
+    locator: 可继承认识、建议修改、引用与超出证据的部分
+  - path: WORK_Q_IBN_LP_AUDIT_20260922/read-scope.json
+    sha256: ba59a6cf4bd03a3d0fa40eca0d26ac198098da909cf21c5e68dd27d777f62b6d
+    locator: /read_files; /review_type
+  - path: WORK_Q_IBN_LP_REVISION_20260922/revision-observations.md
+    sha256: 0fed4c1bc4d7772a70533b8edf85c52bdfc0ae7989f943a5dd6b903b9b0bbe1f
+    locator: whole document
+  - path: WORK_Q_IBN_LP_REVISION_20260922/evidence-r3/manifest.json
+    sha256: 211251d80f6370a7bba3d4f73007af4a3aac7ca53bd3d9c182c863e4d886dc86
+    locator: artifact identities
+  - path: WORK_Q_IBN_LP_REVISION_20260922/evidence-r3/design_evidence.json
+    sha256: 1641126ccb358eec69e9849018444018df1f63513f32d9fc8f62705a420fae9e
+    locator: whole file; revised claim references and limits
+  project_ref: proj-pmu-20260918
+  previous_metadata:
+    source: 'WORK_PMU_PIPELINE_20260917/verifier-reports/L1-functional/dcop-and-state-sweep.md;
+      validation 2026-09-18: its next_test prescription (ramp + isolation + polarity
+      matrix) was executed as proj-pmu-20260918''s TB design and resolved the branch
+      - root cause was two stimulus gaps (floating en_pmu_act, floating ibn_lp), exactly
+      the class this entry predicts; see wiki/projects/fm524/pmu/'
+  previous_metadata_absent:
+  - confidence_note
+  previous_index_entry:
+    path: corner-lessons/pmu-zero-current-branch-before-polarity.yml
+    type: corner-lesson
+    module: pmu
+    summary: Near-zero dual rails plus a mostly-off operating point require branch
+      diagnosis before resizing

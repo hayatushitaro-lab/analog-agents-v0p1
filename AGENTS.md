@@ -24,6 +24,31 @@ in this repo.
    used by the sanitizer. It's gitignored.
 5. **Network**: use the current machine's actual network configuration forGitHub requests (git, uv, gh, curl, WebFetch). Respect HTTP_PRoxY /HTTPs_PRoxy when they are intentionally configured.
 
+## Recovery entrypoint
+
+For fixed-DUT reverse documentation or same-circuit knowledge continuation, use
+this repository's `skills/analog-recovery/SKILL.md` and its sibling evidence/report
+skills as the maintained sources. Global installed copies may be older; do not
+mix their scripts or contracts with the workspace versions. Recovery shares the
+existing `wiki/`, `tools/wiki_ops.py`, and project evidence within this workspace.
+It does not invoke forward sizing, optimizer, default specs, or convergence
+archiving. See `skills/analog-recovery/references/wiki-writeback.md` for local
+continuation. Ordinary forward-design routing remains unchanged.
+
+For ordinary full recovery report tasks in this workspace, the established user
+policy includes necessary fixed-DUT simulations and the external reviewers in
+`config/reviewers.yml`. The orchestrator prepares a bounded run using
+`resolve_workflow.py --repo <repo> --run-dir <WORK_TASK>`; it inherits only the
+effort tier from `config/effort.yml`, not forward specs or sizing permissions.
+Explicit task restrictions (read-only, no simulation/API, single agent) override
+these production defaults. Configuration preparation itself executes no services.
+Before freezing evidence, review major-function coverage and justified stopping
+conditions using `skills/analog-recovery/references/coverage-closeout.md`.
+At standard or above, execute the workspace analog-evolve recovery branch, then
+prepare a same-wiki case archive and evolution proposals;
+apply after approval, or under an already explicit write authorization. Keep
+recovery delivery status separate from historical design convergence.
+
 ## Directory layout
 
 | Path | Role | Tracked by git? |

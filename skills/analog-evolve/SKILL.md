@@ -3,7 +3,8 @@ name: analog-evolve
 description: >
   Self-evolution engine for analog-agents. Reviews completed design sessions to
   extract lessons, discover new anti-patterns, propose checklist additions, and
-  refine agent prompts. Run after design convergence or project completion.
+  refine agent prompts. Supports forward design sessions and fixed-DUT recovery
+  closeout, including partial deliveries.
   TRIGGER on: "evolve", "what did we learn", "improve skills", "meta-review",
   "self-improve", or automatically at end of analog-pipeline.
 ---
@@ -18,9 +19,19 @@ Inspired by the principle: every design session should make the next one smarter
 ## When to Use
 
 - After a sub-block converges (auto-suggested by analog-pipeline)
-- After a project completes
+- After a project completes, or at analog-recovery S7 (standard and above)
 - After a design fails and is abandoned (failure teaches more than success)
 - Manually: `/analog-evolve review` to review the current session
+
+## Choose the session type first
+
+For fixed-DUT recovery, read and execute [Recovery review](references/recovery.md)
+using the workspace's maintained skills and native recovery artifacts. That branch
+takes precedence over the forward-log, engine, confidence-escalation and application
+rules below. It needs neither design convergence nor a new agent/API call. A missing
+forward `iteration-log.yml` does not mean there is nothing to review.
+
+For forward design, continue with the existing dimensions and backend below.
 
 ## Evolution Dimensions
 
@@ -189,7 +200,7 @@ Effort interaction:
 
 ## Tool Backend
 
-All evolution analysis is powered by `tools/evolve_engine.py`:
+The forward-design backend is `tools/evolve_engine.py`:
 
 | Subcommand | Tool invocation |
 |-----------|-----------------|

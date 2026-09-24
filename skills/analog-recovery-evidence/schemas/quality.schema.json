@@ -1,0 +1,426 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "enum": [
+        "1"
+      ]
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "id",
+          "path",
+          "sha256"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "fixtures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "source_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dut_nodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "scans": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "node": {
+                  "type": "string"
+                },
+                "kind": {
+                  "enum": [
+                    "electrical",
+                    "temperature",
+                    "corner",
+                    "load",
+                    "parameter"
+                  ]
+                },
+                "binding": {
+                  "type": "string"
+                },
+                "source_refs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "observed_change": {
+                  "type": "boolean"
+                },
+                "target_nodes": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "measurement": {
+                  "type": "object",
+                  "properties": {
+                    "node": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "unit": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "event": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "threshold": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "window": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "range": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "source_refs": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "required": [
+                    "node",
+                    "unit",
+                    "event",
+                    "threshold",
+                    "window",
+                    "range",
+                    "source_refs"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "source_refs"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "low": {
+                  "type": "number"
+                },
+                "high": {
+                  "type": "number"
+                },
+                "levels": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "low",
+                "high",
+                "levels"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "source_refs",
+          "dut_nodes",
+          "edges",
+          "scans",
+          "domains"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "calculations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "numerator": {
+            "type": "number"
+          },
+          "denominator": {
+            "type": "number"
+          },
+          "convention": {
+            "type": "string"
+          },
+          "reported": {
+            "type": "number"
+          },
+          "tolerance": {
+            "type": "number"
+          },
+          "source_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "numerator",
+          "denominator",
+          "convention",
+          "reported",
+          "tolerance",
+          "source_refs"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "case_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "displayed_case_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "typical_case_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "range_kind": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "case_ids",
+          "displayed_case_ids",
+          "typical_case_id",
+          "range_kind"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "parents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "run_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "qualifier": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "parents",
+          "run_refs",
+          "qualifier"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "uses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "claim_ref": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "qualification": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "claim_ref",
+          "text",
+          "qualification"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "report_snapshot": {
+      "type": "object",
+      "properties": {
+        "content_sha256": {
+          "type": "string"
+        },
+        "bundle_sha256": {
+          "type": "object",
+          "properties": {
+            "manifest": {
+              "type": "string"
+            },
+            "report_requirements": {
+              "type": "string"
+            },
+            "design_evidence": {
+              "type": "string"
+            },
+            "metrics": {
+              "type": "string"
+            },
+            "coverage": {
+              "type": "string"
+            },
+            "review": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "manifest",
+            "report_requirements",
+            "design_evidence",
+            "metrics",
+            "coverage",
+            "review"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "content_sha256",
+        "bundle_sha256"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "artifacts",
+    "fixtures",
+    "calculations",
+    "metrics",
+    "runs",
+    "claims",
+    "uses"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

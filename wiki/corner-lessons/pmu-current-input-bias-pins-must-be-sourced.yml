@@ -1,45 +1,215 @@
 id: corner-pmu-005
 type: corner-lesson
 module: pmu
-name: "PMU current-input bias pins must be driven by explicit isources; a floating source-tied pin starves the whole bias chain"
-tags: [pmu, fm524, LF6, bring-up, tb-stimulus, bias-port, ibn_lp, degenerate-branch]
-process_nodes: [90nm]
-
+name: 'PMU ibn_lp stimulus history: selected 5 V and 0.8 uA fixtures; mechanism and
+  unique cause unverified'
+tags:
+- pmu
+- fm524
+- LF6
+- bring-up
+- tb-stimulus
+- bias-port
+- ibn_lp
+- degenerate-branch
+process_nodes:
+- 90nm
 content:
-  description: >
-    A PMU top-level port classified as "bias current" may be a CURRENT INPUT,
-    not an output. The signature in the netlist is a PMOS whose SOURCE is the
-    port pin and whose DRAIN lands on an internal diode-biased node (e.g.
-    fm524 LDO30 `MP10 (vbn enb1 ibn_lp VDD)`, drain=vbn, source=ibn_lp pin,
-    with vbn's only enabled-state DC path being diode MN8 to VSS). If the TB
-    leaves such a pin open, the internal diode node has no defined current,
-    the mirror chain fed by it (vbn -> vbp2 -> amp tails) collapses, and the
-    block degenerates - often indistinguishable from "circuit is broken".
-  measured_impact: >
-    fm524 PMU bring-up, two sessions on the same DUT. Session 1
-    (proj-pmu-20260917, 10 iterations) measured vref1p2=0.313 V with both LDO
-    rails near 0 V and 678/841 MOS devices off; its report listed "an
-    externally required bias not yet identified" among the live hypotheses.
-    Session 2 (proj-pmu-20260918) traced ibn_lp to the MP10->vbn structure,
-    injected `IIBNLP (0 ibn_lp) isource dc=0.8u` (pin must be SOURCED INTO;
-    sinking starves vbn to 0 V), and the same DUT converged first-try:
-    vref1p2=1.19754 V, LDO15=1.48921 V, LDO30=2.99769 V, Iq=70.21 uA, with
-    the ibn_lp pin settling at 1.424 V (MN8 diode VGS, not the 0.4-0.7 V a
-    voltage-scale intuition predicts).
-  fix: >
-    During TB construction, land every PMU port in one of four classes by
-    tracing where it connects INSIDE the netlist: power, level input,
-    output, current input. The current-input signature is source-terminal-
-    on-pin feeding a diode-connected node. Drive each current input with an
-    isource sized from the internal mirror unit (here the 100 nA unit tree:
-    0.6 uA nominal; 0.8 uA worked). If the DC point still fails, retry
-    0.5x/1x/2x the nominal before suspecting the DUT. Record the direction
-    convention in the deck header: positive isource current flows first
-    terminal -> source -> second terminal, so `(0 ibn_lp)` injects into the
-    pin.
-
-derived_from: [proj-pmu-20260918, proj-pmu-20260917]
+  description: Selected source records establish different ibn_lp stimuli, not a universal
+    failure mechanism. The extant local DUT has MP10 (vbn enb1 ibn_lp VDD), MN8 (vbn
+    vbn VSS VSS), and MN5 (vbn enb1 VSS VSS). Their text connections alone do not
+    establish model terminal semantics, conducting states, a unique DC path, or a
+    whole-chain collapse caused by a floating pin. See revisions/evidence_refs for
+    exact source spans.
+  measured_impact: '2026-09-22 scoped correction: the archived cleanup active_dc fixture
+    (20260918_003610) drives ibn_lp/net24 with V_IBNLP, dc=5 V; it is not floating.
+    The later 20260918_013118 results/02_tb_pmu_dc fixture uses IIBNLP (0 ibn_lp),
+    dc=0.8u. Other fixture conditions including trim and loads also differ. Earlier
+    session-wide numerical observations remain historical; these two records alone
+    do not prove a sole cause or classify every previous run. See revisions/evidence_refs
+    and proj-pmu-20260918 narrative for exact sources. Independent review remains
+    pending. Revision 2: the historical 1.424 V at ibn_lp must not be equated with
+    MN8 VGS; ibn_lp and vbn are distinct nodes separated by MP10. Historical numbers
+    have not been remeasured. The later runtime DUT bytes are not authenticated by
+    an include hash.'
+  fix: Before inheriting a fixture, trace the formal/actual port mapping and record
+    stimulus kind, polarity, magnitude and operating conditions from the selected
+    deck. The later deck contains IIBNLP (0 ibn_lp) isource dc=0.8u; this is an observed
+    fixture setting, not a validated nominal requirement. The earlier 0.6 uA nominal
+    and 0.5x/1x/2x tuning advice are withdrawn as current recommendations for this
+    question; they remain in revisions. Keep the DUT fixed and propose additional
+    evidence only for a separately defined unresolved question.
+derived_from:
+- proj-pmu-20260918
+- proj-pmu-20260917
 confidence: unverified
-source: "wiki/projects/fm524/pmu/ (pmu-des-001 deck headers + pmu-ver-002 L1 report); prior-session hypothesis in WORK_PMU_PIPELINE_20260917/verifier-reports/L1-functional/dcop-and-state-sweep.md"
+source: wiki/projects/fm524/pmu/ (pmu-des-001 deck headers + pmu-ver-002 L1 report);
+  prior-session hypothesis in WORK_PMU_PIPELINE_20260917/verifier-reports/L1-functional/dcop-and-state-sweep.md
 created: '2026-09-18'
-updated: '2026-09-18'
+updated: '2026-09-22'
+revisions:
+- date: '2026-09-22'
+  update_id: ibn-lp-history-20260922
+  reason: 2026-09-22：运行副本区分了特定早期电压源与后续电流源；不将floating-bias机制推广为全部旧运行的根因。
+  previous_content:
+    description: 'A PMU top-level port classified as "bias current" may be a CURRENT
+      INPUT, not an output. The signature in the netlist is a PMOS whose SOURCE is
+      the port pin and whose DRAIN lands on an internal diode-biased node (e.g. fm524
+      LDO30 `MP10 (vbn enb1 ibn_lp VDD)`, drain=vbn, source=ibn_lp pin, with vbn''s
+      only enabled-state DC path being diode MN8 to VSS). If the TB leaves such a
+      pin open, the internal diode node has no defined current, the mirror chain fed
+      by it (vbn -> vbp2 -> amp tails) collapses, and the block degenerates - often
+      indistinguishable from "circuit is broken".
+
+      '
+    measured_impact: 'fm524 PMU bring-up, two sessions on the same DUT. Session 1
+      (proj-pmu-20260917, 10 iterations) measured vref1p2=0.313 V with both LDO rails
+      near 0 V and 678/841 MOS devices off; its report listed "an externally required
+      bias not yet identified" among the live hypotheses. Session 2 (proj-pmu-20260918)
+      traced ibn_lp to the MP10->vbn structure, injected `IIBNLP (0 ibn_lp) isource
+      dc=0.8u` (pin must be SOURCED INTO; sinking starves vbn to 0 V), and the same
+      DUT converged first-try: vref1p2=1.19754 V, LDO15=1.48921 V, LDO30=2.99769 V,
+      Iq=70.21 uA, with the ibn_lp pin settling at 1.424 V (MN8 diode VGS, not the
+      0.4-0.7 V a voltage-scale intuition predicts).
+
+      '
+    fix: 'During TB construction, land every PMU port in one of four classes by tracing
+      where it connects INSIDE the netlist: power, level input, output, current input.
+      The current-input signature is source-terminal- on-pin feeding a diode-connected
+      node. Drive each current input with an isource sized from the internal mirror
+      unit (here the 100 nA unit tree: 0.6 uA nominal; 0.8 uA worked). If the DC point
+      still fails, retry 0.5x/1x/2x the nominal before suspecting the DUT. Record
+      the direction convention in the deck header: positive isource current flows
+      first terminal -> source -> second terminal, so `(0 ibn_lp)` injects into the
+      pin.
+
+      '
+  previous_confidence: unverified
+  evidence_refs:
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/active_dc.scs
+    sha256: 7fd188e7a5fb407e2ac0679e736f246377bc00ab91b48c261d23ff647174be06
+    locator: whole file; detailed source spans in source-observation.json
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/pmu_root_anchor_active_corrected.scs
+    sha256: 36d9bbc5c79963fc3b2fcebd85850a1800caa1f7b08453e3c768b48cf5fe2e1f
+    locator: whole file; detailed source spans in source-observation.json
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/PMU_derived_library.scs
+    sha256: f14ba7bf56468c8fbfbfa3225feb92f89f0eb8236b64b48d40b5268e63322c73
+    locator: whole file; detailed source spans in source-observation.json
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/spectre.out
+    sha256: 7a96666d15083d58ec92c8f0013a8eaca1398da89816995e89a2e038873a924b
+    locator: whole file; detailed source spans in source-observation.json
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/tb_pmu_dc.scs
+    sha256: 617719f57b420e489cf8e31b9f2bc13c1ef7c9ffe8ea0e6f97ec5e51a7468d92
+    locator: whole file; detailed source spans in source-observation.json
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/spectre.out
+    sha256: 19c022023d2714ebc0d498f944a5b1a6383a910a7e9fd27a84ffa933b03db2ad
+    locator: whole file; detailed source spans in source-observation.json
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/summary.json
+    sha256: 969760d514315907fcc52155e154077d287058a9b224b4733e7458965cd631ca
+    locator: whole file; detailed source spans in source-observation.json
+  - path: wiki/projects/fm524/pmu/circuit/PMU_top.scs
+    sha256: 420bd3a0ef56778a83c7cdfed8e1283d479984c4812289ab0711f5615fc093eb
+    locator: whole file; detailed source spans in source-observation.json
+  - path: WORK_RECOVERY_INTEGRATION_STAGE1_20260922/pmu-continuation-r2/before/pmu-current-input-bias-pins-must-be-sourced.yml
+    sha256: e21788555ab9fb964b1d57a606771cb604a0fd81b3fe44592cb8ecb40e977072
+    locator: whole file; detailed source spans in source-observation.json
+  - path: WORK_RECOVERY_INTEGRATION_STAGE1_20260922/pmu-continuation-r2/before/summary.yml
+    sha256: 30c4b350568cff6f59e478b047b68af76b2a5b0f5a35d3653ab057eb9bfe526d
+    locator: whole file; detailed source spans in source-observation.json
+  - path: WORK_RECOVERY_INTEGRATION_STAGE1_20260922/pmu_offline_evidence.py
+    sha256: f5c64dbc169a0e4184c90c43f1be1bcf1a52739d9ae898e010dd52e8a03288e3
+    locator: whole file; detailed source spans in source-observation.json
+  - path: WORK_RECOVERY_INTEGRATION_STAGE1_20260922/pmu-continuation-r2/source-observation.json
+    sha256: 3bcfa6cfad43b2e358dba663cfff31168b3ef0cb8ab1270ce0b7d376ed0f2468
+    locator: whole file; detailed source spans in source-observation.json
+  project_ref: proj-pmu-20260918
+- date: '2026-09-22'
+  update_id: ibn-lp-history-20260922-r2
+  reason: Propagate run-specific correction to retrieval and mechanism/advice; remove
+    unsupported voltage equivalence and current-sweep prescription from current knowledge.
+  previous_content:
+    description: 'A PMU top-level port classified as "bias current" may be a CURRENT
+      INPUT, not an output. The signature in the netlist is a PMOS whose SOURCE is
+      the port pin and whose DRAIN lands on an internal diode-biased node (e.g. fm524
+      LDO30 `MP10 (vbn enb1 ibn_lp VDD)`, drain=vbn, source=ibn_lp pin, with vbn''s
+      only enabled-state DC path being diode MN8 to VSS). If the TB leaves such a
+      pin open, the internal diode node has no defined current, the mirror chain fed
+      by it (vbn -> vbp2 -> amp tails) collapses, and the block degenerates - often
+      indistinguishable from "circuit is broken".
+
+      '
+    measured_impact: '2026-09-22 scoped correction: the archived cleanup active_dc
+      fixture (20260918_003610) drives ibn_lp/net24 with V_IBNLP, dc=5 V; it is not
+      floating. The later 20260918_013118 results/02_tb_pmu_dc fixture uses IIBNLP
+      (0 ibn_lp), dc=0.8u. Other fixture conditions including trim and loads also
+      differ. Earlier session-wide numerical observations remain historical; these
+      two records alone do not prove a sole cause or classify every previous run.
+      See revisions/evidence_refs and proj-pmu-20260918 narrative for exact sources.
+      Independent review remains pending.'
+    fix: 'During TB construction, land every PMU port in one of four classes by tracing
+      where it connects INSIDE the netlist: power, level input, output, current input.
+      The current-input signature is source-terminal- on-pin feeding a diode-connected
+      node. Drive each current input with an isource sized from the internal mirror
+      unit (here the 100 nA unit tree: 0.6 uA nominal; 0.8 uA worked). If the DC point
+      still fails, retry 0.5x/1x/2x the nominal before suspecting the DUT. Record
+      the direction convention in the deck header: positive isource current flows
+      first terminal -> source -> second terminal, so `(0 ibn_lp)` injects into the
+      pin.
+
+      '
+  previous_confidence: unverified
+  evidence_refs:
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/active_dc.scs
+    sha256: 7fd188e7a5fb407e2ac0679e736f246377bc00ab91b48c261d23ff647174be06
+    locator: lines 3-7
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/pmu_root_anchor_active_corrected.scs
+    sha256: 36d9bbc5c79963fc3b2fcebd85850a1800caa1f7b08453e3c768b48cf5fe2e1f
+    locator: lines 34-70; V_IBNLP at 50; V_ENPMUACT at 51
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/PMU_derived_library.scs
+    sha256: f14ba7bf56468c8fbfbfa3225feb92f89f0eb8236b64b48d40b5268e63322c73
+    locator: lines 2644-2650,2665-2666,2677-2681; 2164-2166,2407-2415
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/spectre.out
+    sha256: 7a96666d15083d58ec92c8f0013a8eaca1398da89816995e89a2e038873a924b
+    locator: lines 34,175-176,305-308
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/tb_pmu_dc.scs
+    sha256: 617719f57b420e489cf8e31b9f2bc13c1ef7c9ffe8ea0e6f97ec5e51a7468d92
+    locator: lines 30,37-68,86-98
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/spectre.out
+    sha256: 19c022023d2714ebc0d498f944a5b1a6383a910a7e9fd27a84ffa933b03db2ad
+    locator: lines 39,180,320-329
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/summary.json
+    sha256: 969760d514315907fcc52155e154077d287058a9b224b4733e7458965cd631ca
+    locator: lines 2-6
+  - path: wiki/projects/fm524/pmu/circuit/PMU_top.scs
+    sha256: 420bd3a0ef56778a83c7cdfed8e1283d479984c4812289ab0711f5615fc093eb
+    locator: lines 2644-2650,2665-2666,2164-2166,2407-2415; extant local copy, not
+      runtime hash authentication
+  - path: WORK_Q_IBN_LP_AUDIT_20260922/review.md
+    sha256: 9dbc583f351f08ff8b0cdc1af87d81990f217b907b539543621efd5a6568f013
+    locator: 可继承认识、建议修改、引用与超出证据的部分
+  - path: WORK_Q_IBN_LP_AUDIT_20260922/read-scope.json
+    sha256: ba59a6cf4bd03a3d0fa40eca0d26ac198098da909cf21c5e68dd27d777f62b6d
+    locator: /read_files; /review_type
+  - path: WORK_Q_IBN_LP_REVISION_20260922/revision-observations.md
+    sha256: 0fed4c1bc4d7772a70533b8edf85c52bdfc0ae7989f943a5dd6b903b9b0bbe1f
+    locator: whole document
+  - path: WORK_Q_IBN_LP_REVISION_20260922/evidence-r3/manifest.json
+    sha256: 211251d80f6370a7bba3d4f73007af4a3aac7ca53bd3d9c182c863e4d886dc86
+    locator: artifact identities
+  - path: WORK_Q_IBN_LP_REVISION_20260922/evidence-r3/design_evidence.json
+    sha256: 1641126ccb358eec69e9849018444018df1f63513f32d9fc8f62705a420fae9e
+    locator: whole file; revised claim references and limits
+  project_ref: proj-pmu-20260918
+  previous_metadata:
+    name: PMU current-input bias pins must be driven by explicit isources; a floating
+      source-tied pin starves the whole bias chain
+  previous_metadata_absent:
+  - confidence_note
+  previous_index_entry:
+    path: corner-lessons/pmu-current-input-bias-pins-must-be-sourced.yml
+    type: corner-lesson
+    module: pmu
+    summary: Current-input bias pins (source-tied to internal diode) must be driven
+      by explicit isources; floating starves the bias chain
+confidence_note: Run-specific source observations only. Floating-pin mechanism, operating-state
+  assumptions and nominal bias current need separate evidence; no independent review.

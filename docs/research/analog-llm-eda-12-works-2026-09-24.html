@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>12项模拟电路多模态大模型研究：方法、资源与 analog-agents 适配</title>
+  <style>
+    :root{--ink:#15283c;--muted:#526579;--line:#d9e3ec;--paper:#f4f7fa;--card:#fff;--blue:#1267a5;--teal:#087e77;--gold:#a76d14;--rose:#9f4351;--shadow:0 12px 32px rgba(25,53,79,.08)}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.72 "Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+    a{color:#075c95;text-decoration:none}a:hover{text-decoration:underline}code{background:#edf2f7;border-radius:4px;padding:.1em .32em;font-size:.92em}
+    .hero{padding:58px max(24px,calc((100vw - 1120px)/2)) 46px;background:radial-gradient(circle at 83% 5%,#bfe5e1 0,transparent 25%),linear-gradient(135deg,#10283d,#174f71 68%,#14786f);color:white}
+    .hero .eyebrow{font-size:.82rem;letter-spacing:.13em;text-transform:uppercase;color:#bde8e4;font-weight:700}.hero h1{max-width:930px;margin:10px 0 15px;font-size:clamp(2rem,4.5vw,3.35rem);line-height:1.18;letter-spacing:-.035em}.hero p{max-width:850px;color:#e0edf4;font-size:1.06rem;margin:0}.meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.meta span{border:1px solid #ffffff4a;border-radius:999px;padding:4px 12px;font-size:.84rem;color:#eff8fb}
+    .wrap{width:min(1120px,calc(100% - 40px));margin:0 auto}.nav{display:flex;gap:8px;flex-wrap:wrap;margin:24px 0}.nav a,.chip{border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:#fff;color:var(--ink);font-size:.88rem}.nav a:hover{border-color:#94b8cb;text-decoration:none;background:#f8fcff}
+    main{padding:8px 0 70px}.section{margin:38px 0}.section h2{font-size:1.7rem;line-height:1.25;margin:0 0 12px;letter-spacing:-.02em}.section-lead{color:var(--muted);max-width:850px;margin:0 0 20px}.callout{border-left:4px solid var(--teal);background:#e7f5f3;padding:15px 18px;border-radius:0 10px 10px 0;margin:18px 0;color:#164c4b}.callout strong{color:#0c615b}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.stat,.card,.work{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}.stat{padding:18px}.stat b{display:block;color:var(--blue);font-size:1.15rem;margin-bottom:4px}.stat p{margin:0;color:var(--muted);font-size:.93rem}
+    .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:22px 0}.step{position:relative;background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 13px;min-height:112px}.step:not(:last-child):after{content:"›";position:absolute;right:-12px;top:25px;z-index:2;color:var(--teal);font-size:1.8rem;font-weight:800}.step small{display:block;color:var(--teal);font-weight:800;letter-spacing:.08em}.step b{display:block;margin:3px 0}.step span{display:block;color:var(--muted);font-size:.87rem;line-height:1.5}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}.matrix{width:100%;border-collapse:collapse;min-width:800px}.matrix th,.matrix td{text-align:left;vertical-align:top;padding:12px 13px;border-bottom:1px solid var(--line)}.matrix th{background:#eaf1f6;font-size:.88rem;color:#29445c}.matrix td{font-size:.91rem}.matrix tr:last-child td{border-bottom:0}.fit{display:inline-block;font-size:.75rem;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}.fit.high{color:#075b50;background:#d9f2ed}.fit.mid{color:#77500b;background:#fff1d2}.fit.low{color:#75404a;background:#f8e5e8}
+    .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0}.toolbar input{flex:1;min-width:210px;padding:10px 13px;border:1px solid var(--line);border-radius:9px;font:inherit;background:#fff}.filters{display:flex;gap:6px;flex-wrap:wrap}.filters button{border:1px solid var(--line);border-radius:999px;background:#fff;padding:7px 11px;color:var(--ink);font:inherit;font-size:.85rem;cursor:pointer}.filters button[aria-pressed="true"]{background:#174f71;color:white;border-color:#174f71}
+    .works{display:grid;gap:13px}.work{overflow:hidden}.work[hidden]{display:none}.work summary{cursor:pointer;list-style:none;padding:17px 20px;display:flex;align-items:flex-start;gap:13px}.work summary::-webkit-details-marker{display:none}.num{flex:0 0 37px;height:37px;border-radius:11px;background:#e7f0f7;color:#155d8c;display:grid;place-items:center;font-weight:800}.work-title{flex:1}.work-title strong{display:block;font-size:1.13rem;line-height:1.35}.work-title small{display:block;color:var(--muted);margin-top:4px}.work-title .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.chip{font-size:.75rem;padding:2px 9px;box-shadow:none}.openmark{color:#658094;font-size:1.2rem;margin-left:auto;transition:transform .15s}.work[open] .openmark{transform:rotate(90deg)}.work-body{border-top:1px solid var(--line);padding:18px 22px 21px}.work-body h3{font-size:.96rem;color:#174f71;margin:16px 0 4px}.work-body h3:first-child{margin-top:0}.work-body p{margin:5px 0;color:#32495f}.work-body ul{margin:6px 0 10px;padding-left:1.2rem;color:#32495f}.work-body li{margin:4px 0}.links{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.links a{font-size:.86rem;border:1px solid #ccdae5;border-radius:7px;padding:4px 9px;background:#f7fafc}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:15px}.card{padding:18px}.card h3{margin:0 0 7px;font-size:1.05rem}.card p{margin:0;color:var(--muted)}.todo{border-top:1px solid var(--line);padding-top:13px;margin-top:13px}.note{font-size:.9rem;color:var(--muted)}.license{border-left:3px solid var(--gold);padding-left:12px;margin:10px 0}.footer{border-top:1px solid var(--line);padding-top:20px;color:var(--muted);font-size:.88rem}
+    @media(max-width:800px){.grid{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.step{min-height:auto}.step:not(:last-child):after{content:"⌄";right:15px;top:auto;bottom:-19px}.two{grid-template-columns:1fr}.hero{padding-top:40px}}
+    @media print{body{background:white}.hero{background:#174f71!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.nav,.toolbar{display:none}.work{box-shadow:none;break-inside:avoid}.work summary{padding:10px}.work:not([open]) .work-body{display:block}.section{break-inside:avoid}.step{break-inside:avoid}}
+  </style>
+</head>
+<body>
+<header class="hero">
+  <div class="eyebrow">Analog EDA · Research map · 2026.09</div>
+  <h1>12 项模拟电路多模态大模型研究</h1>
+  <p>从原理图识别、网表生成和模型评测，到知识检索、可读原理图生成与端到端设计。逐项说明它们如何工作、怎样使用，以及哪些方法适合接入 <b>analog-agents</b> 与固定 DUT 的 <b>analog-recovery</b>。</p>
+  <div class="meta"><span>研究快照：2026-09-24</span><span>12 篇论文 / 项目</span><span>中文总结 · 单文件 HTML</span><span>数据许可需逐项核实</span></div>
+</header>
+<main class="wrap">
+  <nav class="nav" aria-label="章节导航">
+    <a href="#overview">研究版图</a><a href="#fit">适配判断</a><a href="#works">12 项逐项拆解</a><a href="#plan">落地路线</a><a href="#license">开放与限制</a><a href="#method">研究口径</a>
+  </nav>
+
+  <section class="section" id="overview">
+    <h2>先看研究版图</h2>
+    <p class="section-lead">这 12 项不是同一种“电路视觉模型”。它们覆盖了一个从图像到工程决策的链条，但每项只解决其中一段，而且数据集、评测集和可复现的软件原型不能混为一谈。</p>
+    <div class="grid">
+      <div class="stat"><b>4 项：图像与网表</b><p>AMSNet、AMSnet 2.0、Masala-CHAI、Image2Net，研究器件/导线/交点的识别、拓扑恢复、数据构建与误差度量。</p></div>
+      <div class="stat"><b>4 项：能力评测</b><p>AMSbench、CIRCUIT、MMCircuitEval、EEE-Bench，检验视觉理解、计算、解释、设计或跨任务推理。</p></div>
+      <div class="stat"><b>4 项：检索、设计与表达</b><p>AnalogRetriever 做跨模态检索；AMSnet-KG 做知识图谱辅助设计；EEschematic 把网表画成可读图；AnalogMaster 串起全流程。</p></div>
+    </div>
+    <div class="callout"><strong>核心结论：</strong>这些成果适合给仓库增加评测、检索和原理图导入/展示能力；现阶段没有一项可以替代 analog-recovery 的固定 DUT 证据链，也不应让视觉模型猜出的连接直接成为仿真事实。</div>
+    <div class="flow" role="img" aria-label="从输入图像到已复核证据的建议接入流程">
+      <div class="step"><small>01 · 输入</small><b>原理图图像</b><span>保留原图、来源与版次</span></div>
+      <div class="step"><small>02 · 感知</small><b>器件 / 导线 / 交点</b><span>分割、检测、方向和置信区间</span></div>
+      <div class="step"><small>03 · 候选</small><b>网表 / 电路图</b><span>映射成可追溯的候选结构</span></div>
+      <div class="step"><small>04 · 核验</small><b>静态检查与工程复核</b><span>核端序、层级、端口和真实使用边界</span></div>
+      <div class="step"><small>05 · 进入现有流程</small><b>冻结来源后取证</b><span>再走仿真、证据包、报告与复核</span></div>
+    </div>
+  </section>
+
+  <section class="section" id="fit">
+    <h2>对仓库的适配判断</h2>
+    <p class="section-lead">这里的“高”表示方法与工作流贴合，不代表外部模型/数据已经能直接安装。analog-agents 面向规格驱动的前向设计；analog-recovery 面向参数固定电路的取证和报告，不能把二者的目标混淆。</p>
+    <div class="table-wrap"><table class="matrix">
+      <thead><tr><th>工作</th><th>analog-agents：前向设计</th><th>analog-recovery：固定 DUT</th><th>建议的接入点</th></tr></thead>
+      <tbody>
+        <tr><td>AMSNet / AMSnet 2.0 / Image2Net</td><td><span class="fit high">高 · 需适配</span> 给 librarian 和 architect 补图像知识、网表候选与识别回归样例。</td><td><span class="fit mid">中 · 旁路导入</span> 可处理“只有图、没有 SCS”的输入；生成物先标为候选。</td><td>图像导入器 → 静态 IR / 局部连接包 → 人工/工程复核。</td></tr>
+        <tr><td>Masala-CHAI</td><td><span class="fit high">高 · 流程参考</span> 多角色检查、仿真反馈和有限修订与设计/验证循环相近。</td><td><span class="fit mid">中 · 仅借验证思想</span> 可学习仿真器反馈迭代；其自动修网表过程不应更改固定 DUT。</td><td>把“仿真反馈”用于核验候选，不用于改写被取证电路。</td></tr>
+        <tr><td>AnalogRetriever / AMSnet-KG</td><td><span class="fit high">高 · 检索增强</span> 拓扑/IP 搜索可补 librarian 与 analog-wiki。</td><td><span class="fit mid">中 · 仅背景线索</span> 找相似案例可帮助提出假设，但不能继承成当前事实。</td><td>保留来源和条件的案例检索层；检索命中不等于证据。</td></tr>
+        <tr><td>AMSbench / CIRCUIT / MMCircuitEval / EEE-Bench</td><td><span class="fit high">高 · 回归评测</span> 为模型能力、技能提示与交接设计建立分项测试。</td><td><span class="fit high">高 · 能力边界</span> 测解释/计算能力；另建固定 DUT 的证据质量验收。</td><td>按感知、分析、计算、仿真、写作分别计分，避免一个总分掩盖失败。</td></tr>
+        <tr><td>EEschematic / AnalogMaster</td><td><span class="fit mid">中 · 可视化参考</span> 从已审网表生成给设计者检查的图，或参考跨阶段代理编排。</td><td><span class="fit mid">中 · 报告辅助</span> 从已确认 netlist 生成插图；图本身仍需和源网表对照。</td><td>先做只读展示；不接管 Virtuoso、参数优化或 P&R 主流程。</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="section" id="works">
+    <h2>12 项逐项拆解</h2>
+    <p class="section-lead">点开卡片查看原理、建议用法、仓库适配与资源状态。数字均按论文或项目页的作者报告记录；除非明确说明，没有在本仓库独立复现。</p>
+    <div class="toolbar"><input id="search" type="search" placeholder="搜索名称、方法或用途…" aria-label="搜索项目"><div class="filters" aria-label="筛选项目类型">
+      <button type="button" data-filter="all" aria-pressed="true">全部</button><button type="button" data-filter="vision" aria-pressed="false">图像 / 网表</button><button type="button" data-filter="eval" aria-pressed="false">评测</button><button type="button" data-filter="rag" aria-pressed="false">检索 / 知识</button><button type="button" data-filter="design" aria-pressed="false">生成 / 设计</button>
+    </div></div>
+    <div class="works" id="work-list">
+
+      <details class="work" data-kind="vision" open>
+        <summary><span class="num">01</span><span class="work-title"><strong>AMSNet — 原理图与 SPICE 网表数据集</strong><small>自动识别器件和导线，把教科书电路转成 SPICE 拓扑。</small><span class="chips"><span class="chip">数据集</span><span class="chip">图像 → 网表</span><span class="chip">早期基线</span></span></span><span class="openmark">›</span></summary>
+        <div class="work-body">
+          <h3>原理</h3><p>工作流先用 YOLOv8 检测器件及朝向，再对二值图上的连通像素做扩展，将器件、导线和交点归组；最后根据器件方向恢复 MOS 等器件的端序并写 SPICE。早期版本假设导线是实线、交叉处没有结点就不相连；遇到无法判定的多器件连接会报例外交人工处理。论文报告器件检测准确率 97.1%、人工核验的网连接准确率 96.7%。</p>
+          <h3>怎样使用</h3><p>适合用作“原理图—网表”配对数据和抽取基线：先在少量代表图上评估器件类型、旋转、交点和端序，再用配对样本做检索或模型回归。不要把其自动生成 netlist 当成黄金真值；按原图逐端核对才可进入 SPICE。</p>
+          <h3>对仓库的价值</h3><p><b>analog-agents：</b>把器件/功能/拓扑标签做成 librarian 的视觉检索索引；用网表作静态结构提示。<b>analog-recovery：</b>只能作为从图像生成候选输入的早期原型；接受候选前仍须解析层级、MOS 端序、端口投影和实际夹具。</p>
+          <h3>资源状态与限制</h3><p>项目仓库提供生成 notebook 和数据 ZIP，并标注 GPL-3.0；README 同时称数据还在清理。不同来源对规模报出 792 与 894 张图，后续 AMSnet 2.0 论文也沿用 792，而 AMSNet v2 / Image2Net 比较表报 894。应记录所用数据版本，不混报样本数。许可适用对象及教科书图像再利用范围需核对。</p>
+          <div class="links"><a href="https://arxiv.org/abs/2405.09045" target="_blank" rel="noreferrer">论文 arXiv</a><a href="https://arxiv.org/html/2405.09045" target="_blank" rel="noreferrer">论文全文 HTML</a><a href="https://github.com/AMS-Net/ams-net.github.io" target="_blank" rel="noreferrer">代码 / 数据</a></div>
+        </div>
+      </details>
+
+      <details class="work" data-kind="vision">
+        <summary><span class="num">02</span><span class="work-title"><strong>AMSnet 2.0 — 抗噪导线分割与可编辑原理图</strong><small>从器件检测进阶到 wire mask、拓扑重建和 OpenAccess 输出。</small><span class="chips"><span class="chip">多模态数据</span><span class="chip">U-Net</span><span class="chip">OpenAccess</span></span></span><span class="openmark">›</span></summary>
+        <div class="work-body">
+          <h3>原理</h3><p>用 YOLO11 检测元件，用 U-Net 对“导线像素”做语义分割，再在交叉点执行拆分与合并，避免只靠 bounding box 或脆弱的手写规则；合成文字、矩形标注等噪声作数据增强。根据检测到的元件引脚位置和导线段关系生成 Spectre 网表，并可重建带位置数据的 OpenAccess 原理图。</p>
+          <h3>规模与结果</h3><p>论文报告 2,686 个电路，包含原理图、Spectre 网表、OA 图和器件/网段坐标。其 easy / medium / hard 测试集上的 netlist F1 分别为 90.19 / 84.17 / 80.39；测试切片共 200 张。相比早期规则法，对复杂交叉、噪声标注的处理更贴近实际图像。</p>
+          <h3>怎样使用与仓库适配</h3><p>适合作为可选的 recovery 图像适配器：分割并输出“器件—pin—net—坐标”图，标注不确定的 crossings，随后由现有静态解析器建立 IR / scope packet；任何 AI 分割漏线、误连都应保留为诊断并阻断证据冻结。对 forward design，可扩充带几何定位的电路案例库。不要把 paper 的 F1 直接解释为本项目任意扫描件上的正确率。</p>
+          <h3>资源状态</h3><p>官方项目页提供数据和 supplementary code 的入口，且明确展示标注平台、数据构建和模型评测；本次可访问页面没有解析出具体下载地址。项目网页本身标注 CC BY-SA 4.0，但这不自动说明每张源图或数据资产都按同一许可授权。</p>
+          <div class="links"><a href="https://arxiv.org/abs/2505.09155" target="_blank" rel="noreferrer">论文 arXiv</a><a href="https://arxiv.org/html/2505.09155" target="_blank" rel="noreferrer">论文全文 HTML</a><a href="https://amsnet2-0.github.io/AMSNet2.0.github.io/" target="_blank" rel="noreferrer">项目主页 / 数据入口</a></div>
+        </div>
+      </details>
+
+      <details class="work" data-kind="vision">
+        <summary><span class="num">03</span><span class="work-title"><strong>Masala-CHAI — 自动构建 SPICE 网表语料</strong><small>视觉检测、线段提取、LLM 整理与仿真验证组合成数据生产线。</small><span class="chips"><span class="chip">7,500 张论文报告</span><span class="chip">自动数据构建</span><span class="chip">ngspice 验证</span></span></span><span class="openmark">›</span></summary>
+        <div class="work-body">
+          <h3>原理</h3><p>论文流程将专用 YOLOv8 元件检测、Deep Hough Transform 导线段识别、端点半径聚类（约 40 px）和 LLM 生成/整理 SPICE 结合；数据来自 10 本教材。作者用数据微调模型，再接入 AnalogCoder，报告 Pass@1 绝对提升 46%。这个结果是作者特定任务和设置下的报告，不是通用电路准确率。</p>
+          <h3>项目的实用更新</h3><p>截至本次查询，GitHub README 另列出 2026 年 5 月的 V2：检测审核 agent、连线追踪/网表生成 agent、Judge 检查元件完整性与 ngspice 结果，失败时最多两轮反馈。其单图命令示例为 <code>python -m agents_v2.run --image &lt;图像&gt; --output &lt;目录&gt;</code>。但 README 仍写 7,500 张清洗版数据“即将提供”；代码含外部模型/API 与 Hough 权重准备步骤。</p>
+          <h3>对仓库的价值</h3><p><b>analog-agents：</b>多角色审核和仿真回馈可借鉴到 verifier 的候选网表检查。<b>analog-recovery：</b>仿真能抓 syntax、DC 失败或模型报错，却不能证明图像中原始连接恢复正确；仿真失败时绝不能为“让它通过”而修改固定 DUT。只从只读副本产出候选和日志。</p>
+          <h3>开放与限制</h3><p>论文授权为 CC BY 4.0；GitHub 首页没有清楚展示独立的数据许可或下载入口。教材材料存在来源权利，代码可见不等于 7,500 张图片都可自由再分发。</p>
+          <div class="links"><a href="https://arxiv.org/abs/2411.14299" target="_blank" rel="noreferrer">论文 arXiv</a><a href="https://arxiv.org/html/2411.14299" target="_blank" rel="noreferrer">论文全文 HTML</a><a href="https://github.com/jitendra-bhandari/Masala-CHAI" target="_blank" rel="noreferrer">代码 / V2</a></div>
+        </div>
+      </details>
+
+      <details class="work" data-kind="vision">
+        <summary><span class="num">04</span><span class="work-title"><strong>Image2Net — 多画风识别、Netlist Edit Distance</strong><small>风格判断 + 多个视觉算法，目标是减少复杂扫描图的拓扑错误。</small><span class="chips"><span class="chip">数据与 benchmark</span><span class="chip">混合 CV 流程</span><span class="chip">拓扑距离</span></span></span><span class="openmark">›</span></summary>
+        <div class="work-body">
+          <h3>原理</h3><p>先识别图的绘制风格，再按风格解释器件、交点、跨线/jumper 和端口；用视觉检测、线段跟踪与后处理逐步拼成异构电路图。NED 将 graph edit distance 按器件、网和端口数量归一化，让不同名称但同一拓扑的网表仍可比较。官方数据涵盖器件、方向/镜像、交叉点和网表真值四类。</p>
+          <h3>规模与结果</h3><p>论文报告 2,914 张完整图、48,930 个器件；网表评测含 104 个手工核验配对。作者报告成功率 80.77%。需谨慎引用 NED：论文摘要及对比表为 0.116，而正文另处出现约 0.657–0.659，指标报告存在不一致；实施时应锁定论文版本、验证集和具体表格口径。</p>
+          <h3>怎样使用与仓库适配</h3><p>官方 GitHub 是数据集/benchmark 仓库，包含验证工具，但明确不是完整 Image2Net 转换引擎。当前最有用的资产是“多画风困难样本”和 NED 评估思路。可为 analog-agents/recovery 自建回归集，把错连、漏连、pin 朝向错误作为图编辑类别；不要把 NED 低等同于器件型号、W/L、层级或模式正确。</p>
+          <h3>许可</h3><p>GitHub 仓库标注 Apache-2.0；数据来源含论文、教材、互联网等，README 要求同时遵守原始材料权利和适用数据许可。arXiv 论文页自身的 CC BY-NC-ND 标记不能与代码仓库许可混为一谈。</p>
+          <div class="links"><a href="https://arxiv.org/abs/2508.13157" target="_blank" rel="noreferrer">论文 arXiv</a><a href="https://arxiv.org/html/2508.13157" target="_blank" rel="noreferrer">论文全文 HTML</a><a href="https://github.com/LAD021/ci2n_datasets" target="_blank" rel="noreferrer">官方数据 / 验证代码</a></div>
+        </div>
+      </details>
+
+      <details class="work" data-kind="rag">
+        <summary><span class="num">05</span><span class="work-title"><strong>AnalogRetriever — 图像、描述和 SPICE 网表跨模态检索</strong><small>把原理图、自然语言和端口感知电路图映射到同一检索空间。</small><span class="chips"><span class="chip">跨模态 RAG</span><span class="chip">拓扑图编码</span><span class="chip">ICCAD 2026</span></span></span><span class="openmark">›</span></summary>
+        <div class="work-body">
+          <h3>原理</h3><p>原理图由 CLIP/ViT 编码、自然语言由 Transformer 编码、网表由端口感知 RGCN 编码，三者通过三模态对比学习进入共享向量空间；分阶段训练，再引入 hard-negative 区分“拓扑相似但功能不同”的电路。因而可做 image↔text、image↔netlist、text↔netlist 六向检索。论文报告六向平均 Recall@1 为 75.2%，并将检索结果用于 AnalogCoder RAG。</p>
+          <h3>实际可用资源与使用方式</h3><p>Hugging Face 数据卡在 2026-09-23 更新，发布 6,371 组三模态样本，可下载用于构建检索原型；按卡片命令固定 dataset revision，运行发布校验器后再整理 CSV。其切分按样本 ID 随机，不保证来源或拓扑互斥，留出集还参与权重选择，因此不应称为完全独立的最终测试集。卡片报告 6,369/6,371 可编译、6,354/6,371 DC 通过；这仍不证明网表忠于图像或满足设计规格。</p>
+          <h3>对仓库的价值</h3><p>12 项里它与现有 librarian / analog-wiki 最贴近：查询可以从电路文字、图像或网表开始，返回候选案例。接入时只检索同工艺、同模块、具备来源与测量条件的案例；候选展示“为什么命中”和差异，不能直接改 DUT 或把历史数字写成新电路规格。</p>
+          <h3>发布与数据权利</h3><p>论文已获 ICCAD 2026 接收，但会议尚未举行；数据卡明确写源码与复现说明当时尚未公开，预计会议后开放。数据标为 <code>masala-chai-derived</code>，原理图及电路材料保留原有权利；代码的 MIT 不会重新授权数据。论文摘要所称 100% compile 与数据卡 99.97% 属四舍五入/发布快照口径，实际发布卡片给出精确计数。</p>
+          <div class="links"><a href="https://arxiv.org/abs/2604.23195" target="_blank" rel="noreferrer">论文 arXiv</a><a href="https://arxiv.org/html/2604.23195" target="_blank" rel="noreferrer">论文全文 HTML</a><a href="https://huggingface.co/datasets/eulermaxwell/AnalogRetriever-data" target="_blank" rel="noreferrer">三模态数据</a><a href="https://huggingface.co/spaces/eulermaxwell/AnalogRetriever" target="_blank" rel="noreferrer">在线演示</a></div>
+        </div>
+      </details>
+
+      <details class="work" data-kind="eval">
+        <summary><span class="num">06</span><span class="work-title"><strong>AMSbench — 感知、分析、设计综合评测</strong><small>把“看懂图、推断功能、算指标、写电路和 testbench”拆开测。</small><span class="chips"><span class="chip">约 8,000 题</span><span class="chip">模型回归</span><span class="chip">模拟 / 混合信号</span></span></span><span class="openmark">›</span></summary>
+        <div class="work-body">
+          <h3>原理</h3><p>分为 perception、analysis、design：感知拆成器件计数/分类/连线和网表；分析有图像问答与文字知识/计算；设计包括电路方案、仿真 testbench 和改错任务。作者对 8 个 MLLM 评测，重点指出复杂多模态推理和设计任务仍弱。GitHub README 将数据分为三类与难度；设计类只 68 题，题型覆盖规格到 testbench。</p>
+          <h3>怎样使用</h3><p>从当前最常用的岗位选子集：architect 测规格分解和 testbench，designer 测电路解释/设计反馈，verifier 测拓扑问答、计算和“看图找错”，recovery analyst 测功能/模式/指标解释。按任务、难度、图像输入分别统计；保留失败回答和逐题来源，避免把 benchmark 总分当签核。</p>
+          <h3>适配价值和资源现状</h3><p>提供 Hugging Face 数据和 GitHub 评测代码，适合补一套 agent 回归，而不是训练数据直接灌入所有技能。需留意 Hugging Face 页面当前显示 161 个顶层 JSON 记录、497 MB，且标注“No dataset card yet”；论文/README 报告约 8,000 题。应先检查行内封装的题目结构、图像分割和答案 schema，再决定统计分母。可访问页面没有显式数据许可字段。</p>
+          <div class="links"><a href="https://arxiv.org/abs/2505.24138" target="_blank" rel="noreferrer">论文 arXiv</a><a href="https://arxiv.org/html/2505.24138" target="_blank" rel="noreferrer">论文全文 HTML</a><a href="https://github.com/Why0912/AMSBench" target="_blank" rel="noreferrer">评测代码</a><a href="https://huggingface.co/datasets/wwhhyy/AMSBench" target="_blank" rel="noreferrer">数据集</a></div>
+        </div>
+      </details>
+
+      <details class="work" data-kind="eval">
+        <summary><span class="num">07</span><span class="work-title"><strong>CIRCUIT — 电路解释与数值推理 benchmark</strong><small>用同一拓扑的多组参数形成“单题答对”与“整题组稳健”的区别。</small><span class="chips"><span class="chip">510 QA</span><span class="chip">102 个模板</span><span class="chip">单元测试式 pass@k/n</span></span></span><span class="openmark">›</span></summary>
+        <div class="work-body">
+          <h3>原理</h3><p>510 个问题覆盖模拟电路概念、拓扑和数值题；102 个题目模板各带 5 组数值参数。很多样本同时提供电路图、简化网表和题目上下文。除普通总体 accuracy 外，模板级 pass@k/n 要求在同一电路题组的多组数值条件中达到指定正确数，更像测试“是否理解这一拓扑”而不是碰巧算中一次。</p>
+          <h3>结果与用法</h3><p>论文报告 GPT-4o 最终数值答案准确率 48.04%，但严格 5/5 模板通过率约 27.45%；人工复核发现约 5% 自动评分是假阳性。可借用于 agent 评测：把同电路的变模式、负载/参数变化组成一个任务组，并同时评分数值与理由。对 recovery，要新增结合 SCS/模式控制/仿真日志的工程题；不能用教材 QA 代替电气证据。</p>
+          <h3>资源</h3><p>转发清单只有论文链接，本次未找到与作者主页明确绑定的官方数据/代码仓库入口。论文全文适合作为任务和评分机制参考，但在取得经许可的数据前，不宜声称已完整复现其 510 题。</p>
+          <div class="links"><a href="https://arxiv.org/abs/2502.07980" target="_blank" rel="noreferrer">论文 arXiv</a><a href="https://arxiv.org/html/2502.07980" target="_blank" rel="noreferrer">论文全文 HTML</a></div>
+        </div>
+      </details>
+
+      <details class="work" data-kind="eval">
+        <summary><span class="num">08</span><span class="work-title"><strong>MMCircuitEval — 覆盖 EDA 多阶段的多模态题集</strong><small>一般知识、规格、前端、后端问题按领域与认知能力标注。</small><span class="chips"><span class="chip">3,614 题</span><span class="chip">模拟 / 数字各半</span><span class="chip">开源评测入口</span></span></span><span class="openmark">›</span></summary>
+        <div class="work-body">
+          <h3>原理</h3><p>把题目按设计阶段、analog/digital、text-only/multimodal、难度、题型以及 knowledge/comprehension/reasoning/computation 标记。3,614 题中一般知识 604、规格 490、前端 1,516、后端 1,004；总量模拟与数字各半，41.6% 为多模态，66.2% 是开放式题目。问题来自教材、题库、数据手册和工程资料，作者称经专家复核。</p>
+          <h3>怎样使用</h3><p>GitHub 示例：安装 Hugging Face <code>datasets</code> 后加载 <code>charlie314159/MMCircuitEval</code>，选 <code>general/spec/frontend/backend</code> 子集；配置待测模型后运行 <code>evaluation/scripts/run_benchmark.py &lt;field&gt;</code>。在 analog-agents 中先跑 analog 子集，按能力标签汇总，而不是让一个 judge 自行决定是否正确。</p>
+          <h3>对 recovery 的扩展</h3><p>可建立专用的结构化输出子集：每个回答引用当前证据包里的 claim ID、运行 ID、条件和单位。开放式问题另做工程师 rubric；benchmark 原始答案不能代替电气复核。当前 HF 页面没有显式 license 字段，GitHub 根目录也未显示独立许可证文件；论文 CC BY 4.0 不应自动视作数据/源图授权。</p>
+          <div class="links"><a href="https://arxiv.org/abs/2507.19525" target="_blank" rel="noreferrer">论文 arXiv</a><a href="https://arxiv.org/html/2507.19525" target="_blank" rel="noreferrer">论文全文 HTML</a><a href="https://github.com/cure-lab/MMCircuitEval" target="_blank" rel="noreferrer">评测代码</a><a href="https://huggingface.co/datasets/charlie314159/MMCircuitEval" target="_blank" rel="noreferrer">数据集</a></div>
+        </div>
+      </details>
+
+      <details class="work" data-kind="eval">
+        <summary><span class="num">09</span><span class="work-title"><strong>EEE-Bench — 跨电气电子工程的图像推理评测</strong><small>通用 EEE 工程题，覆盖电路但不只面向模拟 IC。</small><span class="chips"><span class="chip">2,860 题</span><span class="chip">10 个领域</span><span class="chip">视觉“偷懒”诊断</span></span></span><span class="openmark">›</span></summary>
+        <div class="work-body">
+          <h3>原理</h3><p>评测高分辨率、上下文丰富的工程图与文字问题组合，要求图像理解 + 多步推理/计算，并优先选择可确定评分的答案形式。领域横跨模拟电路、控制、电磁、功率系统等 10 类。17 个模型总体表现低；论文报告平均结果约 19.48%–46.78%，并分析出“laziness”：模型有时只看文字、忽略图像。</p>
+          <h3>怎样使用</h3><p>将它用于视觉 grounding 的外部压力测试：同一题分别用原图、裁剪/清晰图、无图问题提示做对照，观察模型有没有引用真实图中节点和值。它可帮助评估多模态模型是否认真看图，但因题域更广、许多问题是基础电路题，不能替代 transistor-level AMS benchmark。</p>
+          <h3>许可冲突需谨慎</h3><p>Hugging Face 目前标注 MIT；论文正文同时写明 benchmark “仅限学术研究”并严格禁止商业使用。两者范围冲突。商业或再分发前应按更严格声明暂停使用并联系作者澄清。转发清单提供数据页，没有给官方评测代码仓库链接。</p>
+          <div class="links"><a href="https://arxiv.org/abs/2411.01492" target="_blank" rel="noreferrer">论文 arXiv</a><a href="https://arxiv.org/html/2411.01492" target="_blank" rel="noreferrer">论文全文 HTML</a><a href="https://huggingface.co/datasets/afdsafas/EEE-Bench" target="_blank" rel="noreferrer">数据集</a></div>
+        </div>
+      </details>
+
+      <details class="work" data-kind="rag">
+        <summary><span class="num">10</span><span class="work-title"><strong>AMSnet-KG — 知识图谱 RAG 与规格驱动拓扑生成</strong><small>把架构描述、pin 功能和专家提示作为可检索的关系网络。</small><span class="chips"><span class="chip">知识图谱</span><span class="chip">前向设计</span><span class="chip">仿真 / BO 闭环</span></span></span><span class="openmark">›</span></summary>
+        <div class="work-body">
+          <h3>原理</h3><p>图谱里一条电路带网表、全局架构/性能描述（如 cascode current mirror、高差模增益），以及局部 pin 功能/设计洞见（如器件参数配比、工作点约束）。LLM 先把规格整理成架构和关系查询，再从图谱检索子电路与 testbench、装成完整拓扑；接着以局部注释约束 Bayesian Optimization 做器件 sizing，Spectre 结果未达规格时重新生成架构。案例基于 SMIC 28 nm，仿真预算上限 2,000 次。</p>
+          <h3>对两个目标的不同价值</h3><p><b>analog-agents：</b>思路适合增强 librarian / analog-wiki：把案例、拓扑、pin 角色、性能和验证条件关联起来，检索后由 architect 判断是否适用。<b>analog-recovery：</b>只能作历史背景搜索；固定 DUT 禁止套用 sizing/BO/拓扑再生成流程。图谱条目需要证据来源和置信状态，不能因为“图谱里有边”就视作当前网表事实。</p>
+          <h3>资源边界</h3><p>原论文说数据将在发表后公开；转发清单给的 URL 指向 AMSNet 基础资源，并非完整的 AMSnet-KG 图谱/AMSgen 代码包——不应把二者混作同一个交付。论文许可证 CC BY-NC-SA 4.0 是论文页显示的条款，单独数据权利仍须核查。</p>
+          <div class="links"><a href="https://arxiv.org/abs/2411.13560" target="_blank" rel="noreferrer">论文 arXiv</a><a href="https://arxiv.org/html/2411.13560" target="_blank" rel="noreferrer">论文全文 HTML</a><a href="https://github.com/AMS-Net/ams-net.github.io" target="_blank" rel="noreferrer">AMSNet 基础资源（不是完整 KG）</a></div>
+        </div>
+      </details>
+
+      <details class="work" data-kind="design">
+        <summary><span class="num">11</span><span class="work-title"><strong>EEschematic — 从 SPICE 网表生成可读、可编辑原理图</strong><small>解决网表虽可仿真、工程师却难快速审阅的问题。</small><span class="chips"><span class="chip">netlist → schematic</span><span class="chip">Visual CoT</span><span class="chip">MIT code</span></span></span><span class="openmark">›</span></summary>
+        <div class="work-body">
+          <h3>原理</h3><p>输入是 SPICE netlist，不是待识别的原理图。LLM 先识别电路子结构并用六个模拟子结构案例作少样本参考，决定模块相对位置、方向和初始布局；规则式 wiring 根据 pin/netname 接起来；视觉链式推理循环检查布线和版面，再返回人可编辑的 JSON-like schematic。论文展示 inverter、5T OTA 和 telescopic cascode amplifier。</p>
+          <h3>怎样使用</h3><p>对 analog-agents，可把已验证子块网表转成工程师易读的 schematic preview，辅助 librarian 检索和 architect review。对 recovery，可把已经接受的 DUT netlist 转成图形附图，报告中标明“由网表派生的视图”并保留网表哈希。不能把生成图再当成原始设计证据，也不能靠视觉美观判断连接对错。</p>
+          <h3>状态</h3><p>GitHub 公布 MIT 代码；论文目前用少量代表电路展示质量，适合作为用户界面/文档展示探索，不是通用 Virtuoso 原理图编辑器替代品。</p>
+          <div class="links"><a href="https://arxiv.org/abs/2510.17002" target="_blank" rel="noreferrer">论文 arXiv</a><a href="https://arxiv.org/html/2510.17002" target="_blank" rel="noreferrer">论文全文 HTML</a><a href="https://github.com/eelab-dev/EEschematic" target="_blank" rel="noreferrer">代码</a></div>
+        </div>
+      </details>
+
+      <details class="work" data-kind="design">
+        <summary><span class="num">12</span><span class="work-title"><strong>AnalogMaster — 从电路图片到版图的端到端框架</strong><small>把图像解读、器件尺寸搜索、placement 和 routing 放进同一闭环。</small><span class="chips"><span class="chip">image → layout</span><span class="chip">BO / SA / A*</span><span class="chip">代码完善中</span></span></span><span class="openmark">›</span></summary>
+        <div class="work-body">
+          <h3>原理</h3><p>图像预处理使用 YOLO、OCR 和电连接分析；多个不同视觉表示分支分别提出电路结构假设，再由联合推理模块选择并形成网表。器件尺寸搜索 agent 压缩参数范围，随后用 Bayesian Optimization sizing、模拟退火 placement 和 A* routing。核心主张是联合考虑各阶段耦合，而不是把 netlist、sizing、physical design 独立优化。</p>
+          <h3>结果与限制</h3><p>论文在 15 张不同复杂度的代表图上评测整条流程，报告 GPT-5 Pass@1 92.9%、Pass@5 99.9%。这是论文自己的 benchmark 和方法指标，不等于可在其他 PDK/项目直接达到的成功率。GitHub README 截至 2026-09-24 仍写“代码和数据正在逐步完善”，没有成熟安装/复现说明；仓库许可证 MIT 不意味着未发布资产都已开放。</p>
+          <h3>对仓库的价值</h3><p>适合作为 roadmap 对照：多视图图像推理可以借来提升图像导入置信度；前向 analog-agents 可观察跨阶段参数影响。但当前仓库有角色边界、review gate、verifier 仿真、L3 PVT 和 Virtuoso 的真实工具链，不宜因论文声称端到端就让一个 agent 越过这些门禁。对 recovery 的 sizing、placement、routing 自动修改 DUT 都不适用。</p>
+          <div class="links"><a href="https://arxiv.org/abs/2604.20916" target="_blank" rel="noreferrer">论文 arXiv</a><a href="https://arxiv.org/html/2604.20916" target="_blank" rel="noreferrer">论文全文 HTML</a><a href="https://github.com/sjjjoaps/AnalogMaster" target="_blank" rel="noreferrer">项目仓库</a></div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="section" id="plan">
+    <h2>建议的落地路线</h2>
+    <p class="section-lead">先增加观测和可追溯能力，再增加自动动作。每一步都能单独验收；恢复任务仍保持“固定 DUT”。</p>
+    <div class="two">
+      <div class="card"><h3>阶段 A · 建基线与回归集</h3><p>挑 CIRCUIT 的模板组、AMSbench 的 perception/analysis/design 子集和 MMCircuitEval 的 analog frontend/spec 题，建立提示版本、模型版本、输入来源、reference、评分规则和错误标签。将图像识别、拓扑、数值、推理、输出 schema 分开统计。不要把公开题当隐藏测试集，也不要把开卷训练集准确率当通用能力。</p><div class="todo"><b>产物建议：</b>只读 benchmark runner、版本锁定的数据清单、按技能/能力/失败类型导出的报告。</div></div>
+      <div class="card"><h3>阶段 B · 案例检索增强</h3><p>将现有 wiki 案例索引扩展为“模块功能—拓扑—pin 角色—规格条件—仿真来源—版次”的检索元数据。先用结构化过滤 + 文本检索做轻量 baseline；AnalogRetriever 发布源码且许可澄清后，再评估嵌入检索。每次检索结果要能指出原文、工艺、条件、日期和相似点/差异点。</p><div class="todo"><b>注意：</b>论文和旧案例是上下文，不是当次 circuit evidence；相似拓扑也不代表尺寸或目标指标可迁移。</div></div>
+      <div class="card"><h3>阶段 C · recovery 可选图像导入</h3><p>允许输入 schematic image 时，生成 sidecar：原图哈希、源页/裁剪、模型和权重版本、器件列表、每根网段的坐标与置信度、pin/net 候选、不确定交叉点及人工修改记录。转成候选 SPICE 后进入现有静态 parser、层级作用域检查、器件端序和夹具门禁。候选未被人工/独立工程复核接受前，不绑定新仿真 fixture、不写证据包。</p><div class="todo"><b>恢复原则：</b>解析出的 candidate 是 INFERRED / UNKNOWN；通过源图核对后才按实际证据类型提升。任何仿真都读取不可变 DUT 副本，保留尝试和失败记录。</div></div>
+      <div class="card"><h3>阶段 D · 可读图形输出</h3><p>对确定性解析并冻结哈希的网表，用 EEschematic 类工具生成展示图，交给 analyst/reviewer 比对网名、器件端和层级。报告的图片或图注必须经过最终审阅；如果图与网表不一致，回到源证据修正图，不让写作者自行补电气解释。</p><div class="todo"><b>最小可行范围：</b>先做只读的 netlist-to-preview；暂不开放 Virtuoso 写入和自动布局/路由。</div></div>
+    </div>
+    <div class="callout"><strong>明确不建议：</strong>用 benchmark 分数给某个模型贴“懂模拟电路”标签；从文本/RAG 检索命中就复制尺寸、指标或因果解释；用仿真器通过来证明图像识别正确；在 recovery 里调用规格驱动 sizing 或优化。</div>
+  </section>
+
+  <section class="section" id="license">
+    <h2>资源开放与许可速查</h2>
+    <p class="section-lead">许可声明可能分别适用于论文、代码、数据、网站和源教材图像。本表记录本次能访问到的作者/托管页声明，不代替法务判断；要训练、打包或商业再分发时，应按具体文件和数据来源再核对。</p>
+    <div class="table-wrap"><table class="matrix">
+      <thead><tr><th>项目</th><th>本次可访问的资源情况</th><th>可见许可 / 需要留意</th></tr></thead>
+      <tbody>
+        <tr><td>AMSNet</td><td>Notebook + 数据 ZIP；README 说正在清理。</td><td>仓库 GPL-3.0；数据/教材图像独立权利范围需确认。</td></tr>
+        <tr><td>AMSnet 2.0</td><td>主页列数据、补充代码入口；实际链接在页面解析结果中不完整。</td><td>主页标 CC BY-SA 4.0；不据此推断原始图像数据同许可。</td></tr>
+        <tr><td>Masala-CHAI</td><td>代码及 V2 可查看；README 写 7,500 张更新版数据待发布。</td><td>arXiv 论文 CC BY 4.0；源码首页未见独立数据许可，教材源图需核查。</td></tr>
+        <tr><td>Image2Net</td><td>官方数据集和 NED 验证材料公开；不是完整转换器代码。</td><td>GitHub 仓库 Apache-2.0；源材料版权仍须遵守。</td></tr>
+        <tr><td>AnalogRetriever</td><td>Hugging Face 三模态数据公开；截至 9 月 23 日代码和复现说明尚未公开。</td><td>数据标记 masala-chai-derived，保留原始材料权利；代码 MIT 不覆盖数据。</td></tr>
+        <tr><td>AMSbench</td><td>Hugging Face + GitHub；预览结构/题目数需先核实。</td><td>HF 没有 dataset card，未见明确数据许可字段。</td></tr>
+        <tr><td>CIRCUIT</td><td>此清单只有论文；未找到明确的官方数据/代码入口。</td><td>论文页许可不等于完整题库许可。</td></tr>
+        <tr><td>MMCircuitEval</td><td>GitHub 评测代码 + Hugging Face 分 split 数据。</td><td>网页未显示清晰的数据许可；论文 CC BY 4.0 不自动授权每张来源图片。</td></tr>
+        <tr><td>EEE-Bench</td><td>Hugging Face 题库；本条链接未提供官方评测代码。</td><td>HF 显示 MIT，但论文声明只限学术研究且禁止商业用途；先按更严格声明处理并联系作者。</td></tr>
+        <tr><td>AMSnet-KG</td><td>该清单链接仅为 AMSNet 基础资源，未发现完整 KG/AMSgen 对应包。</td><td>论文显示 CC BY-NC-SA 4.0；不能据此视作数据集许可。</td></tr>
+        <tr><td>EEschematic</td><td>GitHub 代码仓库公开。</td><td>仓库 MIT；论文实验范围有限。</td></tr>
+        <tr><td>AnalogMaster</td><td>GitHub 仓库存在，README 仍称代码与数据逐步完善。</td><td>仓库显示 MIT；现阶段许可开放不等于可复现实验资产齐全。</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="section" id="method">
+    <h2>研究口径与参考基线</h2>
+    <div class="two">
+      <div class="card"><h3>本次核对方式</h3><p>按转发的 12 个标题逐项读取 arXiv 论文页/HTML 和所给官方 GitHub、Hugging Face、项目主页；资源状态以 2026-09-24 前后可访问页面为快照。将论文报告值和仓库真实开放状态分开记录。未下载整库、未运行外部模型、未在 analog-agents 仓库中集成或复现实验。</p></div>
+      <div class="card"><h3>仓库基线</h3><p>analog-agents README 与 analog-pipeline 描述的是规格驱动、由 architect/designer/verifier 等分工推进的前向设计循环。analog-recovery 与 analog-recovery-evidence 处理参数固定 DUT：先确定性解析结构、定义模式/条件，建立可引用证据包并独立复核，再写报告；明确不执行 sizing 或优化。图像识别因此只能处在输入适配器或展示层，不能越过现有证据门禁。</p></div>
+    </div>
+    <p class="note" style="margin-top:15px">建议引用外部数据前再次检查仓库最新 revision 和 LICENSE / dataset card；公开页面、会议接收状态、下载路径及许可可能变化。</p>
+  </section>
+  <footer class="footer">生成日期：2026-09-24 · 研究主题：模拟/混合信号电路多模态大模型、图像识别、网表、评测和自动化设计。外部论文的性能数值均为作者在其数据、模型和设置下报告，非本仓库的独立验证。</footer>
+</main>
+<script>
+  const cards=[...document.querySelectorAll('.work')], search=document.getElementById('search'), buttons=[...document.querySelectorAll('.filters button')];
+  let active='all';
+  function applyFilter(){const q=search.value.trim().toLowerCase();for(const card of cards){const kind=card.dataset.kind;const typeOK=active==='all'||kind===active;const textOK=!q||card.innerText.toLowerCase().includes(q);card.hidden=!(typeOK&&textOK)}}
+  search.addEventListener('input',applyFilter);buttons.forEach(b=>b.addEventListener('click',()=>{active=b.dataset.filter;buttons.forEach(x=>x.setAttribute('aria-pressed',String(x===b)));applyFilter()}));
+</script>
+</body>
+</html>

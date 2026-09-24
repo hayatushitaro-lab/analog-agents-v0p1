@@ -1,50 +1,242 @@
 id: strat-pmu-002
 type: strategy
 module: pmu
-name: "PMU bring-up recipe: trace-and-classify every port, drive enables from t=0, source current inputs, use the ramp end-point as the op point"
-tags: [pmu, fm524, bring-up, testbench, recipe, enable-chain, por, reverse-engineering]
-process_nodes: [90nm]
-
+name: 'PMU bring-up: trace ports and document fixture conditions; historical recipe
+  is not a proven cause'
+tags:
+- pmu
+- fm524
+- bring-up
+- testbench
+- recipe
+- enable-chain
+- por
+- reverse-engineering
+process_nodes:
+- 90nm
 content:
-  description: >
-    Six-step recipe that converted a stalled PMU reverse-engineering effort
-    into first-pass convergence, with zero DUT changes: (1) Extract the
-    enable equations FROM the gate instantiations (NAND/NOR/INV wiring), not
-    from pin names - for fm524: en_pmu = rstn_vdd_por AND en_pmu_act;
-    enb_pmu = NOT en_pmu gates the bandgap; enb1_pmu = NOR(en_pmu, sleep)
-    gates LDO30; mode_ldo30 = AND(sleep, enb_pmu) is only reachable after
-    the bandgap is off. (2) Trace every top-level port to its landing node
-    and classify: power / level input / current input / output (see
-    corner-pmu-005 for the current-input signature). (3) Drive every level
-    input explicitly from t=0 with a real vsource (corner-pmu-003) - the
-    enable pin must track the POR, not gate it. (4) Source every current
-    input with an isource sized from the internal mirror unit. (5) Never
-    drive an output pin; leave mirror-output pins dangling (they settle at
-    ~VDD with zero current). (6) Treat the ramped-transient end point
-    (nodes static between two late samples) as the operating point of
-    record; plain DC on a POR/bias-latch circuit chases conditional
-    gmin-affected solutions (prior session: 4136 iterations, bad pivots).
-  measured_impact: >
-    Same DUT (fm524 PMU, 841 MOS + passives, LF6 tt/27C, VDD=PVDD=5 V).
-    Session proj-pmu-20260917 without the recipe: 10 iterations, dead-rail
-    DC branch (vref1p2=0.313 V), conditional active branch at best,
-    power-up tran blocked, convergence false. Session proj-pmu-20260918
-    with the recipe: DC plan A converged first try and equaled the nodeset
-    variant to >=12 digits; 2 ms startup tran endpoint matched DC to 5
-    digits; L1 6/7 with the one failure being a mis-specified check (see
-    corner-pmu-007). Remaining iteration cost was pure TB syntax
-    (c -> capacitor, nodeset bare names), caught by a verifier-owned probe
-    before re-dispatch.
-  fix: >
-    Apply the recipe in order at TB-construction time; the port trace (step
-    2) and the gate-derived enable equations (step 1) go into a written
-    stimulus table that the reviewer reviews BEFORE any simulation. Budget
-    one verifier round for deck-syntax canary + probe on a new
-    tool/Spectre-build combination; reuse the probe results across
-    re-dispatches.
-
-derived_from: [proj-pmu-20260918, proj-pmu-20260917]
+  description: Trace each formal and actual port to its internal landing nodes before
+    assigning a role. Record enable/control conditions from the implementation and
+    selected fixture, together with source kind, direction, magnitude, loads and numerical
+    options. Review those conditions before any separately authorized experiment.
+    A connection pattern alone does not establish a current-input requirement, an
+    enabled-state unique path, nominal bias sizing or a universally valid operating-point
+    method. Consult the current corner-pmu-003/005 revisions and Q-ibn-lp-history
+    rather than treating the old six-step recipe as proven.
+  measured_impact: Historical reports describe a stalled earlier effort and a later
+    accepted L1 6/7 result, including reported first-try DC and ramp endpoint comparisons;
+    this revision does not remeasure or re-sign those results. The selected cleanup
+    fixture already drives en_pmu_act and ibn_lp with 5 V sources, while later 02_tb_pmu_dc
+    uses IIBNLP (0 ibn_lp) isource dc=0.8u and also changes trim, loads and other
+    conditions. This is not a single-variable experiment or proof that the recipe
+    caused the improvement. The later report records local before/after DUT hashes
+    and an attempt-1 baseline; complete equivalence to the earlier cleanup and runtime
+    include/model identity remain unverified.
+  fix: For continued reading, inherit the port/condition-checking method and run-specific
+    source records. Treat the later 0.8u setting as a historical fixture value, not
+    a validated nominal requirement. Do not reuse the old mirror-unit current-sizing
+    rule, 0.5x/1x/2x retry prescription, unique-path assumption or ibn_lp-to-MN8-VGS
+    equivalence as current instructions. The archived stimulus-table.md direction
+    erratum does not repair all its residual wording; archived deck comments have
+    the same scope restriction. Preserve those archives and use current revisions
+    when interpreting them. Keep the DUT fixed; the present source-history question
+    needs no new simulation, tuning or repeated audit.
+  mode_control_scope: 'Q-pmu-mode-control (2026-09-22) adds a fixed-local-copy interpretation:
+    E=rstn_vdd_por AND en_pmu_act, enb1_pmu=NOT(E OR sleep), mode_ldo30=sleep AND
+    NOT E. sleep alone does not request LP while E=1. LP selects LDO30 internal vref1
+    via MP70/MN116, disconnecting the normal vref1p2 transmission gate, and changes
+    bias/output-stage control. Keep historical near-VDD observation separate from
+    the unproven bandgap-loss -> pass-fully-on explanation. For logic shutdown require
+    E=0 and sleep=0; discharge additionally depends on enb_discg15/30. See topo-pmu-001
+    and WORK_PMU_MODE_CONTROL_20260922/conclusions.md for source spans and unknowns;
+    this does not restore withdrawn bias prescriptions.'
+derived_from:
+- proj-pmu-20260918
+- proj-pmu-20260917
 confidence: unverified
-source: "wiki/projects/fm524/pmu/architect/stimulus-table.md (recipe steps 1-4 instantiated); pmu-ver-001/-002 verifier reports (impact numbers); iteration-log.yml"
+source: 'Historical sources: wiki/projects/fm524/pmu/architect/stimulus-table.md;
+  pmu-ver-001/-002 reports. Current limits: proj-pmu-20260918, Q-ibn-lp-history iteration
+  3 and revisions/evidence_refs. The stimulus table contains a direction erratum at
+  lines 30-36 but retains withdrawn sink/nominal/VGS and retry wording elsewhere.
+  The archived deck comments likewise are not current instructions. Local DUT hashes
+  recorded in the historical L1 report are version evidence, not proof of runtime
+  include/model bytes or complete equivalence to the earlier cleanup.'
 created: '2026-09-18'
-updated: '2026-09-18'
+updated: '2026-09-22'
+confidence_note: Unverified strategy. Port tracing and explicit condition recording
+  are retained methods; nominal current, unique mechanism, cross-session causal effect
+  and full DUT equivalence are not established by this comparison.
+revisions:
+- date: '2026-09-22'
+  update_id: ibn-lp-history-20260922-r3
+  reason: Fresh-task acceptance found standalone strategy retrieval still carried
+    withdrawn current-sizing and cross-session causal assertions.
+  previous_content:
+    description: 'Six-step recipe that converted a stalled PMU reverse-engineering
+      effort into first-pass convergence, with zero DUT changes: (1) Extract the enable
+      equations FROM the gate instantiations (NAND/NOR/INV wiring), not from pin names
+      - for fm524: en_pmu = rstn_vdd_por AND en_pmu_act; enb_pmu = NOT en_pmu gates
+      the bandgap; enb1_pmu = NOR(en_pmu, sleep) gates LDO30; mode_ldo30 = AND(sleep,
+      enb_pmu) is only reachable after the bandgap is off. (2) Trace every top-level
+      port to its landing node and classify: power / level input / current input /
+      output (see corner-pmu-005 for the current-input signature). (3) Drive every
+      level input explicitly from t=0 with a real vsource (corner-pmu-003) - the enable
+      pin must track the POR, not gate it. (4) Source every current input with an
+      isource sized from the internal mirror unit. (5) Never drive an output pin;
+      leave mirror-output pins dangling (they settle at ~VDD with zero current). (6)
+      Treat the ramped-transient end point (nodes static between two late samples)
+      as the operating point of record; plain DC on a POR/bias-latch circuit chases
+      conditional gmin-affected solutions (prior session: 4136 iterations, bad pivots).
+
+      '
+    measured_impact: 'Same DUT (fm524 PMU, 841 MOS + passives, LF6 tt/27C, VDD=PVDD=5
+      V). Session proj-pmu-20260917 without the recipe: 10 iterations, dead-rail DC
+      branch (vref1p2=0.313 V), conditional active branch at best, power-up tran blocked,
+      convergence false. Session proj-pmu-20260918 with the recipe: DC plan A converged
+      first try and equaled the nodeset variant to >=12 digits; 2 ms startup tran
+      endpoint matched DC to 5 digits; L1 6/7 with the one failure being a mis-specified
+      check (see corner-pmu-007). Remaining iteration cost was pure TB syntax (c ->
+      capacitor, nodeset bare names), caught by a verifier-owned probe before re-dispatch.
+
+      '
+    fix: 'Apply the recipe in order at TB-construction time; the port trace (step
+      2) and the gate-derived enable equations (step 1) go into a written stimulus
+      table that the reviewer reviews BEFORE any simulation. Budget one verifier round
+      for deck-syntax canary + probe on a new tool/Spectre-build combination; reuse
+      the probe results across re-dispatches.
+
+      '
+  previous_confidence: unverified
+  evidence_refs:
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/active_dc.scs
+    sha256: 7fd188e7a5fb407e2ac0679e736f246377bc00ab91b48c261d23ff647174be06
+    locator: lines 3-7
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/pmu_root_anchor_active_corrected.scs
+    sha256: 36d9bbc5c79963fc3b2fcebd85850a1800caa1f7b08453e3c768b48cf5fe2e1f
+    locator: lines 34-70; V_IBNLP at 50; V_ENPMUACT at 51
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/PMU_derived_library.scs
+    sha256: f14ba7bf56468c8fbfbfa3225feb92f89f0eb8236b64b48d40b5268e63322c73
+    locator: lines 2644-2650,2665-2666,2677-2681; 2164-2166,2407-2415
+  - path: WORK_PMU_PIPELINE_20260917/verifier-runs/reachability/20260918_003610__derived_library_cleanup/active_dc/spectre.out
+    sha256: 7a96666d15083d58ec92c8f0013a8eaca1398da89816995e89a2e038873a924b
+    locator: lines 34,175-176,305-308
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/tb_pmu_dc.scs
+    sha256: 617719f57b420e489cf8e31b9f2bc13c1ef7c9ffe8ea0e6f97ec5e51a7468d92
+    locator: lines 30,37-68,86-98
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/spectre.out
+    sha256: 19c022023d2714ebc0d498f944a5b1a6383a910a7e9fd27a84ffa933b03db2ad
+    locator: lines 39,180,320-329
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/summary.json
+    sha256: 969760d514315907fcc52155e154077d287058a9b224b4733e7458965cd631ca
+    locator: lines 2-6
+  - path: wiki/projects/fm524/pmu/circuit/PMU_top.scs
+    sha256: 420bd3a0ef56778a83c7cdfed8e1283d479984c4812289ab0711f5615fc093eb
+    locator: lines 2644-2650,2665-2666,2164-2166,2407-2415; extant local copy, not
+      runtime hash authentication
+  - path: WORK_Q_IBN_LP_AUDIT_20260922/review.md
+    sha256: 9dbc583f351f08ff8b0cdc1af87d81990f217b907b539543621efd5a6568f013
+    locator: 可继承认识、建议修改、引用与超出证据的部分
+  - path: WORK_Q_IBN_LP_AUDIT_20260922/read-scope.json
+    sha256: ba59a6cf4bd03a3d0fa40eca0d26ac198098da909cf21c5e68dd27d777f62b6d
+    locator: /read_files; /review_type
+  - path: WORK_Q_IBN_LP_REVISION_20260922/revision-observations.md
+    sha256: 0fed4c1bc4d7772a70533b8edf85c52bdfc0ae7989f943a5dd6b903b9b0bbe1f
+    locator: whole document
+  - path: WORK_Q_IBN_LP_REVISION_20260922/evidence-r3/manifest.json
+    sha256: 211251d80f6370a7bba3d4f73007af4a3aac7ca53bd3d9c182c863e4d886dc86
+    locator: artifact identities
+  - path: WORK_Q_IBN_LP_REVISION_20260922/evidence-r3/design_evidence.json
+    sha256: 1641126ccb358eec69e9849018444018df1f63513f32d9fc8f62705a420fae9e
+    locator: whole file; revised claim references and limits
+  - path: WORK_Q_IBN_LP_ACCEPTANCE_20260922_READONLY/acceptance.md
+    sha256: 730b43e92af649534870440029aab4c506cf82bfd7389aea3aa95e510309ed0f
+    locator: 尚未贯穿的修订及继承风险；最小下一步
+  - path: wiki/projects/fm524/pmu/architect/stimulus-table.md
+    sha256: f22977e3361c6807e5cff1a24e8cff2737cf80d05d95ecf763d9a16b8c89a3b7
+    locator: lines 28-36,85,124-127; historical wording and partial erratum
+  - path: wiki/projects/fm524/pmu/verifier-reports/L1-functional/dc-op-point-2026-09-18.md
+    sha256: 667b52fa57abb4cc741ad2f542788161b463a3829ea5731dc1e2555f68c8534e
+    locator: lines 24,322-345; historical L1 and recorded local hashes, not runtime
+      include authentication
+  project_ref: proj-pmu-20260918
+  previous_metadata:
+    name: 'PMU bring-up recipe: trace-and-classify every port, drive enables from
+      t=0, source current inputs, use the ramp end-point as the op point'
+    source: wiki/projects/fm524/pmu/architect/stimulus-table.md (recipe steps 1-4
+      instantiated); pmu-ver-001/-002 verifier reports (impact numbers); iteration-log.yml
+  previous_metadata_absent:
+  - confidence_note
+  previous_index_entry:
+    path: strategies/pmu-bringup-explicit-stimulus-recipe.yml
+    type: strategy
+    module: pmu
+    summary: 'PMU bring-up recipe: trace-and-classify ports, drive enables from t=0,
+      source current inputs, ramp end-point as op point'
+- date: '2026-09-22'
+  update_id: pmu-mode-control-20260922-r1
+  reason: Add the new mode-source finding to the current recipe consumption entry
+    without reopening or undoing Q-ibn-lp-history.
+  previous_content:
+    description: Trace each formal and actual port to its internal landing nodes before
+      assigning a role. Record enable/control conditions from the implementation and
+      selected fixture, together with source kind, direction, magnitude, loads and
+      numerical options. Review those conditions before any separately authorized
+      experiment. A connection pattern alone does not establish a current-input requirement,
+      an enabled-state unique path, nominal bias sizing or a universally valid operating-point
+      method. Consult the current corner-pmu-003/005 revisions and Q-ibn-lp-history
+      rather than treating the old six-step recipe as proven.
+    measured_impact: Historical reports describe a stalled earlier effort and a later
+      accepted L1 6/7 result, including reported first-try DC and ramp endpoint comparisons;
+      this revision does not remeasure or re-sign those results. The selected cleanup
+      fixture already drives en_pmu_act and ibn_lp with 5 V sources, while later 02_tb_pmu_dc
+      uses IIBNLP (0 ibn_lp) isource dc=0.8u and also changes trim, loads and other
+      conditions. This is not a single-variable experiment or proof that the recipe
+      caused the improvement. The later report records local before/after DUT hashes
+      and an attempt-1 baseline; complete equivalence to the earlier cleanup and runtime
+      include/model identity remain unverified.
+    fix: For continued reading, inherit the port/condition-checking method and run-specific
+      source records. Treat the later 0.8u setting as a historical fixture value,
+      not a validated nominal requirement. Do not reuse the old mirror-unit current-sizing
+      rule, 0.5x/1x/2x retry prescription, unique-path assumption or ibn_lp-to-MN8-VGS
+      equivalence as current instructions. The archived stimulus-table.md direction
+      erratum does not repair all its residual wording; archived deck comments have
+      the same scope restriction. Preserve those archives and use current revisions
+      when interpreting them. Keep the DUT fixed; the present source-history question
+      needs no new simulation, tuning or repeated audit.
+  previous_confidence: unverified
+  evidence_refs:
+  - path: WORK_PMU_MODE_CONTROL_20260922/conclusions.md
+    sha256: 7ff4ee2c13de3839ef13a42b7aba47fdfce58ab8bb1b89917ce67f677ba24939
+    locator: mode equations, per-block source spans, historical observation and causal
+      retraction
+  - path: WORK_PMU_MODE_CONTROL_20260922/source-manifest.json
+    sha256: 59148e881485f2a0eed9440ed98b90b996bbd90e82d7aaa862c6114b08caadbf
+    locator: /sources and /scope_packets
+  - path: wiki/projects/fm524/pmu/circuit/PMU_top.scs
+    sha256: 420bd3a0ef56778a83c7cdfed8e1283d479984c4812289ab0711f5615fc093eb
+    locator: L12-19,68-81,87,259,403-433,506-526,575-588,932-976,1098-1106,1326-1343,1693-1695,1837-1838,1977-1996,2081-2186,2289-2415,2644-2672
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/06_exp_lp_mode/exp_lp_mode.scs
+    sha256: 399dfe3c7b3a89f1667502f5090fae537f6eb2f38157a032cc6e03914be19168
+    locator: L44-120; historical fixture
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/06_exp_lp_mode/measurements.json
+    sha256: 15569af2a6c153bdd238dbb33623c6de98ce94161c600a9ad2ba26e3b2cc2c29
+    locator: /t1m,/t2m,/t2p5m; historical derived values, not new measurement
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/06_exp_lp_mode/spectre.out
+    sha256: 6ee1795cd5f3b04f26ebfc26e6c813543d7a518436ae229dc9fc5de387a3ff72
+    locator: L323-326 gmin notice; runtime bytes unauthenticated
+  - path: wiki/projects/fm524/pmu/verifier-runs/20260918_013118__pmu_bringup_r2/results/02_tb_pmu_dc/tb_pmu_dc.scs
+    sha256: 617719f57b420e489cf8e31b9f2bc13c1ef7c9ffe8ea0e6f97ec5e51a7468d92
+    locator: L30-98; historical fixture
+  - path: wiki/projects/fm524/pmu/verifier-reports/L1-functional/dc-op-point-2026-09-18.md
+    sha256: 667b52fa57abb4cc741ad2f542788161b463a3829ea5731dc1e2555f68c8534e
+    locator: 'L255-273: observation versus causal interpretation'
+  - path: WORK_PMU_MODE_CONTROL_20260922/inheritance.json
+    sha256: 08ed2d1f0a5967074cef4f1131812e2cc885fb9f59674e73781c26a9d93a4808
+    locator: whole document
+  project_ref: proj-pmu-20260918
+  previous_index_entry:
+    path: strategies/pmu-bringup-explicit-stimulus-recipe.yml
+    type: strategy
+    module: pmu
+    summary: 'PMU fixture method: trace ports and conditions; Q-ibn-lp-history limits
+      historical recipe, current sizing and causal claims'

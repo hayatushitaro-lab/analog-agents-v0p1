@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:analog-evidence:static:0.2.0",
+  "type": "object",
+  "required": ["schema_version", "snapshot_id", "parent_snapshot_id", "project_id", "stage", "created_by", "scope", "artifacts", "source_spans", "definitions", "instances", "occurrences", "nets", "dependencies", "claims", "records", "conditions", "requirements", "gaps", "diagnostics", "views", "comparisons"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"enum": ["0.2.0"]},
+    "snapshot_id": {"type": "string", "minLength": 1},
+    "parent_snapshot_id": {"type": ["string", "null"]},
+    "project_id": {"type": "string", "minLength": 1},
+    "stage": {"enum": ["static_inspection"]},
+    "created_by": {"type": "object", "required": ["tool", "version", "code_sha256", "schema_sha256", "manifest_sha256"]},
+    "scope": {"type": "object", "required": ["dut_definition_ref", "structural_baseline_ref", "comparison_refs", "harness_refs", "model_resolution_status", "implementation_stage", "stages", "source_policy", "source_statuses", "auxiliary_status", "comparison_coverage"], "properties": {
+      "source_policy": {"enum": ["primary_required_auxiliary_optional"]},
+      "auxiliary_status": {"enum": ["not_requested", "available", "partial"]},
+      "source_statuses": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["artifact_ref", "role", "syntax", "design_elaboration", "error_diagnostic_refs"], "properties": {"role": {"enum": ["primary", "auxiliary"]}}}},
+      "comparison_coverage": {"type": "array", "items": {"type": "object", "required": ["artifact_ref", "uncompared_primary_instance_refs", "uncompared_auxiliary_instance_refs", "unmatched_comparison_refs", "meaning"]}}
+    }},
+    "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
+    "source_spans": {"type": "array", "items": {"$ref": "#/$defs/span"}},
+    "definitions": {"type": "array", "items": {"$ref": "#/$defs/definition"}},
+    "instances": {"type": "array", "items": {"$ref": "#/$defs/instance"}},
+    "occurrences": {"type": "array", "items": {"$ref": "#/$defs/occurrence"}},
+    "nets": {"type": "array", "items": {"$ref": "#/$defs/net"}},
+    "dependencies": {"type": "array", "items": {"$ref": "#/$defs/dependency"}},
+    "claims": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
+    "records": {"type": "array", "items": {"$ref": "#/$defs/record"}},
+    "conditions": {"type": "array", "items": {"$ref": "#/$defs/condition"}},
+    "requirements": {"type": "array", "items": {"type": "object", "required": ["id", "origin", "target_claim_ref", "applicability", "acceptance_authority"]}},
+    "gaps": {"type": "array", "items": {"$ref": "#/$defs/gap"}},
+    "diagnostics": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}},
+    "views": {"type": "array", "items": {"type": "object", "required": ["artifact_ref", "statements", "dialect_contexts", "status", "line_count", "globals"]}},
+    "comparisons": {"type": "array", "items": {"type": "object", "required": ["id", "left_refs", "right_refs", "status", "comparison_scope", "match_basis", "differences", "uncertainty", "support_refs"]}}
+  },
+  "$defs": {
+    "artifact": {"type": "object", "required": ["id", "role", "uri", "sha256", "byte_size", "source_attestation", "admission", "access_scope"], "properties": {"id": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "byte_size": {"type": "integer", "minimum": 0}, "role": {"enum": ["design", "model_metadata"]}}},
+    "span": {"type": "object", "required": ["id", "artifact_ref", "coordinate_system", "fragments"], "properties": {"coordinate_system": {"enum": ["utf8_bytes_half_open_lines_1based"]}, "fragments": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["line", "byte_start", "byte_end"], "properties": {"line": {"type": "integer", "minimum": 1}, "byte_start": {"type": "integer", "minimum": 0}, "byte_end": {"type": "integer", "minimum": 0}}}}}},
+    "definition": {"type": "object", "required": ["id", "artifact_ref", "raw_name", "canonical_name", "dialect_context_ref", "formal_ports", "parameters", "instance_refs", "span_refs", "status"]},
+    "instance": {"type": "object", "required": ["id", "artifact_ref", "definition_scope_ref", "raw_name", "master_ref_or_name", "ordered_terminals", "parameters", "span_refs", "device_class", "is_subckt_call", "resolution_status", "extensions"], "properties": {"parameters": {"type": "array", "items": {"$ref": "#/$defs/parameter"}}}},
+    "parameter": {"type": "object", "required": ["raw_key", "canonical_key", "raw_expr", "raw_span_refs", "normalized_value", "normalization_record_ref", "semantic_status", "semantic_contract_ref", "unit_status"], "properties": {"semantic_status": {"enum": ["lexical_only", "scalar_resolved"]}, "semantic_contract_ref": {"type": "null"}}},
+    "occurrence": {"type": "object", "required": ["id", "root_ref", "instance_path", "definition_ref", "instance_ref", "parent_ref", "port_bindings", "terminal_bindings", "parameter_environment", "status", "role", "support_refs"]},
+    "net": {"type": "object", "required": ["id", "scope_ref", "raw_name", "canonical_name", "name_policy_ref", "declaration_refs", "role"]},
+    "dependency": {"type": "object", "required": ["id", "from_ref", "requested_path", "requested_section", "local_candidate_ref", "resolution_state", "span_refs"]},
+    "claim": {
+      "type": "object",
+      "required": ["id", "subject_ref", "predicate", "value", "kind", "status", "support_refs", "condition_ref", "assumption_refs", "uncertainty", "confidence", "ancestry_kinds"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "minLength": 1}, "subject_ref": {"type": "string"}, "predicate": {"type": "string"},
+        "value": {"type": ["object", "null"]},
+        "kind": {"enum": ["DIRECT", "DERIVED", "SIMULATED", "INFERRED", "UNKNOWN"]},
+        "status": {"enum": ["proposed", "supported", "contested", "blocked", "superseded"]},
+        "support_refs": {"type": "array", "items": {"type": "string"}},
+        "condition_ref": {"type": ["string", "null"]},
+        "assumption_refs": {"type": "array", "items": {"type": "string"}},
+        "uncertainty": {"type": "array", "items": {"type": "string"}},
+        "confidence": {"type": "object", "required": ["level", "basis", "calibrated"], "properties": {"level": {"enum": ["high", "medium", "low"]}, "basis": {"type": "string"}, "calibrated": {"enum": [false]}}},
+        "ancestry_kinds": {"type": "array", "items": {"enum": ["DIRECT", "DERIVED", "SIMULATED", "INFERRED", "UNKNOWN"]}}
+      }
+    },
+    "record": {"type": "object", "required": ["id", "type", "inputs", "outputs", "method_ref", "version", "support_refs"], "properties": {"type": {"enum": ["normalization", "calculation", "comparison", "admission"]}, "inputs": {"type": "array", "minItems": 1}, "outputs": {"type": "array"}}},
+    "condition": {"type": "object", "required": ["id", "role", "entries", "source_refs"], "properties": {"role": {"enum": ["declared_export_options"]}}},
+    "gap": {"type": "object", "required": ["id", "category", "reason", "affected_refs", "blocking_stage", "next_evidence"]},
+    "diagnostic": {"type": "object", "required": ["id", "code", "severity", "stage", "source_span_refs", "affected_scope_refs", "reason", "recovery_action"], "properties": {"severity": {"enum": ["warning", "error"]}}}
+  }
+}

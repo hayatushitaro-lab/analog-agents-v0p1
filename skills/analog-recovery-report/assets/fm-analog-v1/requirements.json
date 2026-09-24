@@ -1,0 +1,173 @@
+{
+  "template_id": "fm-analog-v1",
+  "requirements": [
+    {
+      "id": "req_1_1",
+      "section": "1.1",
+      "title": "功能",
+      "task": "说明用途、服务对象和实际功能边界",
+      "required_evidence": "功能/模式卡、上层连接（可缺）",
+      "acceptance": "按功能分项；未知上层不得虚构"
+    },
+    {
+      "id": "req_1_2",
+      "section": "1.2",
+      "title": "特性",
+      "task": "说明本实现的特性及有条件的收益/代价",
+      "required_evidence": "结构证据、性能或条件分析",
+      "acceptance": "不把器件数量当特性，不恢复原始意图"
+    },
+    {
+      "id": "req_1_3",
+      "section": "1.3",
+      "title": "指标",
+      "task": "先列供电电压和温度等工作条件，再列适用指标、单位和采样min/typ/max",
+      "required_evidence": "有效测量摘要、原始规格（若有）",
+      "acceptance": "供电与温度条件行必须保留（未知值可写UNKNOWN）；条件不登记为DERIVED性能metric；规格与表征分开；单点不假填范围"
+    },
+    {
+      "id": "req_1_4",
+      "section": "1.4",
+      "title": "接口定义",
+      "task": "说明接口边界、供电域与工作模式",
+      "required_evidence": "端口全集、供电证据",
+      "acceptance": "未知供电不得称nominal"
+    },
+    {
+      "id": "req_1_4_1",
+      "section": "1.4.1",
+      "title": "接口列表",
+      "task": "按方向/状态分组列全部端口",
+      "required_evidence": "每位端口名称、角色、来源/去向、负载",
+      "acceptance": "总线分组必须覆盖所有位；方向不由名称决定"
+    },
+    {
+      "id": "req_1_4_2",
+      "section": "1.4.2",
+      "title": "关键时序",
+      "task": "说明使能/模式转换的时序与有效条件",
+      "required_evidence": "真实时序数据或未测原因",
+      "acceptance": "概念时序与实测波形区分"
+    },
+    {
+      "id": "req_1_5",
+      "section": "1.5",
+      "title": "实现方案",
+      "task": "先讲原理，再解释具体实现方案",
+      "required_evidence": "分块图、回路因果链、条件方程",
+      "acceptance": "必须能解释关键反馈和能量/信号路径"
+    },
+    {
+      "id": "req_1_6",
+      "section": "1.6",
+      "title": "验证方案",
+      "task": "定义可执行验证矩阵",
+      "required_evidence": "各指标条件、测量方式、预算、判据",
+      "acceptance": "计划与已执行分离；不以cold/high代替数值"
+    },
+    {
+      "id": "req_1_7",
+      "section": "1.7",
+      "title": "设计实现",
+      "task": "概述实现分区及相互作用",
+      "required_evidence": "已复核功能分块",
+      "acceptance": "不得以缺原始意图省略实际分析"
+    },
+    {
+      "id": "req_1_7_1",
+      "section": "1.7.1",
+      "title": "设计思路",
+      "task": "解释关键路径和条件性权衡",
+      "required_evidence": "局部连接、尺寸比例、工作区证据",
+      "acceptance": "公式变量绑定实际节点，成立条件明确"
+    },
+    {
+      "id": "req_1_7_2",
+      "section": "1.7.2",
+      "title": "器件列表",
+      "task": "按实际器件 model 去重列型号及有依据的属性；逻辑子电路/功能模块放1.5或1.7.1",
+      "required_evidence": "器件型号清单、类别/极性及有来源的 model metadata；未知属性明确保留",
+      "acceptance": "实例尺寸/比例/偏置放1.7.1；PDK器件可由subckt封装，不能仅凭语法排除；不猜工艺属性"
+    },
+    {
+      "id": "req_1_7_3",
+      "section": "1.7.3",
+      "title": "问题预测",
+      "task": "预测具体失效机制及验证方式",
+      "required_evidence": "敏感节点、未闭环假设、告警",
+      "acceptance": "每项风险说明影响和最小诊断"
+    },
+    {
+      "id": "req_1_8",
+      "section": "1.8",
+      "title": "设计验证",
+      "task": "组织实际验证结果",
+      "required_evidence": "有效运行、图数据、指标摘要",
+      "acceptance": "四个固定标签不编号；主结论与1.3一致；每项已完成仿真配对应真实结果图，未测项集中说明缺口"
+    },
+    {
+      "id": "req_1_9",
+      "section": "1.9",
+      "title": "脚本检查",
+      "task": "说明脚本检查范围",
+      "required_evidence": "实际脚本记录或明确未执行",
+      "acceptance": "parser/SPICE不是PERC"
+    },
+    {
+      "id": "req_1_9_1",
+      "section": "1.9.1",
+      "title": "脚本RUNPERC",
+      "task": "报告RUNPERC结果",
+      "required_evidence": "PERC日志或未执行说明",
+      "acceptance": "不得展示模板命令并暗示已运行"
+    },
+    {
+      "id": "req_1_10",
+      "section": "1.10",
+      "title": "后端说明",
+      "task": "说明实际电路对后端的要求",
+      "required_evidence": "电源/高阻/匹配/敏感节点",
+      "acceptance": "建议与已实现事实分开"
+    },
+    {
+      "id": "req_1_10_1",
+      "section": "1.10.1",
+      "title": "设计要点",
+      "task": "列布线隔离/匹配/电流重点",
+      "required_evidence": "具名节点及相关器件证据",
+      "acceptance": "不能只写见线路图"
+    },
+    {
+      "id": "req_1_10_2",
+      "section": "1.10.2",
+      "title": "特殊要求",
+      "task": "说明特殊约束及落实状态",
+      "required_evidence": "具体约束来源与后端资料",
+      "acceptance": "没有后端资料不得标完成"
+    },
+    {
+      "id": "req_1_11",
+      "section": "1.11",
+      "title": "ECO策略",
+      "task": "说明已存在option及可条件讨论的ECO",
+      "required_evidence": "连接/控制/配置证据",
+      "acceptance": "不虚构NVM/FIB能力"
+    },
+    {
+      "id": "req_1_12",
+      "section": "1.12",
+      "title": "物理实现",
+      "task": "记录物理实现",
+      "required_evidence": "当前项目后端资料或缺失说明",
+      "acceptance": "不继承其他项目留空授权"
+    },
+    {
+      "id": "req_1_13",
+      "section": "1.13",
+      "title": "物理验证",
+      "task": "记录物理验证",
+      "required_evidence": "当前项目DRC/LVS/PEX等实际记录",
+      "acceptance": "未执行明确，不以静态解析替代"
+    }
+  ]
+}

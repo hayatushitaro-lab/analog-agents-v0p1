@@ -1,28 +1,112 @@
 id: strat-ota-004
 type: strategy
-name: "单级 OTA 内部自偏置用大镜像比(10:1)压 bias 支路功耗"
-tags: [ota, 5t, bias, mirror, power, self-bias, sizing]
-process_nodes: [65nm]
-
+name: 单级 OTA 内部自偏置用大镜像比(10:1)压 bias 支路功耗
+tags:
+- ota
+- 5t
+- bias
+- mirror
+- power
+- self-bias
+- sizing
+process_nodes:
+- 65nm
 content:
-  description: >
-    单级 OTA 的内部自偏置支路（Mbp diode + IREF）功耗可以独立于信号路径压缩：
-    把 bias 参考电流与尾电流做成 N:1 大镜像比（如 10:1，IREF=10u → Itail=100u），
-    bias 支路只流 1/N 的电流，功耗占比从 ~50% 压到 ~9%，
-    而信号路径（输入对/负载镜/尾源）尺寸与性能完全不动。
+  description: 在尾源/参考管匹配、均满足工作区及偏置精度要求时，增大I_tail/I_ref的名义镜像比可降低参考支路功耗。即便保持核心几何，有限输出电阻、偏置漂移和寄生仍可能改变性能，不能保证性能完全不动。r2最终版本同时改变输入对W1，不能作为只改bias的受控对比。
   how:
-    - "镜像链: IREF sink 抽 10uA → Mbp PMOS diode 提供 10uA → vbias 由 Mbp Vsg 决定 → M5 栅同为 vbias, 按 W 比例给 Itail=10×10u=100uA。"
-    - "M5/Mbp 必须同 L、同 finger width(1u/finger)，只靠 W 比例(40u/4u=10)调镜像比，不靠改 finger width。"
-    - "IREF 方向: `IREF (vbias vss) isource dc=10u` 从 vbias 抽流，Mbp 从 VDD 注入补偿（KCL 平衡）——Spectre isource 第一节点→第二节点为电流方向。"
-    - "代价: 大镜像比匹配精度低于 1:1 → Itail 实测 -3% (97uA vs 100uA)，spec 接受 ±10%；Vth 失配 ΔVth/Vov≈2-3%。"
+  - 理想比N=(W/L)_M5/(W/L)_Mbp=I_tail/I_ref；参考IREF从vbias抽向VSS，Mbp由VDD补流。
+  - 本次原DUT为M5=Mbp=40u/2u、IREF=100u，名义1:1；r2摘要为M5=40u/2u、Mbp=4u/2u、IREF=10u，名义10:1。具体PDK宽度/finger/m语义须读准入模型，不从summary的nf反乘当前w。
+  - 名义镜像误差不自动证明随机失配；确认mismatch需独立的失配模型/统计证据，有限VDS与输出电导也可产生误差。
   measured:
-    - "proj-ota-5t-33v-r2: 10:1 自偏置 (IREF=10u, Mbp=4u, M5=40u) 压 bias 支路功耗 0.33mW→0.033mW，总 I(VDD) 210u→110uA，0.66mW→0.363mW，闭合 power budget。"
-    - "信号路径性能与 1:1 参考项目一致 (L2 全 PASS, Itail≈100u)。"
-  when_to_use: "任何含内部自偏置支路的单级 OTA/LDO-OTA，power budget 偏紧且 bias 支路占比过高时。"
-  references: ["corner-ota-002", "anti-ota-001"]
-
-derived_from: ["proj-ota-5t-33v-r2"]
-confidence: verified   # 本项目全角实测支撑 (3 corners power 0.318-0.387mW 全 PASS)
-source: "ota-5t-33v-r2 相对 proj-ota-5t-33v 的唯一结构差异 (10:1 vs 1:1 bias 镜像), L3 PVT spectre 实测"
+  - 历史来源保留于revisions。原DUT按理想1:1得总200uA/0.66mW；名义10:1在相同100uA尾电流假设下得110uA/0.363mW，这是条件算术，不是本次实测。旧210uA与0.66mW在3.3V下不自洽。
+  - r2 final summary记W1=80u、尾电流约97u；其L3数值仅属于该历史版本，本次不核实、不移用，不能称与W1=52u原项目性能完全一致。
+  when_to_use: 仅作参考支路功耗权衡线索；需另验证偏置准确度、工作区与性能。固定DUT recovery不据此调参。
+  references:
+  - corner-ota-002
+  - anti-ota-001
+derived_from:
+- proj-ota-5t-33v-r2
+- proj-ota-5t-33v
+confidence: unverified
+source: 原r2历史归档保留；2026-09-22仅对照原DUT、r2摘要与计量公式限定适用性，未复核r2仿真。
 created: 2026-08-25
-updated: 2026-08-25
+updated: '2026-09-23'
+confidence_note: 有条件机制推断与历史版本比较；没有独立复核或随机失配证据。
+revisions:
+- date: '2026-09-23'
+  update_id: ota5t-polarity-bias-20260923-apply
+  reason: r2 summary:26-30 与原DUT参数不同；旧条目总电流/功率不自洽且把名义偏差归因为失配。
+  previous_content:
+    description: '单级 OTA 的内部自偏置支路（Mbp diode + IREF）功耗可以独立于信号路径压缩： 把 bias 参考电流与尾电流做成
+      N:1 大镜像比（如 10:1，IREF=10u → Itail=100u）， bias 支路只流 1/N 的电流，功耗占比从 ~50% 压到 ~9%，
+      而信号路径（输入对/负载镜/尾源）尺寸与性能完全不动。
+
+      '
+    how:
+    - '镜像链: IREF sink 抽 10uA → Mbp PMOS diode 提供 10uA → vbias 由 Mbp Vsg 决定 → M5 栅同为
+      vbias, 按 W 比例给 Itail=10×10u=100uA。'
+    - M5/Mbp 必须同 L、同 finger width(1u/finger)，只靠 W 比例(40u/4u=10)调镜像比，不靠改 finger width。
+    - 'IREF 方向: `IREF (vbias vss) isource dc=10u` 从 vbias 抽流，Mbp 从 VDD 注入补偿（KCL 平衡）——Spectre
+      isource 第一节点→第二节点为电流方向。'
+    - '代价: 大镜像比匹配精度低于 1:1 → Itail 实测 -3% (97uA vs 100uA)，spec 接受 ±10%；Vth 失配 ΔVth/Vov≈2-3%。'
+    measured:
+    - 'proj-ota-5t-33v-r2: 10:1 自偏置 (IREF=10u, Mbp=4u, M5=40u) 压 bias 支路功耗 0.33mW→0.033mW，总
+      I(VDD) 210u→110uA，0.66mW→0.363mW，闭合 power budget。'
+    - 信号路径性能与 1:1 参考项目一致 (L2 全 PASS, Itail≈100u)。
+    when_to_use: 任何含内部自偏置支路的单级 OTA/LDO-OTA，power budget 偏紧且 bias 支路占比过高时。
+    references:
+    - corner-ota-002
+    - anti-ota-001
+  previous_confidence: verified
+  evidence_refs:
+  - path: WORK_OTA_5T_RECOVERY_20260922/source-observation.json
+    sha256: 01067aaf911876878457109da574e455c91781f8a6516c6c3834ff4eb7a9881a
+    locator: /observations
+  - path: WORK_OTA_5T_RECOVERY_20260922/source-identity.json
+    sha256: af7e16c180b507181c7ad8a4c3d26f8f3fce5ef64b41c08b492c686aecd34310
+    locator: /files
+  - path: wiki/projects/ota-5t-33v/circuit/ota_5t_33v.scs
+    sha256: 9e05fbfc72824521ebc22b11ed9103b61c2e7d657dbfc342e6c2353fa46967f9
+    locator: L12-L40
+  - path: wiki/projects/ota-5t-33v/testbench/tb_ota_5t_33v_ac.scs
+    sha256: 75bcdf8deafd636c495b079b3dff18dc03c9493284be239eb74b209d2a96c638
+    locator: L2-L18
+  - path: wiki/projects/ota-5t-33v/testbench/tb_ota_5t_33v_loopgain.scs
+    sha256: 65c42b636bd33eb84f7c333aa2f1c3c2c05c5f7984e3c0c2954f6f86631220e4
+    locator: L2-L21
+  - path: wiki/projects/ota-5t-33v/sim_raw/tb_ota_5t_33v_dcop.log
+    sha256: 3875b586af49920ae7ee103f51035cb536d877aec27f329d5788e011d3168a9a
+    locator: L50-L56,L104-L129
+  - path: wiki/projects/ota-5t-33v/verifier-reports/L2-performance/2026-08-24_measured-l2-tt.md
+    sha256: d2f3ddc2be8e1dbdb0df58a36e8288e32cb363f8e349e82270665495dbf6853e
+    locator: L11-L40
+  - path: wiki/projects/ota-5t-33v-r2/summary.yml
+    sha256: bf598d4ee56534f728daaa3bfa8d8fb7c18eb16dc79d018402846777366ea105
+    locator: L15,L26-L37
+  - path: WORK_OTA_RECOVERY_COMPAT_20260922/revision-notes.md
+    sha256: b5022802b8908b740f479a3a1c15e03439032911e08f42a56e0f4152c6b6a83d
+    locator: whole document
+  - path: WORK_OTA_RECOVERY_COMPAT_20260922/static/snapshots/de33aaaded82ed03899292f568ecb6cbf72725b5e91fac5372c9c7889883fc12/summary.json
+    sha256: 7c327b1e63d4af19ff16ab9961e2163ba2599aebb6b0006ce296fe09a1251850
+    locator: /stage_status; /acceptance; /diagnostics_by_code
+  - path: WORK_OTA_RECOVERY_COMPAT_20260922/static/snapshots/de33aaaded82ed03899292f568ecb6cbf72725b5e91fac5372c9c7889883fc12/design_evidence.json
+    sha256: 157247c56a33f47f2ca1cf2c9319a98833b6f6228be3679344e29cc87b087cee
+    locator: /views; /source_spans; /occurrences
+  - path: WORK_OTA_RECOVERY_COMPAT_20260922/static/snapshots/de33aaaded82ed03899292f568ecb6cbf72725b5e91fac5372c9c7889883fc12/validation.json
+    sha256: 655823ac7f996b259837b1279f4757264aac1ab82808d9b562c06a9f640f36af
+    locator: /valid; /errors
+  - path: WORK_OTA_RECOVERY_COMPAT_20260922/vendor-identity.json
+    sha256: 242bd575ddd4d551c0df9c0100a1d08ef090af23cc281cd6afb9903d5bfb9d6e
+    locator: /files; /workspace_revision
+  project_ref: proj-ota-5t-33v
+  previous_metadata:
+    source: ota-5t-33v-r2 相对 proj-ota-5t-33v 的唯一结构差异 (10:1 vs 1:1 bias 镜像), L3 PVT
+      spectre 实测
+  previous_metadata_absent:
+  - confidence_note
+  previous_index_entry:
+    path: strategies/bias-mirror-ratio-power-savings.yml
+    type: strategy
+    module: ota
+    summary: '单级 OTA 内部自偏置用大镜像比(10:1)压 bias 支路功耗: bias 0.33→0.033mW, 信号路径不动 (proj-ota-5t-33v-r2
+      实测)'

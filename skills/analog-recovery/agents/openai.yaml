@@ -1,0 +1,4 @@
+interface:
+  display_name: "电路反推设计文档"
+  short_description: "从固定电路实现出发，编排证据生成、独立复核与模板设计报告交付"
+  default_prompt: "使用 $analog-recovery，从我提供的 SCS、模型与模板重建设计说明书，先取证再写作。"

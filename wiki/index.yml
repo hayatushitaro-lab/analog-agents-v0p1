@@ -56,14 +56,12 @@ entries:
     path: strategies/spectre-simulation-method.yml
     type: strategy
     module: ota
-    summary: Spectre sim method (remote spectre + PSF real/imag + no-BOM/no-multi).
-      Applies LDO sim method to OTA.
+    summary: Spectre历史执行/复数解析方法；PM须先核反馈符号与DC等效。原5T案例PM未由本次离线证据确认。
   strat-ota-004:
     path: strategies/bias-mirror-ratio-power-savings.yml
     type: strategy
     module: ota
-    summary: '单级 OTA 内部自偏置用大镜像比(10:1)压 bias 支路功耗: bias 0.33→0.033mW, 信号路径不动 (proj-ota-5t-33v-r2
-      实测)'
+    summary: 名义大镜像比可降低参考支路功耗；r2最终W1也改变，非仅bias受控对比，不保证性能不动。
   anti-ota-001:
     path: anti-patterns/gbw-cl-itail-contradiction.yml
     type: anti-pattern
@@ -467,8 +465,8 @@ entries:
     path: projects/ota-5t-33v/summary.yml
     type: project
     module: ota
-    summary: '5T 单级 OTA (TSMC-65nm 3.3V IO, PMOS input + NMOS mirror): review-mode
-      迭代, M5 尾源欠尺寸陷阱 + DC gain 估算紧裕度(待 EDA)'
+    summary: Q-ota5t-polarity-bias：1:1偏置原版5T，饱和小信号下vp反相/vn同相；总电源含bias。历史TT增益/UGBW仅关联，PM符号/运行版本未闭合；recovery
+      partial，无新仿真。
   proj-ota-5t-33v-r2:
     path: projects/ota-5t-33v-r2/summary.yml
     type: project
@@ -884,76 +882,91 @@ entries:
     path: anti-patterns/pmu-active-root-double-instantiation.yml
     type: anti-pattern
     module: pmu
-    summary: Do not instantiate a second PMU when the source already contains an active root instance
+    summary: Do not instantiate a second PMU when the source already contains an active
+      root instance
   strat-pmu-001:
     path: strategies/pmu-root-anchor-state-sweep.yml
     type: strategy
     module: pmu
-    summary: Root-anchor plus fresh-DC state sweep for PMU reverse engineering
+    summary: 'PMU mode tracing before state sweeps: conditional enable/reference/discharge
+      paths; historical bias sweeps and LP rail-up cause are not certified.'
   corner-pmu-001:
     path: corner-lessons/pmu-lf6-flat-staging-winerror206.yml
     type: corner-lesson
     module: pmu
-    summary: LF6 recursive model staging avoids Windows flat-include command-length failure
+    summary: LF6 recursive model staging avoids Windows flat-include command-length
+      failure
   corner-pmu-002:
     path: corner-lessons/pmu-zero-current-branch-before-polarity.yml
     type: corner-lesson
     module: pmu
-    summary: Near-zero dual rails plus a mostly-off operating point require branch diagnosis before resizing
+    summary: 'PMU near-zero rails: diagnose branch and fixture; selected cleanup inputs
+      were driven, unique cause unproven'
   corner-pmu-003:
     path: corner-lessons/pmu-en-pmu-act-required-input.yml
     type: corner-lesson
     module: pmu
-    summary: External en_pmu_act must be driven explicitly; a 1 MOhm load is not an enable stimulus
+    summary: 'PMU explicit en_pmu_act stimulus: conditional historical reachability;
+      numerical warning disposition remains unreviewed'
   corner-pmu-004:
     path: corner-lessons/pmu-source-tail-cleanup-not-convergence-fix.yml
     type: corner-lesson
     module: pmu
-    summary: Removing source-tail save/options leaves the PMU numerical signature unchanged; wrapper cleanup is not convergence
+    summary: Removing source-tail save/options leaves the PMU numerical signature
+      unchanged; wrapper cleanup is not convergence
   topo-pmu-001:
     path: topologies/pmu-five-volt-dual-ldo-hierarchy.yml
     type: topology
     module: pmu
-    summary: 5 V PMU with bandgap, POR/isolation, dual LDO, and power-down monitor
+    summary: 'PMU en_pmu_act/sleep/POR mode table: normal, LP and shutdown; LDO30
+      LP selects internal vref1; historical rail-up cause unresolved (local copy,
+      partial).'
   proj-pmu-20260917:
     path: projects/2026-09-17-pmu_reverse_engineering/summary.yml
     type: project
     module: pmu
-    summary: PMU reverse-engineering pass; explicit en_pmu_act=5V recovers conditional active branch, clean L1 still deferred
-
+    summary: PMU reverse-engineering pass; explicit en_pmu_act=5V recovers conditional
+      active branch, clean L1 still deferred
   corner-pmu-005:
     path: corner-lessons/pmu-current-input-bias-pins-must-be-sourced.yml
     type: corner-lesson
     module: pmu
-    summary: Current-input bias pins (source-tied to internal diode) must be driven by explicit isources; floating starves the bias chain
+    summary: 'PMU ibn_lp: selected cleanup uses 5 V, later fixture 0.8 uA; not all
+      old runs floating, unique cause unproven'
   corner-pmu-006:
     path: corner-lessons/pmu-ldo15-softstart-overshoot-load-limited-decay.yml
     type: corner-lesson
     module: pmu
-    summary: LDO15 soft-start overshoot 1.9x regulation with load-limited decay tail; scope the rail, not only the end point
+    summary: LDO15 soft-start overshoot 1.9x regulation with load-limited decay tail;
+      scope the rail, not only the end point
   corner-pmu-007:
     path: corner-lessons/pmu-por-release-outputs-are-one-shot-not-level.yml
     type: corner-lesson
     module: pmu
-    summary: POR release outputs may be ~24us one-shots, not levels; only a ramped transient tells, DC end point lies by omission
+    summary: 'PMU POR outputs are mode-dependent: historical active-startup pulse
+      versus asserted LP isolation; distinguish upstream rstn_vdd_por.'
   anti-pmu-002:
     path: anti-patterns/pmu-acceptance-checks-encode-tester-assumptions.yml
     type: anti-pattern
     module: pmu
-    summary: Acceptance checks encoding an unverified behavioral model fail healthy circuits (POR pulse read as level)
+    summary: Acceptance checks encoding an unverified behavioral model fail healthy
+      circuits (POR pulse read as level)
   strat-pmu-002:
     path: strategies/pmu-bringup-explicit-stimulus-recipe.yml
     type: strategy
     module: pmu
-    summary: "PMU bring-up recipe: trace-and-classify ports, drive enables from t=0, source current inputs, ramp end-point as op point"
+    summary: 'PMU fixture/mode tracing: retain Q-ibn-lp-history limits; sleep requires
+      E=0 for LP, internal vref1 selected, historical rail-up cause unproven.'
   proj-pmu-20260918:
     path: projects/2026-09-18-pmu_bringup_l1/summary.yml
     type: project
     module: pmu
-    summary: PMU bring-up L1; op point proven 6/7 with disposition; supersedes the stalled 20260917 pass
-
+    summary: 'PMU historical L1 6/7; Q-pmu-mode-control partial: en_pmu_act/sleep/POR
+      normal-LP-shutdown table, LP internal vref1 and unresolved rail-up cause. Q-ibn-lp-history
+      restrictions retained.'
   anti-shared-004:
     path: anti-patterns/wiki-entry-metadata-must-be-sourced-not-copied.yml
     type: anti-pattern
     module: _shared
-    summary: "Wiki entry metadata (process_nodes etc.) must be evidenced from PDK/source, not pattern-matched from neighboring entries"
+    summary: Wiki entry metadata (process_nodes etc.) must be evidenced from PDK/source,
+      not pattern-matched from neighboring entries

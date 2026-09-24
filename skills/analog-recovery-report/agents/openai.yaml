@@ -1,0 +1,4 @@
+interface:
+  display_name: "证据到设计说明书"
+  short_description: "将已校验证据包写入设计说明书模板，生成图文清晰且经过版式检查的报告"
+  default_prompt: "使用 $analog-recovery-report，将已校验证据包写入指定 DOCX 模板并交付渲染预览。"

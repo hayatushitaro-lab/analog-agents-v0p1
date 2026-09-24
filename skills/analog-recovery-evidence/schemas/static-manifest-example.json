@@ -1,0 +1,25 @@
+{
+  "manifest_version": "0.2.0",
+  "project_id": "example",
+  "dut_definition": "example_top",
+  "structural_baseline": "S",
+  "comparison_artifacts": [],
+  "simulation_policy": "disabled",
+  "model_policy": "metadata_only",
+  "source_policy": "primary_required_auxiliary_optional",
+  "source_attestation": {
+    "provider": "user",
+    "status": "authorized_original_export"
+  },
+  "inputs": [
+    {
+      "id": "S",
+      "role": "design",
+      "dialect": "spectre",
+      "access_scope": "design",
+      "path": "inputs/example.scs",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "path_maps": []
+}

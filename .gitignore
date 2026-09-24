@@ -49,6 +49,20 @@ skill-api-reference/
 # ── Third-party reference PDFs (size + redistribution concerns) ──
 references/
 
+# Maintained skill instructions, not third-party reference assets.
+!skills/analog-recovery/references/
+!skills/analog-recovery-evidence/references/
+!skills/analog-recovery-report/references/
+!skills/analog-evolve/references/
+skills/analog-recovery/references/*
+skills/analog-recovery-evidence/references/*
+skills/analog-recovery-report/references/*
+skills/analog-evolve/references/*
+!skills/analog-recovery/references/*.md
+!skills/analog-recovery-evidence/references/*.md
+!skills/analog-recovery-report/references/*.md
+!skills/analog-evolve/references/*.md
+
 # Workstation-local working dirs — anything starting with WORK
 WORK/
 WORK_*

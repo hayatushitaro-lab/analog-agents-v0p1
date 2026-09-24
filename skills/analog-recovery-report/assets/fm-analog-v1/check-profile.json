@@ -1,0 +1,33 @@
+{
+  "bullet_sections": [
+    {
+      "start": "功能",
+      "end": "特性",
+      "template_example": "功能1",
+      "template_occurrence": 0
+    },
+    {
+      "start": "特性",
+      "end": "指标",
+      "template_example": "特性1",
+      "template_occurrence": 0
+    }
+  ],
+  "label_sections": [
+    {
+      "start": "设计验证",
+      "end": "脚本检查",
+      "labels": [
+        "仿真工具",
+        "仿真路径",
+        "仿真方法",
+        "结果分析"
+      ],
+      "per_subsection": true,
+      "subsection_styles": [
+        "3"
+      ]
+    }
+  ],
+  "preserve_page_fields": true
+}
