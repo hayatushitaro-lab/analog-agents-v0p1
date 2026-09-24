@@ -1,0 +1,15 @@
+{
+  "repository_root": "<absolute-current-workspace>",
+  "wiki_root": "<absolute-current-workspace>/wiki",
+  "python": "<absolute-current-workspace>/.venv/Scripts/python.exe",
+  "reviewers_config": "<absolute-current-workspace>/config/reviewers.yml",
+  "project_root": "<absolute-current-workspace>",
+  "max_calls_per_run": 12,
+  "max_rounds": 3,
+  "report_defaults": {
+    "mode": "replay",
+    "simulation_authorized": false,
+    "external_review_authorized": false,
+    "knowledge_write_policy": "approval"
+  }
+}

@@ -1,8 +1,8 @@
-# analog-agents 全量工作区接收与配置说明
+# analog-agents 工作区接收与配置说明
 
-更新日期：2026-09-24。面向收到完整工作区 ZIP、准备在另一台电脑运行相同流程的使用者。
+更新日期：2026-09-24。面向收到完整工作区 ZIP，或从 GitHub 获取指定分支后，准备在另一台电脑运行相同流程的使用者。
 
-**保留全量文件，不需要删除历史项目或整理知识库。需要重新配置的是接收方的 Python 环境、工作区路径、远程 EDA 连接、评审 API 和技能入口。** 本说明依据交付时的维护源码编写，不代表接收方环境已经验证。
+**保留交付文件，不需要删除历史项目或整理知识库。需要重新配置的是接收方的 Python 环境、工作区路径、远程 EDA 连接、评审 API 和技能入口。** GitHub 分支不包含被忽略的 `WORK_*`、`wiki/projects/`、本机配置和 PDK/model 文件；它提供流程源码、通用配置示例和报告模板，不是可直接仿真的完整设计工程。跑通 analog-pipeline 需要接收方有权使用的设计规格、网表/testbench 和模型；跑通 analog-recovery 需要固定 DUT 及可追溯的设计证据。还需有权使用相应远程服务。本说明依据维护源码编写，不代表接收方环境已经验证。
 
 以下以 **Windows + PowerShell + Microsoft Word 桌面版** 为操作环境。解压目录示例为 `E:/AI/analog-agents-v0p1`，请换成自己的实际路径。Linux/macOS 需要另行适配解释器路径和文档渲染，本说明不承诺其版式与 Windows 相同。
 
@@ -11,18 +11,18 @@
 | 文件或位置 | 是否需要处理 | 配置内容 |
 |---|---|---|
 | `.venv/` | 必须重建或验证，通常重建 | 压缩包内的虚拟环境可能引用发送方用户目录的基础 Python；editable 安装也可能指向旧路径 |
-| `skills/analog-recovery/_local/site.json` | 必须核对 | 当前仓库、wiki、Python、reviewers 路径；本机仿真/API使用策略及额度 |
+| `skills/analog-recovery/_local/site.json` | 必须创建/核对 | 当前仓库、wiki、Python、reviewers 路径；本机仿真/API使用策略及额度。GitHub clone 不含此本机配置，应从已跟踪的 `skills/analog-recovery/references/site.example.json` 复制后填写 |
 | 工作区根目录 `.env`，或接收方用户目录 `.virtuoso-bridge/.env` | 运行远程仿真时必须 | bridge 实际读取的 EDA 主机、账号、Spectre 路径、环境脚本、跳板/SSH后端等 |
 | `config/servers.yml` | 使用 EDA/正向角色路由时配置 | 主机、账号、SSH key、角色映射；**不能代替 bridge 的 `.env`** |
 | `config/reviewers.yml` | 使用外部评审时必须 | 可用模型、接口地址、API key或环境变量、超时及启用项 |
-| `config/effort.yml` | 核对即可 | 默认 `standard`；按需设置模块覆盖档位 |
+| `config/effort.yml` | 可选 | GitHub clone 不含本机文件；缺省按 `standard`，需要覆盖档位时再创建 |
 | `_local/context.yml` | 建议补充 | 接收方主机、模型位置、工作目录、网络等环境说明；供代理理解环境，不是自动连接配置 |
 | `_local/sanitize-map.yml` | 使用标准下载脱敏流程时需要 | 接收方路径、账号、主机标识等的替换表 |
 | 接收方代理的技能目录/插件 | 必须核对 | 让代理读到本工作区维护技能、bridge自带技能及文档技能 |
 | 远程服务器的模型、许可证和初始化环境 | 仿真时必须核对 | ZIP不能替代服务器上的EDA安装、许可证服务或缺失的PDK文件 |
 | Word桌面版、中文字体 | 生成同类DOCX/PDF时需要 | 当前渲染器使用Word COM；历史绘图脚本可能引用Windows字体 |
 
-交付时的工作区没有根级 `_local/` 和根级 `.env`，但已有 `skills/analog-recovery/_local/site.json`。如果收到的 ZIP 是其他时点的快照，以解压结果为准。缺少根级配置时按下面说明新建，不能因技能的 `_local/site.json` 已存在，就认为远程连接也已配置。
+发送方本机的 `skills/analog-recovery/_local/site.json`、根级 `_local/` 和 `.env` 都是忽略的本机配置，不会随 GitHub 分支提供。收到 ZIP 时也要检查其内容和路径；不能因 site 文件存在，就认为远程连接已配置。GitHub clone 的 site 文件创建方式见第3节。
 
 API key、SSH身份、账号权限和许可证由接收方确认并配置；不默认沿用发送方凭据或发送方的服务使用授权。本文件不包含凭据。
 
@@ -50,6 +50,16 @@ virtuoso-bridge-lite/skills/spectre/SKILL.md
 ```
 
 `virtuoso-bridge-lite/` 虽是Git子模块，但ZIP中必须有实际源码。若只有空目录或Git指针，应向发送方补齐对应快照，不要直接拉最新版本替换本次已验证源码。运行Python不依赖Git历史完整，但后续提交/更新需要完整Git元数据。
+
+### 从 GitHub 获取
+
+若使用本次交付分支，从仓库根目录外运行：
+
+```powershell
+git clone --recurse-submodules --branch feature/update-dispatch-subagents https://github.com/hayatushitaro-lab/analog-agents-v0p1.git E:/AI/analog-agents-v0p1
+```
+
+把目标目录换成接收方路径。递归 clone 会按父仓库记录的提交检出 `virtuoso-bridge-lite`；不要单独把子模块更新到另一个版本。仓库若设为私有，接收方需先取得访问权限。
 
 ### 2.2 建立接收方环境
 
@@ -81,7 +91,14 @@ uv pip install --python .venv/Scripts/python.exe -e ./virtuoso-bridge-lite PyYAM
 
 ## 3. Recovery 的 site.json
 
-编辑 `skills/analog-recovery/_local/site.json`。将五个路径都指向接收方当前工作区，JSON建议使用 `/`，避免反斜杠转义错误。
+GitHub clone 后，先从已跟踪的安全示例创建忽略的本机配置，再编辑 `skills/analog-recovery/_local/site.json`。将五个路径都指向接收方当前工作区，JSON建议使用 `/`，避免反斜杠转义错误：
+
+```powershell
+New-Item -ItemType Directory -Force skills/analog-recovery/_local | Out-Null
+Copy-Item skills/analog-recovery/references/site.example.json skills/analog-recovery/_local/site.json
+```
+
+`config/servers.example.yml` 和 `config/reviewers.example.yml` 已随仓库提供；按需复制成被忽略的本机 `config/servers.yml`、`config/reviewers.yml` 并填写接收方自己的设置。不要提交生成的本机配置。
 
 下面是完整示例；`live/true`表示接收方已经确认允许本项目执行必要仿真和外部评审后采用的生产设置：
 
@@ -253,6 +270,8 @@ Recovery只继承档位，不继承正向规格、调参权限或收敛结论。
 ### 第四步：实际运行前的小范围验证
 
 在已确认授权的范围内检查SSH、远端Spectre/许可证/模型与一个有限夹具；检查一次配置的reviewer真实返回；用现有小文档检查Word渲染及中文字体。外部连接失败与电路失败分开记录，已有通过的检查不重复。
+
+完成环境检查后，先用一个接收方可分享、且已准备好模型/权限的有限任务实际跑流程。analog-pipeline 至少要提供规格和可仿真的 DUT/testbench；analog-recovery 要提供固定 DUT、设计证据及报告所需输入。当前 GitHub 分支没有这些项目级输入，也没有附带可直接仿真的 demo；不要把未脱敏的 `WORK_*`、生产 PDK/model 或凭据直接推到仓库。
 
 之后给代理的项目任务可以简写为：
 

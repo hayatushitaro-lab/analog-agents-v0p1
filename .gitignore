@@ -62,6 +62,7 @@ skills/analog-evolve/references/*
 !skills/analog-recovery-evidence/references/*.md
 !skills/analog-recovery-report/references/*.md
 !skills/analog-evolve/references/*.md
+!skills/analog-recovery/references/site.example.json
 
 # Workstation-local working dirs — anything starting with WORK
 WORK/
